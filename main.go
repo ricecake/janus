@@ -7,5 +7,5 @@ package main
 import "github.com/ricecake/janus/cmd"
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }
