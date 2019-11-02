@@ -19,3 +19,19 @@ session jti is stored in the access token
 actions are grant only, no deny.
 
 actions are ltrees.  being granted the root of the tree is being granted "root", and is exactly what it sounds like
+
+
+Pbkdf(Secret+time mod 5min), gives password. Can use sliding window like totp, but for encryption key. 
+the 5min part should be configurable
+one function that takes the secret, and the time, and then does the code, and another that handles the offset bits, and can return a list of valid codes for a specific time window.
+
+
+Put the browser/session token in with auth code data, then can tie everything together when issuing access token. 
+basically, we just need to put the associated authed browser session into the encrypted auth code.  That way, when the code turns back into an access token,
+we know which browser session it should be associsated with.  if issuing an access token directly, we have the browser session handy, and can just directly use it from there.
+We'll need an "access token context" table, since a single context can be used to have multiple valid access tokens, by renewal and whatnot.  Will want to make sure that
+the bits and bops are all lined up right there.
+
+Should have a token util file, with helpers for serialization, sign, encrypt and the like. 
+
+Consolidate Janus notes as well
