@@ -24,7 +24,7 @@ actions are ltrees.  being granted the root of the tree is being granted "root",
 Pbkdf(Secret+time mod 5min), gives password. Can use sliding window like totp, but for encryption key. 
 the 5min part should be configurable
 one function that takes the secret, and the time, and then does the code, and another that handles the offset bits, and can return a list of valid codes for a specific time window.
-
+Might also just use a simple list of possible secrets stored in the config
 
 Put the browser/session token in with auth code data, then can tie everything together when issuing access token. 
 basically, we just need to put the associated authed browser session into the encrypted auth code.  That way, when the code turns back into an access token,
@@ -35,3 +35,10 @@ the bits and bops are all lined up right there.
 Should have a token util file, with helpers for serialization, sign, encrypt and the like. 
 
 Consolidate Janus notes as well
+
+
+seperate user from context.  When doing a signup, detect that the user exists, and when passing the new user data to the signup app, just let it create the group.
+when authenticating, we'll know the client, and hence can find the appropriate user.
+
+can I make the refresh token something that I can just use to lookup the access token?  like make the refresh token be somehow meaningfully derived from the access token, or a jwt that has it signed inside it?  that way I don't need to store it, but can verify that it's correct?
+I'm thinking use an encrypted jwt, that way I can just unseal it and have the data, no storage needed.
