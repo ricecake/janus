@@ -2,6 +2,7 @@ BEGIN;
 
 CREATE TABLE identity (
     code text  NOT NULL PRIMARY KEY,
+    active boolean not null default true,
     email citext unique not null,
     preferred_name text not null,
     given_name text,
