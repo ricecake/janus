@@ -55,3 +55,5 @@ For refresh token, use an hmac of the access token I'd? Will need an hmac helper
 
 webauthn support should be easy-ish, and kinda neat.  Should be able to make it work with just a small "biometric" button on the login page, and the info in the handshake can be used to identify the user
 implies that the auth-check method should be able to understand that it might be doing a lookup on something other than email
+
+Support enrollment protocol?if hit main page, show grid of contexts (available by group), and drill to grid of apps. If only one, start with apps. 
