@@ -94,6 +94,14 @@ func EncodeJWTOpen(tok interface{}) (string, error) {
 	return raw, nil
 }
 
+func DecodeJWTOpen(raw string, decoded interface{}) error {
+	tok, err := jwt.ParseSigned(raw)
+	if err != nil {
+		return err
+	}
+	return tok.Claims(Keys, decoded)
+}
+
 func EncodeJWTClose(tok interface{}, passphrase string) (string, error) {
 	key := DeriveKey(passphrase)
 	enc, err := jose.NewEncrypter(
@@ -113,6 +121,19 @@ func EncodeJWTClose(tok interface{}, passphrase string) (string, error) {
 		return "", err
 	}
 	return raw, nil
+}
+
+func DecodeJWTClose(raw, passphrase string, decoded interface{}) error {
+	key := DeriveKey(passphrase)
+	tok, err := jwt.ParseSignedAndEncrypted(raw)
+	if err != nil {
+		return err
+	}
+	nested, err := tok.Decrypt(key)
+	if err != nil {
+		return err
+	}
+	return nested.Claims(Keys, decoded)
 }
 
 func DeriveKey(passphrase string) []byte {

@@ -63,7 +63,29 @@ func loginPage(c *gin.Context) {
 
 	c.Data(200, "text/html", body)
 }
-func loginSubmit(c *gin.Context)  {}
+
+func loginSubmit(c *gin.Context) {
+	response := server.NewResponse()
+	defer response.Close()
+
+	ar := server.HandleAuthorizeRequest(response, c.Request)
+	if ar == nil {
+		if response.IsError && response.InternalError != nil {
+			log.Printf("internal error: %v", response.InternalError)
+		}
+		osin.OutputJSON(response, c.Writer, c.Request)
+		return
+	}
+
+	ar.Authorized = true
+
+	server.FinishAuthorizeRequest(response, c.Request, ar)
+
+	if response.IsError && response.InternalError != nil {
+		log.Printf("internal error: %v", response.InternalError)
+	}
+	osin.OutputJSON(response, c.Writer, c.Request)
+}
 func signupPage(c *gin.Context)   {}
 func signupSubmit(c *gin.Context) {}
 func logoutPage(c *gin.Context)   {}
