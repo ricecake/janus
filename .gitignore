@@ -8,6 +8,10 @@
 # Test binary, build with `go test -c`
 *.test
 
+# Configs and Keys, even for testing...
+*.pem
+*.yaml
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		{% block meta %}
+			<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+			<meta name="robots" content="noindex,follow">
+		{% endblock %}
+
+			<link rel="icon" href="/static/janus-icon.svg"  sizes="any" type="image/svg+xml">
+
+		{% block title %}
+			<title>IDP</title>
+		{% endblock %}
+
+		{% block style %}
+		{% endblock %}
+
+		{% block javascript %}
+		{% endblock %}
+
+		{% block headExtras %}
+		{% endblock %}
+	</head>
+	<body>
+		{% block header %}
+		{% endblock %}
+
+		{% block main %}
+			<div id="main">
+				<p>Hello</p>
+			</div>
+		{% endblock %}
+
+		{% block footer %}
+		{% endblock %}
+	</body>
+</html>
