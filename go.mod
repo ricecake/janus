@@ -9,6 +9,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jinzhu/gorm v1.9.11
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/onsi/ginkgo v1.10.3
@@ -20,7 +21,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/ulule/limiter/v3 v3.3.2
 	github.com/unrolled/secure v1.0.5
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c
 	gopkg.in/go-playground/validator.v9 v9.30.0
 	gopkg.in/square/go-jose.v2 v2.4.0
 )

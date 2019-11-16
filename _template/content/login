@@ -1,1 +1,7 @@
 {% extends "lib/basepage" %}
+
+{% block main %}
+    <div id="main">
+        <p>Hello from {{ Name }}</p>
+    </div>
+{% endblock %}

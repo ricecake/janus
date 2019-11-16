@@ -59,6 +59,7 @@ func init() {
 
 func setupRouter(r *gin.Engine) {
 
+	r.Use(gin.Logger())
 	r.Use(gin.RecoveryWithWriter(log.StandardLogger().Writer()))
 
 	rootGroup := r.Group("/")

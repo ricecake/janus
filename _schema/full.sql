@@ -1,4 +1,8 @@
+CREATE DATABASE janus_app;
+\c janus_app
 BEGIN;
+CREATE EXTENSION citext;
+CREATE EXTENSION ltree;
 
 CREATE TABLE identity (
     code text  NOT NULL PRIMARY KEY,
@@ -103,7 +107,7 @@ CREATE TABLE access_context (
     client integer NOT NULL,
     scope text NOT NULL,
     redirect_uri text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 CREATE TABLE access_token (
     code text not null primary key,
@@ -125,8 +129,38 @@ CREATE TABLE stash_data (
     expires_in integer
 );
 
+ALTER TABLE identity OWNER to postgres;
+ALTER TABLE auth_password OWNER to postgres;
 ALTER TABLE context OWNER to postgres;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE context TO janus;
+ALTER TABLE action OWNER to postgres;
+ALTER TABLE role OWNER to postgres;
+ALTER TABLE clique OWNER to postgres;
+ALTER TABLE client OWNER to postgres;
+ALTER TABLE role_to_action OWNER to postgres;
+ALTER TABLE ratelimit_prototype OWNER to postgres;
+ALTER TABLE ratelimit_instance OWNER to postgres;
+ALTER TABLE identity_clique_role OWNER to postgres;
+ALTER TABLE session_token OWNER to postgres;
+ALTER TABLE access_context OWNER to postgres;
+ALTER TABLE access_token OWNER to postgres;
+ALTER TABLE revocation OWNER to postgres;
+ALTER TABLE stash_data OWNER to postgres;
 
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE identity TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE auth_password TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE context TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE action TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE role TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE clique TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE client TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE role_to_action TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ratelimit_prototype TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ratelimit_instance TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE identity_clique_role TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE session_token TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE access_context TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE access_token TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE revocation TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE stash_data TO janus;
 
 COMMIT;
