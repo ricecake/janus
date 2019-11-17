@@ -5,17 +5,18 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/util"
 )
 
 type Identity struct {
-	Code          string  `gorm:"column:code;not null"`
-	Active        bool    `gorm:"column:active;not null"`
-	Email         string  `gorm:"column:email;not null"`
-	PreferredName string  `gorm:"column:preferred_name;not null"`
-	GivenName     *string `gorm:"column:given_name"`
-	FamilyName    *string `gorm:"column:family_name"`
+	Code          string `gorm:"column:code;not null"`
+	Active        bool   `gorm:"column:active;not null"`
+	Email         string `gorm:"column:email;not null"`
+	PreferredName string `gorm:"column:preferred_name;not null"`
+	GivenName     string `gorm:"column:given_name"`
+	FamilyName    string `gorm:"column:family_name"`
 }
 
 func (this Identity) TableName() string {
@@ -68,4 +69,25 @@ func (this *Identity) SetPassword(password string) (err error) {
 	}
 
 	return err
+}
+
+func (this Identity) IdentityToken(claims map[string]bool) IDToken {
+	issued := time.Now()
+	expires := issued.Add(time.Duration(viper.GetInt("identity.ttl")) * time.Hour)
+
+	token := IDToken{
+		UserCode:   this.Code,
+		IssuedAt:   int64(issued.Unix()),
+		Expiration: int64(expires.Unix()),
+		TokenId:    util.CompactUUID(),
+	}
+
+	if claims["profile"] {
+		token.Email = this.Email
+		token.PreferredName = this.PreferredName
+		token.FamilyName = this.FamilyName
+		token.GivenName = this.GivenName
+	}
+
+	return token
 }

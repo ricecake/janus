@@ -3,12 +3,14 @@ package public_routes
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/model"
+	"github.com/ricecake/janus/util"
 )
 
 func defaultPage(c *gin.Context)   {}
@@ -22,9 +24,32 @@ func establishSession(c *gin.Context, user model.Identity) (*model.UserAuthDetai
 		return nil, clientErr
 	}
 
-	log.Info("Generate an id token -- method should live off of user, since it's their id")
-	log.Info("record record of it in db")
-	log.Info("create session record referencing it")
+	token := user.IdentityToken(map[string]bool{})
+
+	encToken, err := util.EncodeJWTOpen(token)
+	if err != nil {
+		return nil, err
+	}
+
+	sessionToken := model.SessionToken{
+		Identity:  user.Code,
+		UserAgent: "test",
+		IpAddress: "127.0.0.1",
+		CreatedAt: time.Now(),
+		ExpiresIn: int(token.Expiration - token.IssuedAt),
+	}
+	if err := model.CreateSessionToken(&sessionToken); err != nil {
+		return nil, err
+	}
+
+	accessContext := model.AccessContext{
+		Session:   sessionToken.Code,
+		Client:    client.ClientId,
+		CreatedAt: time.Now(),
+	}
+	if err := model.CreateAccessContext(&accessContext); err != nil {
+		return nil, err
+	}
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "janus.user.email",
@@ -36,11 +61,15 @@ func establishSession(c *gin.Context, user model.Identity) (*model.UserAuthDetai
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     fmt.Sprintf("janus.auth.%s", client.Context),
-		Value:    "pancake",
+		Value:    encToken,
 		Path:     "/",
 		Secure:   !viper.GetBool("development.insecure"),
 		HttpOnly: true,
 	})
 
-	return &model.UserAuthDetails{}, nil
+	return &model.UserAuthDetails{
+		Code:    user.Code,
+		Browser: sessionToken.Code,
+		Context: accessContext.Code,
+	}, nil
 }

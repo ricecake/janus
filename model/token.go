@@ -13,10 +13,23 @@ import (
 type SessionToken struct {
 	Code      string    `gorm:"column:code;not null"`
 	Identity  string    `gorm:"column:identity;not null"`
-	UserAgen  string    `gorm:"column:identity;not null"`
-	IpAddress string    `gorm:"column:identity;not null"`
+	UserAgent string    `gorm:"column:user_agent;not null"`
+	IpAddress string    `gorm:"column:ip_address;not null"`
 	CreatedAt time.Time `gorm:"column:created_at;not null"`
 	ExpiresIn int       `gorm:"column:expires_in;not null"`
+}
+
+func (this SessionToken) TableName() string {
+	return "session_token"
+}
+
+func CreateSessionToken(tok *SessionToken) error {
+	db := util.GetDb()
+
+	tok.Code = util.CompactUUID()
+	log.Info("Creating session", tok.Code)
+
+	return db.Create(tok).Error
 }
 
 type AccessContext struct {
@@ -24,6 +37,19 @@ type AccessContext struct {
 	Session   string    `gorm:"column:session;not null"`
 	Client    string    `gorm:"column:client;not null"`
 	CreatedAt time.Time `gorm:"column:created_at;not null"`
+}
+
+func (this AccessContext) TableName() string {
+	return "access_context"
+}
+
+func CreateAccessContext(con *AccessContext) error {
+	db := util.GetDb()
+
+	con.Code = util.CompactUUID()
+	log.Info("Creating session", con.Code)
+
+	return db.Create(con).Error
 }
 
 type RevocationEntry struct {
@@ -159,7 +185,6 @@ type IDToken struct {
 	// See: https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
 
 	Email         string `json:"email,omitempty"`
-	Name          string `json:"name,omitempty"`
 	FamilyName    string `json:"family_name,omitempty"`
 	GivenName     string `json:"given_name,omitempty"`
 	PreferredName string `json:"preferred_name,omitempty"`
