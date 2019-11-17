@@ -13,10 +13,11 @@ CREATE TABLE identity (
     family_name text
 );
 CREATE TABLE auth_password (
-    identity text not null references identity(code),
-    secret text NOT NULL,
+    identity text not null unique references identity(code),
+    totp_active boolean not null default false,
+    hash text NOT NULL,
     totp text,
-    created timestamp with time zone DEFAULT now() not null
+    created_at timestamp with time zone DEFAULT now() not null
 );
 
 
@@ -48,7 +49,7 @@ CREATE TABLE clique (
 CREATE TABLE client (
     context text NOT NULL REFERENCES context(code),
     display_name text NOT NULL,
-    client_id text NOT NULL,
+    client_id text NOT NULL UNIQUE,
     secret text NOT NULL,
     base_uri text
 );
@@ -105,7 +106,7 @@ CREATE TABLE session_token (
 CREATE TABLE access_context (
     code text not null primary key,
     session text  REFERENCES session_token(code),
-    client text NOT NULL REFERENCES client(code),
+    client text NOT NULL REFERENCES client(client_id),
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 

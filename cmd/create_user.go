@@ -7,7 +7,10 @@ package cmd
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/ricecake/janus/model"
 )
 
 // userCmd represents the user command
@@ -20,21 +23,37 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("user called")
+		user := &model.Identity{}
+
+		fmt.Printf("create user [%s] password [%s]\n", args[0], args[1])
+
+		active, err := cmd.Flags().GetBool("active")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		pname, err := cmd.Flags().GetString("preferred-name")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		user.Email = args[0]
+		user.Active = active
+		user.PreferredName = pname
+
+		if err := model.CreateIdentity(user); err != nil {
+			log.Fatal(err)
+		}
+
+		user.SetPassword(args[1])
 	},
 }
 
 func init() {
 	createCmd.AddCommand(createUserCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// userCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// userCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	createUserCmd.Flags().BoolP("active", "a", true, "User is active")
+	createUserCmd.Flags().StringP("preferred-name", "p", "", "Preferred name for user")
 }

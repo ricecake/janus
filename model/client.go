@@ -11,7 +11,7 @@ type Client struct {
 	Context     string `gorm:"column:context;not null"`
 	DisplayName string `gorm:"column:display_name;not null"`
 	ClientId    string `gorm:"column:client_id;not null"`
-	Secret      string `gorm:"column:secret;not null" json:"-"`
+	Secret      []byte `gorm:"column:secret;not null" json:"-"`
 	BaseUri     string `gorm:"column:base_uri;not null"`
 }
 
@@ -29,7 +29,7 @@ func (this *Client) SetSecret(plainSecret string) error {
 		return fmt.Errorf("hash failed")
 	}
 
-	this.Secret = string(hash)
+	this.Secret = hash
 	return nil
 }
 
@@ -47,7 +47,7 @@ func (this Client) GetUserData() interface{} {
 }
 
 func (this Client) ClientSecretMatches(plainSecret string) bool {
-	return util.PasswordHashValid([]byte(plainSecret), []byte(this.Secret))
+	return util.PasswordHashValid([]byte(plainSecret), this.Secret)
 }
 
 func FindClientById(id string) (client Client, err error) {

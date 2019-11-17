@@ -1,8 +1,8 @@
 package public_routes
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +15,7 @@ func defaultPage(c *gin.Context)   {}
 func checkUsername(c *gin.Context) {}
 func checkAuth(c *gin.Context)     {}
 
-func establishSession(c *gin.Context, user model.User) (*model.UserAuthDetails, error) {
+func establishSession(c *gin.Context, user model.Identity) (*model.UserAuthDetails, error) {
 	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
 	if clientErr != nil {
 		log.Error("Error with own client?")
@@ -25,6 +25,14 @@ func establishSession(c *gin.Context, user model.User) (*model.UserAuthDetails, 
 	log.Info("Generate an id token -- method should live off of user, since it's their id")
 	log.Info("record record of it in db")
 	log.Info("create session record referencing it")
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "janus.user.email",
+		Value:    user.Email,
+		Path:     "/",
+		Secure:   !viper.GetBool("development.insecure"),
+		HttpOnly: false,
+	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     fmt.Sprintf("janus.auth.%s", client.Context),
