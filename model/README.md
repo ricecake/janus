@@ -57,3 +57,12 @@ webauthn support should be easy-ish, and kinda neat.  Should be able to make it 
 implies that the auth-check method should be able to understand that it might be doing a lookup on something other than email
 
 Support enrollment protocol?if hit main page, show grid of contexts (available by group), and drill to grid of apps. If only one, start with apps. 
+
+Need a link between users and contexts/clients that they've "joined"?  Or is that over designing?
+
+Can we represent refresh tokens with jwe, and find a way to not store jti in db either?  Just store the session per client, and use encryption to de-auth?
+Session has a signing key, and that signs a value in the refresh token?
+
+What if we just stick the session code in the access token?  then we can also just use a jwe of the session data as the refresh token.  Would also need to stick the jti of the access token in there, but that's no biggie
+
+Access Token has a sessid claim, and a browser id claim.  That way it can be known what browser and session an access token came from.  The refresh token will have the sesssion id and the access token id.  That way it can be confirmed that the refresh token matches with the given access token, and it can also be revoked by revoking the session id

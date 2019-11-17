@@ -2,6 +2,9 @@ package model
 
 import (
 	"github.com/openshift/osin"
+	"github.com/spf13/viper"
+
+	"github.com/ricecake/janus/util"
 )
 
 type DbStorage struct{}
@@ -26,11 +29,40 @@ func (s *DbStorage) GetClient(id string) (osin.Client, error) {
 }
 
 func (s *DbStorage) LoadAuthorize(code string) (*osin.AuthorizeData, error) {
-	return nil, osin.ErrNotFound
+	var encData AuthCodeData
+	if err := util.DecodeJWTClose(code, viper.GetString("security.passphrase"), &encData); err != nil {
+		return nil, osin.ErrNotFound
+	}
+
+	client, clientErr := FindClientById(encData.ClientId)
+	if clientErr != nil {
+		return nil, osin.ErrNotFound
+	}
+
+	if EntityRevoked(encData.Code) {
+		return nil, osin.ErrNotFound
+	}
+
+	return &osin.AuthorizeData{
+		Client:              client,
+		ExpiresIn:           encData.ExpiresIn,
+		Scope:               encData.Scope,
+		RedirectUri:         encData.RedirectUri,
+		State:               encData.State,
+		CreatedAt:           encData.CreatedAt,
+		CodeChallenge:       encData.CodeChallenge,
+		CodeChallengeMethod: encData.CodeChallengeMethod,
+		UserData:            encData.UserData,
+	}, nil
 }
 
 func (s *DbStorage) RemoveAuthorize(code string) error {
-	return nil
+	var encData AuthCodeData
+	if err := util.DecodeJWTClose(code, viper.GetString("security.passphrase"), &encData); err != nil {
+		return err
+	}
+
+	return InsertRevocation(encData.Code, int(encData.ExpiresIn))
 }
 
 func (s *DbStorage) SaveAccess(data *osin.AccessData) error {

@@ -14,7 +14,34 @@ type SessionToken struct{}
 
 type AccessToken struct{}
 
-type RevocationEntry struct{}
+type RevocationEntry struct {
+	EntityCode string    `gorm:"column:entity_code;not null"`
+	CreatedAt  time.Time `gorm:"column:created_at;not null"`
+	ExpiresIn  int       `gorm:"column:expires_in;not null"`
+}
+
+func (this RevocationEntry) TableName() string {
+	return "revocation"
+}
+
+func InsertRevocation(entity string, ttl int) error {
+	db := util.GetDb()
+
+	revocationEntry := RevocationEntry{
+		EntityCode: entity,
+		CreatedAt:  time.Now(),
+		ExpiresIn:  ttl,
+	}
+
+	log.Info("Revoking entity ", revocationEntry.EntityCode)
+
+	return db.Create(&revocationEntry).Error
+}
+
+func EntityRevoked(entity string) bool {
+	db := util.GetDb()
+	return !db.Where("entity_code = ?", entity).First(&RevocationEntry{}).RecordNotFound()
+}
 
 type StashToken struct{}
 
@@ -25,6 +52,7 @@ type UserAuthDetails struct {
 	Nonce string
 }
 type AuthCodeData struct {
+	Code                string
 	ClientId            string
 	ExpiresIn           int32
 	Scope               string
@@ -37,9 +65,8 @@ type AuthCodeData struct {
 }
 
 func (a *TokenGenerator) GenerateAuthorizeToken(data *osin.AuthorizeData) (ret string, err error) {
-	log.Printf("REQUEST %+v", data)
-
 	codeData := AuthCodeData{
+		Code:                util.CompactUUID(),
 		ClientId:            data.Client.GetId(),
 		ExpiresIn:           data.ExpiresIn,
 		Scope:               data.Scope,
