@@ -32,8 +32,6 @@ func discovery(c *gin.Context) {
 			"jti",
 			"nonce",
 			"email",
-			"username",
-			"name",
 			"family_name",
 			"given_name",
 			"preferred_name",

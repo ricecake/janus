@@ -91,3 +91,76 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 
 	return token
 }
+
+type IdentificationStrategy int
+
+const (
+	NONE IdentificationStrategy = iota
+	PASSWORD
+	SESSION_TOKEN
+	WEBAUTHN
+)
+
+type IdentificationRequest struct {
+	Strategy     IdentificationStrategy
+	Email        *string
+	Password     *string
+	Totp         *string
+	SessionToken *string
+}
+type IdentificationResult struct {
+	Success       bool
+	Identity      *Identity
+	Strength      string
+	Method        string
+	FailureCode   int
+	FailureReason string
+}
+
+func IdentifyFromCredentials(req IdentificationRequest) (*IdentificationResult, error) {
+	switch req.Strategy {
+	case NONE:
+		return &IdentificationResult{
+			FailureCode:   500,
+			FailureReason: "Bad auth attempt",
+		}, nil
+	case PASSWORD:
+		db := util.GetDb()
+		var ident Identity
+		if db.Where("email = ?", *req.Email).Find(&ident).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad user",
+			}, nil
+		}
+		var auth AuthPassword
+		if db.Where("identity = ?", ident.Code).Find(&auth).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad auth method",
+			}, nil
+		}
+		if !util.PasswordHashValid([]byte(*req.Password), auth.Hash) {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad password",
+			}, nil
+		}
+		return &IdentificationResult{
+			Success:  true,
+			Identity: &ident,
+			Strength: "1",
+			Method:   "password",
+		}, nil
+	case SESSION_TOKEN:
+		return &IdentificationResult{
+			FailureCode:   500,
+			FailureReason: "Unknown auth method",
+		}, nil
+	default:
+		return &IdentificationResult{
+			FailureCode:   500,
+			FailureReason: "Unknown auth method",
+		}, nil
+	}
+}

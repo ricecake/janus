@@ -27,7 +27,7 @@ func CreateSessionToken(tok *SessionToken) error {
 	db := util.GetDb()
 
 	tok.Code = util.CompactUUID()
-	log.Info("Creating session", tok.Code)
+	log.Info("Creating session ", tok.Code)
 
 	return db.Create(tok).Error
 }
@@ -47,7 +47,7 @@ func CreateAccessContext(con *AccessContext) error {
 	db := util.GetDb()
 
 	con.Code = util.CompactUUID()
-	log.Info("Creating session", con.Code)
+	log.Info("Creating context ", con.Code)
 
 	return db.Create(con).Error
 }
