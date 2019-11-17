@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/openshift/osin"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/util"
@@ -44,6 +45,7 @@ func (s *DbStorage) LoadAuthorize(code string) (*osin.AuthorizeData, error) {
 	}
 
 	return &osin.AuthorizeData{
+		Code:                code,
 		Client:              client,
 		ExpiresIn:           encData.ExpiresIn,
 		Scope:               encData.Scope,
@@ -59,6 +61,7 @@ func (s *DbStorage) LoadAuthorize(code string) (*osin.AuthorizeData, error) {
 func (s *DbStorage) RemoveAuthorize(code string) error {
 	var encData AuthCodeData
 	if err := util.DecodeJWTClose(code, viper.GetString("security.passphrase"), &encData); err != nil {
+		log.Error(err)
 		return err
 	}
 

@@ -105,15 +105,7 @@ CREATE TABLE access_context (
     code text not null primary key,
     session text not null,
     client integer NOT NULL,
-    scope text NOT NULL,
-    redirect_uri text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-CREATE TABLE access_token (
-    code text not null primary key,
-    context text not null,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    expires_in integer
 );
 
 CREATE TABLE revocation (
@@ -142,7 +134,6 @@ ALTER TABLE ratelimit_instance OWNER to postgres;
 ALTER TABLE identity_clique_role OWNER to postgres;
 ALTER TABLE session_token OWNER to postgres;
 ALTER TABLE access_context OWNER to postgres;
-ALTER TABLE access_token OWNER to postgres;
 ALTER TABLE revocation OWNER to postgres;
 ALTER TABLE stash_data OWNER to postgres;
 
@@ -159,7 +150,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ratelimit_instance TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE identity_clique_role TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE session_token TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE access_context TO janus;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE access_token TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE revocation TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE stash_data TO janus;
 

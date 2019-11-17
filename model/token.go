@@ -12,8 +12,6 @@ import (
 
 type SessionToken struct{}
 
-type AccessToken struct{}
-
 type RevocationEntry struct {
 	EntityCode string    `gorm:"column:entity_code;not null"`
 	CreatedAt  time.Time `gorm:"column:created_at;not null"`
@@ -83,12 +81,45 @@ func (a *TokenGenerator) GenerateAuthorizeToken(data *osin.AuthorizeData) (ret s
 	return util.EncodeJWTClose(codeData, viper.GetString("security.passphrase"))
 }
 
-func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefresh bool) (accesstoken string, refreshtoken string, err error) {
-	log.Printf("REQUEST %+v", data)
-	accesstoken = ""
+type AccessToken struct {
+	Issuer     string `json:"iss"`
+	UserCode   string `json:"sub"`
+	Expiration int64  `json:"exp"`
+	IssuedAt   int64  `json:"iat"`
+	TokenCode  string `json:"jti"`
+
+	Nonce         string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
+	ValidResource string `json:"aud,omitempty"`
+	SessionCode   string `json:"sess,omitempty"`
+}
+type RefreshToken struct {
+	TokenCode   string `json:"jti"`
+	AccessCode  string `json:"ati"`
+	SessionCode string `json:"sti"`
+}
+
+func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefresh bool) (accessToken string, refreshToken string, err error) {
+	accessTokenData := AccessToken{
+		Issuer:      viper.GetString("identity.issuer"),
+		UserCode:    "potato",
+		Expiration:  data.CreatedAt.Add(time.Duration(data.ExpiresIn) * time.Second).Unix(),
+		IssuedAt:    data.CreatedAt.Unix(),
+		TokenCode:   util.CompactUUID(),
+		SessionCode: "",
+		// Nonce:  ,
+	}
+
+	accessToken, err = util.EncodeJWTOpen(accessTokenData)
+	if err != nil {
+		return
+	}
 
 	if generaterefresh {
-		refreshtoken = ""
+		refreshToken, err = util.EncodeJWTClose(RefreshToken{
+			TokenCode:   util.CompactUUID(),
+			AccessCode:  accessTokenData.TokenCode,
+			SessionCode: "",
+		}, viper.GetString("security.passphrase"))
 	}
 	return
 }
