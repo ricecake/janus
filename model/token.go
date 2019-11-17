@@ -10,7 +10,21 @@ import (
 	"github.com/ricecake/janus/util"
 )
 
-type SessionToken struct{}
+type SessionToken struct {
+	Code      string    `gorm:"column:code;not null"`
+	Identity  string    `gorm:"column:identity;not null"`
+	UserAgen  string    `gorm:"column:identity;not null"`
+	IpAddress string    `gorm:"column:identity;not null"`
+	CreatedAt time.Time `gorm:"column:created_at;not null"`
+	ExpiresIn int       `gorm:"column:expires_in;not null"`
+}
+
+type AccessContext struct {
+	Code      string    `gorm:"column:code;not null"`
+	Session   string    `gorm:"column:session;not null"`
+	Client    string    `gorm:"column:client;not null"`
+	CreatedAt time.Time `gorm:"column:created_at;not null"`
+}
 
 type RevocationEntry struct {
 	EntityCode string    `gorm:"column:entity_code;not null"`
@@ -46,8 +60,12 @@ type StashToken struct{}
 type TokenGenerator struct{}
 
 type UserAuthDetails struct {
-	Code  string
-	Nonce string
+	Code     string
+	Nonce    string
+	Browser  string
+	Context  string
+	Strength int
+	Method   string
 }
 type AuthCodeData struct {
 	Code                string
@@ -90,12 +108,12 @@ type AccessToken struct {
 
 	Nonce         string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
 	ValidResource string `json:"aud,omitempty"`
-	SessionCode   string `json:"sess,omitempty"`
+	ContextCode   string `json:"ctx,omitempty"`
 }
 type RefreshToken struct {
 	TokenCode   string `json:"jti"`
 	AccessCode  string `json:"ati"`
-	SessionCode string `json:"sti"`
+	ContextCode string `json:"ctx"`
 }
 
 func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefresh bool) (accessToken string, refreshToken string, err error) {
@@ -105,7 +123,7 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		Expiration:  data.CreatedAt.Add(time.Duration(data.ExpiresIn) * time.Second).Unix(),
 		IssuedAt:    data.CreatedAt.Unix(),
 		TokenCode:   util.CompactUUID(),
-		SessionCode: "",
+		ContextCode: "", // Pull this out of userdata -- also, store this in userdata
 		// Nonce:  ,
 	}
 
@@ -118,8 +136,31 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		refreshToken, err = util.EncodeJWTClose(RefreshToken{
 			TokenCode:   util.CompactUUID(),
 			AccessCode:  accessTokenData.TokenCode,
-			SessionCode: "",
+			ContextCode: "",
 		}, viper.GetString("security.passphrase"))
 	}
 	return
+}
+
+type IDToken struct {
+	Issuer     string `json:"iss"`
+	UserCode   string `json:"sub"`
+	ClientID   string `json:"aud"`
+	IssuedAt   int64  `json:"iat"`
+	Expiration int64  `json:"exp"`
+	TokenId    string `json:"jti"`
+
+	Nonce    string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
+	Strength string `json:"acr,omitempty"`
+	Methods  string `json:"amr,omitempty"`
+
+	// Custom claims supported by this server.
+	//
+	// See: https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
+
+	Email         string `json:"email,omitempty"`
+	Name          string `json:"name,omitempty"`
+	FamilyName    string `json:"family_name,omitempty"`
+	GivenName     string `json:"given_name,omitempty"`
+	PreferredName string `json:"preferred_name,omitempty"`
 }

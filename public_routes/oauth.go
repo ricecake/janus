@@ -63,6 +63,7 @@ func accessToken(c *gin.Context) {
 		}
 
 		server.FinishAccessRequest(response, c.Request, ar)
+		// TODO: add an id_token to response here, but only if authorized and we have what we need
 	}
 
 	if response.IsError && response.InternalError != nil {

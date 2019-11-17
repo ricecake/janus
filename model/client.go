@@ -2,7 +2,9 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/ricecake/janus/util"
+	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -21,8 +23,19 @@ func (this Client) GetId() string {
 	return this.ClientId
 }
 
+func (this *Client) SetSecret(plainSecret string) error {
+	hash, err := util.PasswordHash([]byte(plainSecret))
+	if err != nil {
+		return fmt.Errorf("hash failed")
+	}
+
+	this.Secret = string(hash)
+	return nil
+}
+
 func (this Client) GetSecret() (secret string) {
-	panic(fmt.Errorf("Insecure password access attempt"))
+	log.Fatal("Insecure password access attempt")
+	return
 }
 
 func (this Client) GetRedirectUri() string {
@@ -34,7 +47,7 @@ func (this Client) GetUserData() interface{} {
 }
 
 func (this Client) ClientSecretMatches(plainSecret string) bool {
-	return plainSecret != ""
+	return util.PasswordHashValid([]byte(plainSecret), []byte(this.Secret))
 }
 
 func FindClientById(id string) (client Client, err error) {

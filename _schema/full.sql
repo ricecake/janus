@@ -57,6 +57,7 @@ CREATE TABLE role_to_action (
     role integer NOT NULL REFERENCES role(id),
     action integer not null references action(id),
     unique(role, action)
+    -- Might be able to add a context column, and do a multi column foreign key, and not need to deal with int primary keys?
 );
 
 CREATE TABLE ratelimit_prototype (
@@ -94,7 +95,7 @@ CREATE TABLE identity_clique_role (
 
 CREATE TABLE session_token (
     code text not null primary key,
-    identity integer NOT NULL,
+    identity text NOT NULL references identity(code),
     user_agent text,
     ip_address text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -103,8 +104,8 @@ CREATE TABLE session_token (
 
 CREATE TABLE access_context (
     code text not null primary key,
-    session text not null,
-    client integer NOT NULL,
+    session text  REFERENCES session_token(code),
+    client text NOT NULL REFERENCES client(code),
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
