@@ -1,7 +1,6 @@
 package public_routes
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -17,37 +16,70 @@ func defaultPage(c *gin.Context)   {}
 func checkUsername(c *gin.Context) {}
 func checkAuth(c *gin.Context)     {}
 
-func establishSession(c *gin.Context, user model.Identity) (*model.UserAuthDetails, error) {
+func establishSession(c *gin.Context, identData model.IdentificationResult) (*model.UserAuthDetails, error) {
 	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
 	if clientErr != nil {
 		log.Error("Error with own client?")
 		return nil, clientErr
 	}
 
-	token := user.IdentityToken(map[string]bool{})
+	user := identData.Identity
 
-	encToken, err := util.EncodeJWTOpen(token)
-	if err != nil {
-		return nil, err
-	}
+	var sessionCode string
+	if identData.Session == nil {
+		token := user.IdentityToken(map[string]bool{})
 
-	sessionToken := model.SessionToken{
-		Identity:  user.Code,
-		UserAgent: "test",
-		IpAddress: "127.0.0.1",
-		CreatedAt: time.Now(),
-		ExpiresIn: int(token.Expiration - token.IssuedAt),
-	}
-	if err := model.CreateSessionToken(&sessionToken); err != nil {
-		return nil, err
+		encToken, err := util.EncodeJWTOpen(token)
+		if err != nil {
+			return nil, err
+		}
+
+		sessionToken := model.SessionToken{
+			Code:      token.TokenId,
+			Identity:  user.Code,
+			UserAgent: c.Request.UserAgent(),
+			IpAddress: c.ClientIP(),
+			CreatedAt: time.Now(),
+			ExpiresIn: int(token.Expiration - token.IssuedAt),
+		}
+		if err := model.CreateSessionToken(&sessionToken); err != nil {
+			return nil, err
+		}
+
+		sessionCode = sessionToken.Code
+
+		cookieName := "janus.auth.session"
+		for _, cookie := range c.Request.Cookies() {
+			if cookie.Name == cookieName {
+				if cookieVal := cookie.Value; cookieVal != "" {
+					var encData model.IDToken
+					if err := util.DecodeJWTOpen(cookieVal, &encData); err == nil {
+						if err := model.InvalidateSessionToken(encData.TokenId); err != nil {
+							log.Error(err)
+						}
+					}
+				}
+				break
+			}
+		}
+
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     cookieName,
+			Value:    encToken,
+			Path:     "/",
+			Secure:   !viper.GetBool("development.insecure"),
+			HttpOnly: true,
+		})
+	} else {
+		sessionCode = *identData.Session
 	}
 
 	accessContext := model.AccessContext{
-		Session:   sessionToken.Code,
+		Session:   sessionCode,
 		Client:    client.ClientId,
 		CreatedAt: time.Now(),
 	}
-	if err := model.CreateAccessContext(&accessContext); err != nil {
+	if err := model.EnsureAccessContext(&accessContext); err != nil {
 		return nil, err
 	}
 
@@ -59,17 +91,9 @@ func establishSession(c *gin.Context, user model.Identity) (*model.UserAuthDetai
 		HttpOnly: false,
 	})
 
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     fmt.Sprintf("janus.auth.%s", client.Context),
-		Value:    encToken,
-		Path:     "/",
-		Secure:   !viper.GetBool("development.insecure"),
-		HttpOnly: true,
-	})
-
 	return &model.UserAuthDetails{
 		Code:    user.Code,
-		Browser: sessionToken.Code,
+		Browser: sessionCode,
 		Context: accessContext.Code,
 	}, nil
 }

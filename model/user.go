@@ -111,19 +111,21 @@ type IdentificationRequest struct {
 type IdentificationResult struct {
 	Success       bool
 	Identity      *Identity
+	Session       *string
+	Strategy      IdentificationStrategy
 	Strength      string
 	Method        string
 	FailureCode   int
 	FailureReason string
 }
 
-func IdentifyFromCredentials(req IdentificationRequest) (*IdentificationResult, error) {
+func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 	switch req.Strategy {
 	case NONE:
 		return &IdentificationResult{
 			FailureCode:   500,
 			FailureReason: "Bad auth attempt",
-		}, nil
+		}
 	case PASSWORD:
 		db := util.GetDb()
 		var ident Identity
@@ -131,36 +133,63 @@ func IdentifyFromCredentials(req IdentificationRequest) (*IdentificationResult, 
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: "Bad user",
-			}, nil
+			}
 		}
 		var auth AuthPassword
 		if db.Where("identity = ?", ident.Code).Find(&auth).RecordNotFound() {
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: "Bad auth method",
-			}, nil
+			}
 		}
 		if !util.PasswordHashValid([]byte(*req.Password), auth.Hash) {
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: "Bad password",
-			}, nil
+			}
 		}
 		return &IdentificationResult{
 			Success:  true,
+			Strategy: req.Strategy,
 			Identity: &ident,
 			Strength: "1",
 			Method:   "password",
-		}, nil
+		}
 	case SESSION_TOKEN:
+		if req.SessionToken == nil {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "No token",
+			}
+		}
+		var encData IDToken
+		if err := util.DecodeJWTOpen(*req.SessionToken, &encData); err != nil {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: err.Error(),
+			}
+		}
+
+		db := util.GetDb()
+		var ident Identity
+		if db.Where("code = ?", encData.UserCode).Find(&ident).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad user",
+			}
+		}
 		return &IdentificationResult{
-			FailureCode:   500,
-			FailureReason: "Unknown auth method",
-		}, nil
+			Success:  true,
+			Strategy: req.Strategy,
+			Identity: &ident,
+			Strength: "0",
+			Method:   "session",
+			Session:  &encData.TokenId,
+		}
 	default:
 		return &IdentificationResult{
 			FailureCode:   500,
 			FailureReason: "Unknown auth method",
-		}, nil
+		}
 	}
 }

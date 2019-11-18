@@ -26,10 +26,18 @@ func (this SessionToken) TableName() string {
 func CreateSessionToken(tok *SessionToken) error {
 	db := util.GetDb()
 
-	tok.Code = util.CompactUUID()
+	if tok.Code == "" {
+		tok.Code = util.CompactUUID()
+	}
 	log.Info("Creating session ", tok.Code)
 
 	return db.Create(tok).Error
+}
+
+func InvalidateSessionToken(sessid string) error {
+	db := util.GetDb()
+	db.Where("code = ?", sessid).Delete(&SessionToken{})
+	return InsertRevocation(sessid, int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()))
 }
 
 type AccessContext struct {
@@ -43,13 +51,16 @@ func (this AccessContext) TableName() string {
 	return "access_context"
 }
 
-func CreateAccessContext(con *AccessContext) error {
+func EnsureAccessContext(con *AccessContext) error {
 	db := util.GetDb()
 
-	con.Code = util.CompactUUID()
-	log.Info("Creating context ", con.Code)
+	if db.Where("session = ? AND client = ?", con.Session, con.Client).Find(&con).RecordNotFound() {
+		log.Info("Creating context ", con.Code)
+		con.Code = util.CompactUUID()
+		return db.Create(&con).Error
+	}
 
-	return db.Create(con).Error
+	return nil
 }
 
 type RevocationEntry struct {
@@ -144,13 +155,17 @@ type RefreshToken struct {
 
 func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefresh bool) (accessToken string, refreshToken string, err error) {
 	accessTokenData := AccessToken{
-		Issuer:      viper.GetString("identity.issuer"),
-		UserCode:    "potato",
-		Expiration:  data.CreatedAt.Add(time.Duration(data.ExpiresIn) * time.Second).Unix(),
-		IssuedAt:    data.CreatedAt.Unix(),
-		TokenCode:   util.CompactUUID(),
-		ContextCode: "", // Pull this out of userdata -- also, store this in userdata
-		// Nonce:  ,
+		Issuer:     viper.GetString("identity.issuer"),
+		Expiration: data.CreatedAt.Add(time.Duration(data.ExpiresIn) * time.Second).Unix(),
+		IssuedAt:   data.CreatedAt.Unix(),
+		TokenCode:  util.CompactUUID(),
+	}
+
+	if data.UserData != nil {
+		authDetails := data.UserData.(*UserAuthDetails)
+		accessTokenData.Nonce = authDetails.Nonce
+		accessTokenData.ContextCode = authDetails.Context
+		accessTokenData.UserCode = authDetails.Code
 	}
 
 	accessToken, err = util.EncodeJWTOpen(accessTokenData)
