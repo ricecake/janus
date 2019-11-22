@@ -15,7 +15,33 @@ import (
 
 func defaultPage(c *gin.Context)   {}
 func checkUsername(c *gin.Context) {}
-func checkAuth(c *gin.Context)     {}
+
+func checkAuth(c *gin.Context) {
+	c.Header("Content-Type", "application/json; charset=utf-8")
+
+	client, clientErr := model.FindClientById(c.Query("client_id"))
+	if clientErr != nil {
+		c.AbortWithStatusJSON(400, "Client Not Found")
+		return
+	}
+
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy: model.NONE,
+		Context:  &client.Context,
+	})
+
+	if res.Success {
+		_, err := establishSession(c, client.Context, *res)
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+		}
+		c.Status(204)
+		return
+	}
+
+	c.AbortWithStatusJSON(res.FailureCode, res.FailureReason)
+}
 
 func establishSession(c *gin.Context, context string, identData model.IdentificationResult) (*model.UserAuthDetails, error) {
 	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))

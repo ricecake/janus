@@ -85,3 +85,5 @@ Look at browser compiled react/Babel stuff. https://reactjs.org/docs/add-react-t
 
 Client API should have way to manage user group memberships, and need to think about ways to handle checking for user groups, for asking if users are in the same group.  
 But maybe just need to say if a group is in a context, that context can manage group memberships, and possibly just tracks that in the client app. 
+
+for the webauthn session bits, can store the bits relating to doing the handshake in a jwe, which saves us from having to do more db stuff

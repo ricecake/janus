@@ -146,6 +146,7 @@ type AccessToken struct {
 	Nonce         string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
 	ValidResource string `json:"aud,omitempty"`
 	ContextCode   string `json:"ctx,omitempty"`
+	Scope         string `json:"scope,omitempty"`
 }
 type RefreshToken struct {
 	TokenCode   string `json:"jti"`
@@ -159,6 +160,7 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		Expiration: data.CreatedAt.Add(time.Duration(data.ExpiresIn) * time.Second).Unix(),
 		IssuedAt:   data.CreatedAt.Unix(),
 		TokenCode:  util.CompactUUID(),
+		Scope:      data.Scope,
 	}
 
 	if data.UserData != nil {
