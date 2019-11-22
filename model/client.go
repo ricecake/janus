@@ -23,6 +23,16 @@ func (this Client) GetId() string {
 	return this.ClientId
 }
 
+func CreateClient(client *Client) error {
+	db := util.GetDb()
+
+	client.ClientId = util.CompactUUID()
+
+	log.Info("Creating client ", client.ClientId)
+
+	return db.Create(client).Error
+}
+
 func (this *Client) SetSecret(plainSecret string) error {
 	hash, err := util.PasswordHash([]byte(plainSecret))
 	if err != nil {
