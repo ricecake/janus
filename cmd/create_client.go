@@ -30,8 +30,14 @@ to quickly create a Cobra application.`,
 			log.Fatal(err)
 		}
 
+		redir, err := cmd.Flags().GetString("redirect")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		client.Context = args[0]
 		client.DisplayName = dname
+		client.BaseUri = redir
 
 		client.SetSecret(args[1])
 
@@ -45,4 +51,5 @@ func init() {
 	createCmd.AddCommand(createClientCmd)
 
 	createClientCmd.Flags().StringP("display-name", "d", "", "display name for user")
+	createClientCmd.Flags().StringP("redirect", "r", "", "redirect url")
 }
