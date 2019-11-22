@@ -66,3 +66,22 @@ Session has a signing key, and that signs a value in the refresh token?
 What if we just stick the session code in the access token?  then we can also just use a jwe of the session data as the refresh token.  Would also need to stick the jti of the access token in there, but that's no biggie
 
 Access Token has a sessid claim, and a browser id claim.  That way it can be known what browser and session an access token came from.  The refresh token will have the sesssion id and the access token id.  That way it can be confirmed that the refresh token matches with the given access token, and it can also be revoked by revoking the session id
+
+Need to add a lot of recovery logic for if things get out of sync.  Can have sessions just falling over all the time
+
+consider abandoning context notion.  Too complicated, not enough gain.  Straight forward to re-add if it becomes wanted later
+
+Need to pass the context into identification functions, and can use that to identify the cookie in question. Need to put the context code into the I'd token, so that we know the cookie name matches the I'd token
+
+Might also look at finding a better way to tie context to user. Not sure matters. 
+
+Also need to validate token expiration times.  
+
+Would it work to store user ssh keys, as a fun diversion?  Use AuthorizedKeysCommand as a way to validate pup keys for users, and give permissions for different users to login as different users?  Could be neat. 
+Should definitely do that. Could work as a neat way to authenticate users even across web requests.   With some trickery, would be possible to make it divert auth to fingerprint reader?
+Need to link the key, identity, and what auth user it can login as. Also indicate if a user can use key to login to anyone. 
+
+Look at browser compiled react/Babel stuff. https://reactjs.org/docs/add-react-to-a-website.html
+
+Client API should have way to manage user group memberships, and need to think about ways to handle checking for user groups, for asking if users are in the same group.  
+But maybe just need to say if a group is in a context, that context can manage group memberships, and possibly just tracks that in the client app. 

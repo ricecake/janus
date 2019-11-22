@@ -45,12 +45,21 @@ func loginPage(c *gin.Context) {
 		return
 	}
 
+	client, clientErr := model.FindClientById(ar.Client.GetId())
+	if clientErr != nil {
+		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
 	prompt := c.DefaultQuery("prompt", "any")
 	if prompt != "login" {
-		res := attemptIdentifyUser(c, model.SESSION_TOKEN)
+		res := attemptIdentifyUser(c, model.IdentificationRequest{
+			Strategy: model.SESSION_TOKEN,
+			Context:  &client.Context,
+		})
 		if res.Success {
 			ar.Authorized = res.Success
-			userDetails, err := establishSession(c, *res)
+			userDetails, err := establishSession(c, client.Context, *res)
 			if err != nil {
 				c.Error(err).SetType(gin.ErrorTypePrivate)
 				c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
@@ -71,12 +80,6 @@ func loginPage(c *gin.Context) {
 		ar.Authorized = false
 		server.FinishAuthorizeRequest(response, c.Request, ar)
 		osin.OutputJSON(response, c.Writer, c.Request)
-		return
-	}
-
-	client, clientErr := model.FindClientById(ar.Client.GetId())
-	if clientErr != nil {
-		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
 		return
 	}
 
@@ -106,12 +109,21 @@ func loginSubmit(c *gin.Context) {
 		return
 	}
 
-	res := attemptIdentifyUser(c, model.PASSWORD)
+	client, clientErr := model.FindClientById(ar.Client.GetId())
+	if clientErr != nil {
+		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy: model.PASSWORD,
+		Context:  &client.Context,
+	})
 
 	ar.Authorized = res.Success
 
 	if res.Success {
-		userDetails, err := establishSession(c, *res)
+		userDetails, err := establishSession(c, client.Context, *res)
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
@@ -139,11 +151,7 @@ type AuthParams struct {
 	Totp     *string `form:"totp" json:"totp"`
 }
 
-func attemptIdentifyUser(c *gin.Context, preference model.IdentificationStrategy) *model.IdentificationResult {
-	var authData model.IdentificationRequest
-
-	authData.Strategy = preference
-
+func attemptIdentifyUser(c *gin.Context, authData model.IdentificationRequest) *model.IdentificationResult {
 	if authData.Strategy == model.NONE || authData.Strategy == model.PASSWORD {
 		var authParams AuthParams
 		if c.ShouldBind(&authParams) == nil {
@@ -163,14 +171,16 @@ func attemptIdentifyUser(c *gin.Context, preference model.IdentificationStrategy
 	}
 
 	if authData.Strategy == model.NONE || authData.Strategy == model.SESSION_TOKEN {
-		cookieName := "janus.auth.session"
-		for _, cookie := range c.Request.Cookies() {
-			if cookie.Name == cookieName {
-				if cookieVal := cookie.Value; cookieVal != "" {
-					authData.Strategy = model.SESSION_TOKEN
-					authData.SessionToken = &cookieVal
+		if authData.Context != nil {
+			cookieName := fmt.Sprintf("janus.auth.session.%s", *authData.Context)
+			for _, cookie := range c.Request.Cookies() {
+				if cookie.Name == cookieName {
+					if cookieVal := cookie.Value; cookieVal != "" {
+						authData.Strategy = model.SESSION_TOKEN
+						authData.SessionToken = &cookieVal
+					}
+					break
 				}
-				break
 			}
 		}
 	}

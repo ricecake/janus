@@ -194,6 +194,7 @@ type IDToken struct {
 	Nonce    string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
 	Strength string `json:"acr,omitempty"`
 	Methods  string `json:"amr,omitempty"`
+	Context  string `json:"ctx,omitempty"`
 
 	// Custom claims supported by this server.
 	//

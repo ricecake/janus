@@ -80,6 +80,7 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 		IssuedAt:   int64(issued.Unix()),
 		Expiration: int64(expires.Unix()),
 		TokenId:    util.CompactUUID(),
+		Issuer:     viper.GetString("identity.issuer"),
 	}
 
 	if claims["profile"] {
@@ -103,6 +104,7 @@ const (
 
 type IdentificationRequest struct {
 	Strategy     IdentificationStrategy
+	Context      *string
 	Email        *string
 	Password     *string
 	Totp         *string
@@ -156,7 +158,7 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			Method:   "password",
 		}
 	case SESSION_TOKEN:
-		if req.SessionToken == nil {
+		if req.SessionToken == nil || req.Context == nil {
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: "No token",
@@ -167,6 +169,29 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: err.Error(),
+			}
+		}
+
+		now := time.Now()
+		if now.Unix() >= encData.Expiration {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Expired",
+			}
+		}
+
+		clientId := viper.GetString("identity.issuer_id")
+		if encData.ClientID != clientId {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad token",
+			}
+		}
+
+		if encData.Context != *req.Context {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad token",
 			}
 		}
 

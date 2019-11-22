@@ -1,6 +1,7 @@
 package public_routes
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -16,7 +17,7 @@ func defaultPage(c *gin.Context)   {}
 func checkUsername(c *gin.Context) {}
 func checkAuth(c *gin.Context)     {}
 
-func establishSession(c *gin.Context, identData model.IdentificationResult) (*model.UserAuthDetails, error) {
+func establishSession(c *gin.Context, context string, identData model.IdentificationResult) (*model.UserAuthDetails, error) {
 	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
 	if clientErr != nil {
 		log.Error("Error with own client?")
@@ -28,6 +29,9 @@ func establishSession(c *gin.Context, identData model.IdentificationResult) (*mo
 	var sessionCode string
 	if identData.Session == nil {
 		token := user.IdentityToken(map[string]bool{})
+
+		token.ClientID = client.ClientId
+		token.Context = context
 
 		encToken, err := util.EncodeJWTOpen(token)
 		if err != nil {
@@ -48,7 +52,7 @@ func establishSession(c *gin.Context, identData model.IdentificationResult) (*mo
 
 		sessionCode = sessionToken.Code
 
-		cookieName := "janus.auth.session"
+		cookieName := fmt.Sprintf("janus.auth.session.%s", context)
 		for _, cookie := range c.Request.Cookies() {
 			if cookie.Name == cookieName {
 				if cookieVal := cookie.Value; cookieVal != "" {
