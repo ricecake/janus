@@ -5,12 +5,13 @@ Copyright © 2019 Sebastian Green-Husted <geoffcake@gmail.com>
 package cmd
 
 import (
-	"fmt"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/ricecake/janus/model"
 )
 
-// contextCmd represents the context command
+// ContextCmd represents the Context command
 var createContextCmd = &cobra.Command{
 	Use:   "context",
 	Short: "A brief description of your command",
@@ -20,21 +21,18 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("context called")
+		context := &model.Context{}
+
+		context.Name = args[0]
+
+		if err := model.CreateContext(context); err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
 func init() {
 	createCmd.AddCommand(createContextCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// contextCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// contextCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
