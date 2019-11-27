@@ -5,6 +5,7 @@ import (
 	"github.com/openshift/osin"
 	"github.com/spf13/viper"
 
+	"github.com/ricecake/janus/model"
 	"github.com/ricecake/janus/util"
 )
 
@@ -60,8 +61,34 @@ func accessToken(c *gin.Context) {
 			ar.Authorized = true
 		}
 
+		if ar.UserData != nil {
+			authDetails := ar.UserData.(*model.UserAuthDetails)
+			ident, err := model.FindIdentityById(authDetails.Code)
+			if err != nil {
+				response.InternalError = err
+			} else {
+
+				token := ident.IdentityToken(map[string]bool{})
+
+				token.ClientID = ar.Client.GetId()
+				token.Nonce = authDetails.Nonce
+
+				encToken, err := util.EncodeJWTOpen(token)
+				if err != nil {
+					response.InternalError = err
+				} else {
+					response.Output["id_token"] = encToken
+				}
+			}
+
+			// Record errors as internal server errors.
+			if response.InternalError != nil {
+				response.IsError = true
+				response.ErrorId = osin.E_SERVER_ERROR
+			}
+		}
+
 		server.FinishAccessRequest(response, c.Request, ar)
-		// TODO: add an id_token to response here, but only if authorized and we have what we need
 	}
 
 	if response.IsError && response.InternalError != nil {

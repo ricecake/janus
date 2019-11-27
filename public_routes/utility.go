@@ -84,6 +84,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 				if cookieVal := cookie.Value; cookieVal != "" {
 					var encData model.IDToken
 					if err := util.DecodeJWTOpen(cookieVal, &encData); err == nil {
+						// TODO: should do something to move access context entries to the new token
 						if err := model.InvalidateSessionToken(encData.TokenId); err != nil {
 							log.Error(err)
 						}

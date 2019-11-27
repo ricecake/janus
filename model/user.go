@@ -44,6 +44,22 @@ func CreateIdentity(ident *Identity) error {
 	return db.Create(ident).Error
 }
 
+func FindIdentityById(id string) (ident Identity, err error) {
+	db := util.GetDb()
+	if db.Where("code = ? and active", id).Find(&ident).RecordNotFound() {
+		err = fmt.Errorf("Invalid user id")
+	}
+	return ident, err
+}
+
+func FindIdentityByEmail(id string) (ident Identity, err error) {
+	db := util.GetDb()
+	if db.Where("email = ? and active", id).Find(&ident).RecordNotFound() {
+		err = fmt.Errorf("Invalid email")
+	}
+	return ident, err
+}
+
 func (this *Identity) SetPassword(password string) (err error) {
 	db := util.GetDb()
 
@@ -137,6 +153,7 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 				FailureReason: "Bad user",
 			}
 		}
+		//TODO: verify user active
 		var auth AuthPassword
 		if db.Where("identity = ?", ident.Code).Find(&auth).RecordNotFound() {
 			return &IdentificationResult{
@@ -150,6 +167,7 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 				FailureReason: "Bad password",
 			}
 		}
+		// TODO: verify mfa
 		return &IdentificationResult{
 			Success:  true,
 			Strategy: req.Strategy,
@@ -203,6 +221,8 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 				FailureReason: "Bad user",
 			}
 		}
+
+		// TODO: check to see if the session in the token is revoked as well
 		return &IdentificationResult{
 			Success:  true,
 			Strategy: req.Strategy,
