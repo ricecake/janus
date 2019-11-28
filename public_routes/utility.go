@@ -43,6 +43,86 @@ func checkAuth(c *gin.Context) {
 	c.AbortWithStatusJSON(res.FailureCode, res.FailureReason)
 }
 
+func checkAuthBackground(c *gin.Context) {
+	c.Header("Content-Type", "application/json; charset=utf-8")
+
+	client, clientErr := model.FindClientById(c.GetHeader("X-Client-Id"))
+	if clientErr != nil {
+		c.AbortWithStatusJSON(400, "Client Not Found")
+		return
+	}
+
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy: model.SESSION_TOKEN,
+		Context:  &client.Context,
+	})
+
+	if res.Success {
+		_, err := establishSession(c, client.Context, *res)
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+		}
+		c.Status(204)
+		return
+	}
+
+	redirect := c.GetHeader("X-Auth-Redirect")
+	if redirect == "" {
+		redirect = client.BaseUri
+	}
+
+	stashCode, err := model.Stash(map[string]string{"redirect": redirect})
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+	}
+
+	c.Header("X-Auth-State", stashCode)
+	c.Header("X-Auth-Scope", "openid")
+
+	c.AbortWithStatusJSON(res.FailureCode, res.FailureReason)
+}
+
+func checkAuthRedirect(c *gin.Context) {
+	var encData model.AuthCodeData
+	if err := util.DecodeJWTClose(c.Query("code"), viper.GetString("security.passphrase"), &encData); err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+	}
+
+	//TODO: validate that the code isn't expired.
+	// Need to make a generic function/interface for doing that, since it happens a lot
+
+	client, clientErr := model.FindClientById(encData.ClientId)
+	if clientErr != nil {
+		c.AbortWithStatusJSON(400, "Client Not Found")
+		return
+	}
+
+	stateVar := c.Query("state")
+	if encData.State != stateVar {
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	var data map[string]string
+	if err := model.StashFetch(stateVar, &data); err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy: model.NONE,
+		Context:  &client.Context,
+	})
+
+	if res.Success {
+		c.Redirect(302, data["redirect"])
+	}
+}
+
 func establishSession(c *gin.Context, context string, identData model.IdentificationResult) (*model.UserAuthDetails, error) {
 	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
 	if clientErr != nil {
@@ -94,6 +174,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 		}
 
 		http.SetCookie(c.Writer, &http.Cookie{
+			Domain:   viper.GetString("identity.cookie"),
 			Name:     cookieName,
 			Value:    encToken,
 			Path:     "/",
@@ -114,6 +195,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 	}
 
 	http.SetCookie(c.Writer, &http.Cookie{
+		Domain:   viper.GetString("identity.cookie"),
 		Name:     "janus.user.email",
 		Value:    user.Email,
 		Path:     "/",

@@ -2,9 +2,11 @@ package model
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ricecake/janus/util"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type Client struct {
@@ -49,7 +51,7 @@ func (this Client) GetSecret() (secret string) {
 }
 
 func (this Client) GetRedirectUri() string {
-	return this.BaseUri
+	return strings.Join([]string{this.BaseUri, viper.GetString("identity.issuer")}, "|")
 }
 
 func (this Client) GetUserData() interface{} {

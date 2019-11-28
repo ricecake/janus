@@ -35,6 +35,8 @@ func (s *DbStorage) LoadAuthorize(code string) (*osin.AuthorizeData, error) {
 		return nil, osin.ErrNotFound
 	}
 
+	//TODO: validate code not expired
+
 	client, clientErr := FindClientById(encData.ClientId)
 	if clientErr != nil {
 		return nil, osin.ErrNotFound

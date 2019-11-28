@@ -18,6 +18,7 @@ var (
 
 func init() {
 	sconfig := osin.NewServerConfig()
+	sconfig.RedirectUriSeparator = "|"
 	sconfig.AllowClientSecretInParams = true
 	sconfig.RequirePKCEForPublicClients = true
 	sconfig.AllowedAuthorizeTypes = osin.AllowedAuthorizeType{osin.CODE, osin.TOKEN}

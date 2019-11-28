@@ -141,7 +141,7 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 	switch req.Strategy {
 	case NONE:
 		return &IdentificationResult{
-			FailureCode:   500,
+			FailureCode:   401,
 			FailureReason: "Bad auth attempt",
 		}
 	case PASSWORD:

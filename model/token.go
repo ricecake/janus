@@ -1,6 +1,8 @@
 package model
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/openshift/osin"
@@ -124,7 +126,80 @@ func EntityRevoked(entity string) bool {
 	return !db.Where("entity_code = ?", entity).First(&RevocationEntry{}).RecordNotFound()
 }
 
-type StashToken struct{}
+type StashToken struct {
+	UUID      string    `gorm:"column:uuid;       not null" json:"-"`
+	Data      []byte    `gorm:"column:data;       not null" json:"-"`
+	CreatedAt time.Time `gorm:"column:created_at; not null" json:"-"`
+	ExpiresIn int       `gorm:"column:expires_in; not null" json:"-"`
+}
+
+func (StashToken) TableName() string {
+	return "stash_data"
+}
+
+func Stash(data interface{}) (string, error) {
+	return StashTTL(data, viper.GetInt("stash_ttl"))
+}
+
+func StashTTL(data interface{}, ttl int) (string, error) {
+	db := util.GetDb()
+
+	encData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	stash := StashToken{
+		UUID:      util.CompactUUID(),
+		Data:      encData,
+		CreatedAt: time.Now(),
+		ExpiresIn: ttl,
+	}
+
+	if stashErr := db.Create(&stash).Error; stashErr != nil {
+		return "", err
+	}
+	return stash.UUID, nil
+}
+
+func StashFetch(uuid string, data interface{}) error {
+	db := util.GetDb()
+	tx := db.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		return err
+	}
+
+	var stash StashToken
+
+	if tx.Where("uuid = ?", uuid).Find(&stash).RecordNotFound() {
+		tx.Rollback()
+		return fmt.Errorf("Invalid State Code")
+	}
+
+	deleteErr := tx.Where("uuid = ?", uuid).Delete(StashToken{}).Error
+	if deleteErr != nil {
+		tx.Rollback()
+		return fmt.Errorf("stash Error: %s", deleteErr)
+	}
+
+	if stash.CreatedAt.Add(time.Second * time.Duration(stash.ExpiresIn)).Before(time.Now()) {
+		tx.Rollback()
+		return fmt.Errorf("bad stash")
+	}
+
+	if unmarshalError := json.Unmarshal(stash.Data, data); unmarshalError != nil {
+		tx.Rollback()
+		return unmarshalError
+	}
+
+	return tx.Commit().Error
+}
 
 type TokenGenerator struct{}
 
@@ -153,11 +228,11 @@ func (a *TokenGenerator) GenerateAuthorizeToken(data *osin.AuthorizeData) (ret s
 	codeData := AuthCodeData{
 		Code:                util.CompactUUID(),
 		ClientId:            data.Client.GetId(),
-		ExpiresIn:           data.ExpiresIn,
 		Scope:               data.Scope,
 		RedirectUri:         data.RedirectUri,
 		State:               data.State,
 		CreatedAt:           data.CreatedAt,
+		ExpiresIn:           data.ExpiresIn,
 		CodeChallenge:       data.CodeChallenge,
 		CodeChallengeMethod: data.CodeChallengeMethod,
 	}
