@@ -15,30 +15,32 @@ variables:
   GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
   modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
 
-steps:
-- script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    shopt -s dotglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-  displayName: 'Set up the Go workspace'
+jobs:
+- job: Build
+  steps:
+  - script: |
+      mkdir -p '$(GOBIN)'
+      mkdir -p '$(GOPATH)/pkg'
+      mkdir -p '$(modulePath)'
+      shopt -s extglob
+      shopt -s dotglob
+      mv !(gopath) '$(modulePath)'
+      echo '##vso[task.prependpath]$(GOBIN)'
+      echo '##vso[task.prependpath]$(GOROOT)/bin'
+    displayName: 'Set up the Go workspace'
 
-- script: |
-    go version
-    go get -v -t -d ./...
-  workingDirectory: '$(modulePath)'
-  displayName: 'Get dependencies'
+  - script: |
+      go version
+      go get -v -t -d ./...
+    workingDirectory: '$(modulePath)'
+    displayName: 'Get dependencies'
 
-- script: |
-    make test
-  workingDirectory: '$(modulePath)'
-  displayName: 'run tests'
+  - script: |
+      make test
+    workingDirectory: '$(modulePath)'
+    displayName: 'run tests'
 
-- script: |
-    make release
-  workingDirectory: '$(modulePath)'
-  displayName: 'build release'
+  - script: |
+      make release
+    workingDirectory: '$(modulePath)'
+    displayName: 'build release'
