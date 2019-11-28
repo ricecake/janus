@@ -26,6 +26,8 @@
       background: rgba(0,203,0,1);
       border-radius: 15px;
       margin-top: 1em;
+      width: 50%;
+      height: 4em;
     }
 
     /* .login fieldset label {
