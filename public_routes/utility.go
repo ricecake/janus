@@ -3,6 +3,7 @@ package public_routes
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -58,11 +59,6 @@ func checkAuthBackground(c *gin.Context) {
 	})
 
 	if res.Success {
-		_, err := establishSession(c, client.Context, *res)
-		if err != nil {
-			c.Error(err).SetType(gin.ErrorTypePrivate)
-			c.AbortWithStatusJSON(500, "system error")
-		}
 		c.Status(204)
 		return
 	}
@@ -114,11 +110,51 @@ func checkAuthRedirect(c *gin.Context) {
 	}
 
 	res := attemptIdentifyUser(c, model.IdentificationRequest{
-		Strategy: model.NONE,
+		Strategy: model.SESSION_TOKEN,
 		Context:  &client.Context,
 	})
 
 	if res.Success {
+		idp, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
+		if clientErr != nil {
+			log.Error("Error with own client?")
+			c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+		}
+
+		user := res.Identity
+
+		token := user.IdentityToken(map[string]bool{})
+		token.ClientID = idp.ClientId
+		token.Context = client.Context
+		encToken, err := util.EncodeJWTOpen(token)
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+		}
+
+		redirectBase, err := url.Parse(data["redirect"])
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+		}
+
+		idpBase, err := url.Parse(viper.GetString("identity.issuer"))
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+		}
+
+		cookieName := fmt.Sprintf("janus.auth.session.%s", client.Context)
+		http.SetCookie(c.Writer, &http.Cookie{
+			Domain:   util.TrunkUrlFragment([]string{redirectBase.Host, idpBase.Host}),
+			Name:     cookieName,
+			Value:    encToken,
+			Path:     "/",
+			Secure:   !viper.GetBool("development.insecure"),
+			HttpOnly: true,
+		})
+
 		c.Redirect(302, data["redirect"])
 	}
 }
@@ -174,7 +210,6 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 		}
 
 		http.SetCookie(c.Writer, &http.Cookie{
-			Domain:   viper.GetString("identity.cookie"),
 			Name:     cookieName,
 			Value:    encToken,
 			Path:     "/",
@@ -195,7 +230,6 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 	}
 
 	http.SetCookie(c.Writer, &http.Cookie{
-		Domain:   viper.GetString("identity.cookie"),
 		Name:     "janus.user.email",
 		Value:    user.Email,
 		Path:     "/",

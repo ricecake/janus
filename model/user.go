@@ -223,6 +223,7 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 		}
 
 		// TODO: check to see if the session in the token is revoked as well
+		// TODO: also validate that the audience is the clientid of ident
 		return &IdentificationResult{
 			Success:  true,
 			Strategy: req.Strategy,
