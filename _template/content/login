@@ -39,7 +39,7 @@
 {% endblock %}
 
 {% block main %}
-<div id="main" style="">
+<div id="main" >
     <div class="login" >
       <h1>Hello from {{ Name }}</h1>
       <form method="POST">

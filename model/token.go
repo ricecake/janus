@@ -34,10 +34,42 @@ func CreateSessionToken(tok *SessionToken) error {
 	return db.Create(tok).Error
 }
 
-func InvalidateSessionToken(sessid string) error {
+func ReplaceSessionToken(sessid, newSessid string) error {
 	db := util.GetDb()
-	db.Where("code = ?", sessid).Delete(&SessionToken{})
-	return InsertRevocation(sessid, int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()))
+	tx := db.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := db.Model(&AccessContext{}).Where("session = ?", sessid).Update("session", newSessid).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := db.Where("code = ?", sessid).Delete(&SessionToken{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	revocationEntry := RevocationEntry{
+		EntityCode: sessid,
+		CreatedAt:  time.Now(),
+		ExpiresIn:  int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()),
+	}
+
+	if err := db.Create(&revocationEntry).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	log.Info("Revoking session ", revocationEntry.EntityCode)
+	return tx.Commit().Error
 }
 
 type AccessContext struct {
