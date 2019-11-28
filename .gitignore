@@ -16,3 +16,6 @@
 *.out
 
 bin
+*.tar.gz
+*.tgz
+_package/janus

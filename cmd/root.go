@@ -66,9 +66,10 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".janus" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".janus")
+		viper.AddConfigPath("/etc")
+		viper.AddConfigPath("/opt/janus")
+		viper.SetConfigName("janus")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
