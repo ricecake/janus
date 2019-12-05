@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openshift/osin"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/model"
 	"github.com/ricecake/janus/util"
@@ -85,7 +86,9 @@ func loginPage(c *gin.Context) {
 	}
 
 	body, renderErr := util.RenderTemplate("login", util.TemplateContext{
-		"Name": client.DisplayName,
+		"Name":     client.DisplayName,
+		"Param":    c.Request.URL.Query(),
+		"RawQuery": c.Request.URL.RawQuery,
 	})
 
 	if renderErr != nil {
@@ -141,8 +144,62 @@ func loginSubmit(c *gin.Context) {
 	osin.OutputJSON(response, c.Writer, c.Request)
 }
 
-func signupPage(c *gin.Context)   {}
-func signupSubmit(c *gin.Context) {}
+func signupPage(c *gin.Context) {
+	client, clientErr := model.FindClientById(c.Query("client_id"))
+	if clientErr != nil {
+		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
+		return
+	}
+	body, renderErr := util.RenderTemplate("signup", util.TemplateContext{
+		"Name":     client.DisplayName,
+		"Param":    c.Request.URL.Query(),
+		"RawQuery": c.Request.URL.RawQuery,
+	})
+
+	if renderErr != nil {
+		c.Error(renderErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	c.Data(200, "text/html", body)
+}
+func signupSubmit(c *gin.Context) {
+	user := &model.Identity{}
+
+	user.Email = c.PostForm("email")
+	user.PreferredName = c.PostForm("name")
+
+	if err := model.CreateIdentity(user); err != nil {
+		log.Fatal(err)
+	}
+
+	zipCode := model.ZipCode{
+		Identity:    user.Code,
+		Client:      viper.GetString("identity.issuer_id"),
+		TTL:         86400, // One day
+		RedirectUri: "/profile/activate",
+	}
+	if zipErr := zipCode.Save(); zipErr != nil {
+		c.Error(zipErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	body, renderErr := util.RenderTemplate("signup_submit", util.TemplateContext{
+		"Name":  user.PreferredName,
+		"Email": user.Email,
+		"Code":  zipCode.Code,
+	})
+
+	if renderErr != nil {
+		c.Error(renderErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	c.Data(200, "text/html", body)
+}
 func logoutPage(c *gin.Context)   {}
 func logoutSubmit(c *gin.Context) {}
 
