@@ -72,6 +72,7 @@ func checkAuthBackground(c *gin.Context) {
 	if err != nil {
 		c.Error(err).SetType(gin.ErrorTypePrivate)
 		c.AbortWithStatusJSON(500, "system error")
+		return
 	}
 
 	c.Header("X-Auth-State", stashCode)
@@ -120,6 +121,7 @@ func checkAuthRedirect(c *gin.Context) {
 			log.Error("Error with own client?")
 			c.Error(clientErr).SetType(gin.ErrorTypePrivate)
 			c.AbortWithStatusJSON(500, "system error")
+			return
 		}
 
 		user := res.Identity
@@ -131,18 +133,21 @@ func checkAuthRedirect(c *gin.Context) {
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithStatusJSON(500, "system error")
+			return
 		}
 
 		redirectBase, err := url.Parse(data["redirect"])
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithStatusJSON(500, "system error")
+			return
 		}
 
 		idpBase, err := url.Parse(viper.GetString("identity.issuer"))
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithStatusJSON(500, "system error")
+			return
 		}
 
 		cookieName := fmt.Sprintf("janus.auth.session.%s", client.Context)
@@ -157,6 +162,34 @@ func checkAuthRedirect(c *gin.Context) {
 
 		c.Redirect(302, data["redirect"])
 	}
+}
+
+func processZipCode(c *gin.Context) {
+	code := c.Param("code")
+
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy: model.ZIPCODE,
+		ZipCode:  &code,
+	})
+
+	if res.Success {
+		idp, clientErr := model.FindClientById(res.ZipCode.Client)
+		if clientErr != nil {
+			c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+			return
+		}
+		_, err := establishSession(c, idp.Context, *res)
+		if err != nil {
+			c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+			return
+		}
+		c.Redirect(302, res.ZipCode.RedirectUri)
+		return
+	}
+
+	c.AbortWithStatusJSON(401, res.FailureReason)
 }
 
 func establishSession(c *gin.Context, context string, identData model.IdentificationResult) (*model.UserAuthDetails, error) {

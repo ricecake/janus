@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/openshift/osin"
@@ -199,6 +200,50 @@ func StashFetch(uuid string, data interface{}) error {
 	}
 
 	return tx.Commit().Error
+}
+
+type ZipCode struct {
+	Identity    string
+	Client      string
+	Code        string
+	TTL         int
+	RedirectUri string
+}
+
+func (zip *ZipCode) Save() error {
+	idp, clientErr := FindClientById(zip.Client)
+	if clientErr != nil {
+		return clientErr
+	}
+
+	redirectURL := idp.BaseUri
+	if zip.RedirectUri != "" {
+		redirectBase, err := url.Parse(idp.BaseUri)
+		if err != nil {
+			return err
+		}
+
+		redirect, redirErr := url.Parse(zip.RedirectUri)
+		if redirErr != nil {
+			return redirErr
+		}
+
+		redirect.Scheme = redirectBase.Scheme
+		redirect.Host = redirectBase.Host
+
+		redirectURL = redirect.String()
+	}
+
+	zip.RedirectUri = redirectURL
+
+	code, zipErr := StashTTL(zip, zip.TTL)
+	zip.Code = code
+	return zipErr
+}
+
+func FetchZipCode(code string) (zip ZipCode, zipErr error) {
+	zipErr = StashFetch(code, &zip)
+	return
 }
 
 type TokenGenerator struct{}

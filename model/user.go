@@ -116,6 +116,7 @@ const (
 	PASSWORD
 	SESSION_TOKEN
 	WEBAUTHN
+	ZIPCODE
 )
 
 type IdentificationRequest struct {
@@ -125,11 +126,13 @@ type IdentificationRequest struct {
 	Password     *string
 	Totp         *string
 	SessionToken *string
+	ZipCode      *string
 }
 type IdentificationResult struct {
 	Success       bool
 	Identity      *Identity
 	Session       *string
+	ZipCode       *ZipCode
 	Strategy      IdentificationStrategy
 	Strength      string
 	Method        string
@@ -231,6 +234,34 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			Strength: "0",
 			Method:   "session",
 			Session:  &encData.TokenId,
+		}
+	case ZIPCODE:
+		if req.ZipCode == nil {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "missing code",
+			}
+		}
+
+		zipCode, zipErr := FetchZipCode(*req.ZipCode)
+		if zipErr != nil {
+		}
+
+		db := util.GetDb()
+		var ident Identity
+		if db.Where("code = ?", zipCode.Identity).Find(&ident).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad user",
+			}
+		}
+		return &IdentificationResult{
+			Success:  true,
+			Strategy: req.Strategy,
+			Identity: &ident,
+			ZipCode:  &zipCode,
+			Strength: "1",
+			Method:   "email possession",
 		}
 	default:
 		return &IdentificationResult{
