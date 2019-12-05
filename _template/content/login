@@ -1,84 +1,17 @@
 {% extends "lib/basepage" %}
 
-{% block headExtras %}
-<style>
-    html {
-    background: rgb(0,203,0);
-    background: linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%); 
-    }
-    
-    #main {
-      width: 100%;
-      height: 100vh;
-    }
-    
-    .login {
-      background-color:#2c9dd569;
-      margin: 0 auto;
-      margin-top: 25vh;
-      width: 25%;
-      padding: .5em 2em 2em 2em;
-      border-radius: 30px;
-    }
-
-    .login button {
-      border: none;
-      background: rgba(0,203,0,1);
-      border-radius: 15px;
-      margin-top: 1em;
-      width: 50%;
-      height: 4em;
-    }
-
-    /* .login fieldset label {
-      width: 8em;
-      padding-right: 4em;
-    } */
-    
-    </style>
-{% endblock %}
-
 {% block main %}
 <div id="main" >
-    <div class="login" >
-      <h1>Hello from {{ Name }}</h1>
+    <div class="dialog login" >
+      <h1>{{ Name }} Login</h1>
       <form method="POST">
         <fieldset>
             <div><label>Email: <input type='email'     name="email" placeholder="user@domain.com"></label></div>
             <div><label>Password: <input type='password' name="password" placeholder="**********"></label></div>
         </fieldset>
         <button type="submit">Submit</button>
+        <a href="/signup?{{ RawQuery }}">Signup</a>
       </form>
     </div>
 </div>
-{% endblock %}
-
-{% block bodyEnd %}
-<script>
-'use strict';
-
-const e = React.createElement;
-
-class LikeButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { liked: false };
-  }
-
-  render() {
-    if (this.state.liked) {
-      return 'You liked this.';
-    }
-
-    return e(
-      'button',
-      { onClick: () => this.setState({ liked: true }) },
-      'Like'
-    );
-  }
-}
-
-const domContainer = document.querySelector('#like_button_container');
-ReactDOM.render(e(LikeButton), domContainer);
-</script>
 {% endblock %}

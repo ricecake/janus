@@ -1,0 +1,10 @@
+{% extends "lib/basepage" %}
+
+{% block main %}
+<div id="main" >
+    <div class="dialog signup-submit" >
+      <h1>Thanks {{ Name }}</h1>
+      Please check {{ Email }} to activate your account -- <a href="/zip/{{ Code }}"> Click</a>
+    </div>
+</div>
+{% endblock %}
