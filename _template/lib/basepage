@@ -51,6 +51,7 @@
 			} */
 		</style>
 
+		<script type="text/javascript" src="/static/default.js"></script>
 
 		{% block headExtras %}
 		{% endblock %}
