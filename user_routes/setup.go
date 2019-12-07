@@ -7,4 +7,4 @@ package user_routes
 /profile/reset/password
 */
 
-Need some middleware for ensuring that the user is authenticated
+//Need some middleware for ensuring that the user is authenticated

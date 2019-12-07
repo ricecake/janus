@@ -17,6 +17,8 @@ release:
 
 content:
 	cd _pages; npm run build
+	rm _static/pages
+	ln -s ../_pages/build/pages _static/pages
 
 package: release content
 	rm -rf _package/janus;
@@ -27,7 +29,8 @@ package: release content
 	cp -R _template _package/janus/content/template;
 	cp -R _static _package/janus/content/static;
 
-	cp -R _pages/build _package/janus/content/static/component;
+	rm _package/janus/content/static/pages;
+	cp -R _pages/build/* _package/janus/content/static/;
 
 	mkdir -p _package/janus/util
 	cp _package/janus.service _package/janus/util;
