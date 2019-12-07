@@ -6,3 +6,5 @@ package user_routes
 /profile/activate
 /profile/reset/password
 */
+
+Need some middleware for ensuring that the user is authenticated
