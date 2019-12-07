@@ -1,0 +1,5 @@
+{% extends "lib/basepage" %}
+
+{% block javascript %}
+<script type="text/javascript" src="/static/pages/profile/activate.js"></script>
+{% endblock %}

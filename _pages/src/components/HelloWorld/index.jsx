@@ -1,3 +1,4 @@
+import React from "react";
 import { PureComponent } from 'react'; // eslint-disable-line import/no-extraneous-dependencies
 import { string } from 'prop-types'; // eslint-disable-line import/no-extraneous-dependencies
 import Button from '@material-ui/core/Button';

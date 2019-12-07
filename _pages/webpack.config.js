@@ -4,7 +4,7 @@ const webpack = require("webpack");
 
 let files = glob.sync('./src/pages/**/index.jsx').reduce((acc, path) => {
 	const entry = path.replace('./src/', '').replace('/index.jsx', '')
-	acc[entry] = path.replace('/src', '');
+	acc[entry] = path;//.replace('/src', '');
 	return acc
 }, {});
 
@@ -14,7 +14,7 @@ module.exports = {
 		filename: './build/[name].js',
 		path: path.resolve(__dirname)
 	},
-	context: path.resolve(__dirname, 'src/'),
+	context: path.resolve(__dirname),
 	resolve: {
 		extensions: ["*", ".js", ".jsx"],
 		modules: [path.resolve('./node_modules')],
@@ -42,3 +42,5 @@ module.exports = {
 		]
 	},
 };
+
+console.log(module.exports);

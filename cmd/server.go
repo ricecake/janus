@@ -6,12 +6,14 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/public_routes"
+	"github.com/ricecake/janus/user_routes"
 	"github.com/ricecake/janus/util"
 )
 
@@ -70,4 +72,5 @@ func setupRouter(r *gin.Engine) {
 
 	// Public routes are special, and need to live outside a namespace
 	public_routes.Configure(rootGroup)
+	user_routes.Configure(rootGroup)
 }
