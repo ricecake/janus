@@ -19,3 +19,6 @@ bin
 *.tar.gz
 *.tgz
 _package/janus
+
+_pages/build
+_pages/node_modules
