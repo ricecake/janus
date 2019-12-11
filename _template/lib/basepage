@@ -51,7 +51,7 @@
 			} */
 		</style>
 
-		<script type="text/javascript" src="/static/default.js"></script>
+		<script type="text/javascript" src="/content/libs/default.js"></script>
 
 		{% block headExtras %}
 		{% endblock %}
@@ -66,6 +66,10 @@
 
 		{% block footer %}
 		{% endblock %}
+
+		<script type="text/javascript" src="/content/runtime.js"></script>
+		<script type="text/javascript" src="/content/vendors.js"></script>
+
 		{% block javascript %}
 		{% endblock %}
 	</body>

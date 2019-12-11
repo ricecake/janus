@@ -70,6 +70,11 @@ func setupRouter(r *gin.Engine) {
 		rootGroup.Static("/static", staticDir)
 	}
 
+	contentDir := viper.GetString("http.content")
+	if contentDir != "" {
+		rootGroup.Static("/content", contentDir)
+	}
+
 	// Public routes are special, and need to live outside a namespace
 	public_routes.Configure(rootGroup)
 	user_routes.Configure(rootGroup)
