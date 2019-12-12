@@ -46,7 +46,7 @@ func CreateIdentity(ident *Identity) error {
 
 func FindIdentityById(id string) (ident Identity, err error) {
 	db := util.GetDb()
-	if db.Where("code = ? and active", id).Find(&ident).RecordNotFound() {
+	if db.Where("code = ?", id).Find(&ident).RecordNotFound() {
 		err = fmt.Errorf("Invalid user id")
 	}
 	return ident, err

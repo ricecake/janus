@@ -85,7 +85,37 @@ func (s *DbStorage) RemoveAccess(code string) error {
 }
 
 func (s *DbStorage) LoadRefresh(code string) (*osin.AccessData, error) {
-	return nil, osin.ErrNotFound
+	var encData RefreshToken
+	if err := util.DecodeJWTClose(code, viper.GetString("security.passphrase"), &encData); err != nil {
+		return nil, osin.ErrNotFound
+	}
+
+	accessToken := encData.AccessToken
+
+	accessTokenString, err := util.EncodeJWTOpen(accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	client, clientErr := FindClientById(accessToken.ClientId)
+	if clientErr != nil {
+		return nil, osin.ErrNotFound
+	}
+
+	if EntityRevoked(encData.TokenCode) {
+		return nil, osin.ErrNotFound
+	}
+
+	return &osin.AccessData{
+		Client:       client,
+		AccessToken:  accessTokenString,
+		RefreshToken: code,
+		ExpiresIn:    encData.ExpiresIn,
+		Scope:        encData.Scope,
+		RedirectUri:  encData.RedirectUri,
+		CreatedAt:    encData.CreatedAt,
+		UserData:     encData.UserData,
+	}, nil
 }
 
 func (s *DbStorage) RemoveRefresh(code string) error {

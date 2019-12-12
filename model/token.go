@@ -294,6 +294,7 @@ type AccessToken struct {
 	Expiration int64  `json:"exp"`
 	IssuedAt   int64  `json:"iat"`
 	TokenCode  string `json:"jti"`
+	ClientId   string `json:"azp"`
 
 	Nonce         string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
 	ValidResource string `json:"aud,omitempty"`
@@ -301,9 +302,15 @@ type AccessToken struct {
 	Scope         string `json:"scope,omitempty"`
 }
 type RefreshToken struct {
-	TokenCode   string `json:"jti"`
-	AccessCode  string `json:"ati"`
-	ContextCode string `json:"ctx"`
+	TokenCode   string      `json:"jti"`
+	AccessToken AccessToken `json:"ati"`
+
+	ExpiresIn   int32
+	Scope       string
+	RedirectUri string
+	CreatedAt   time.Time
+
+	UserData *UserAuthDetails
 }
 
 func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefresh bool) (accessToken string, refreshToken string, err error) {
@@ -313,6 +320,7 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		IssuedAt:   data.CreatedAt.Unix(),
 		TokenCode:  util.CompactUUID(),
 		Scope:      data.Scope,
+		ClientId:   data.Client.GetId(),
 	}
 
 	if data.UserData != nil {
@@ -328,11 +336,20 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 	}
 
 	if generaterefresh {
-		refreshToken, err = util.EncodeJWTClose(RefreshToken{
+		plainRefreshToken := RefreshToken{
 			TokenCode:   util.CompactUUID(),
-			AccessCode:  accessTokenData.TokenCode,
-			ContextCode: "",
-		}, viper.GetString("security.passphrase"))
+			AccessToken: accessTokenData,
+			ExpiresIn:   data.ExpiresIn,
+			Scope:       data.Scope,
+			RedirectUri: data.RedirectUri,
+			CreatedAt:   data.CreatedAt,
+		}
+
+		if data.UserData != nil {
+			plainRefreshToken.UserData = data.UserData.(*UserAuthDetails)
+		}
+
+		refreshToken, err = util.EncodeJWTClose(plainRefreshToken, viper.GetString("security.passphrase"))
 	}
 	return
 }
