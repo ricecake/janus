@@ -1,6 +1,5 @@
 const glob = require('glob')
 const path = require("path");
-const webpack = require("webpack");
 
 
 let libs = glob.sync('./src/libs/**/index.js').reduce((acc, path) => {
@@ -20,7 +19,6 @@ module.exports = {
 	output: {
 		filename: './build/[name].js',
 		path: path.resolve(__dirname),
-		// chunkFilename: './build/[name].bundle.js',
 	},
 	context: path.resolve(__dirname),
 	resolve: {

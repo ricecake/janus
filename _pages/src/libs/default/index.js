@@ -1,6 +1,6 @@
 'use strict';
 
-if ('serviceWorker' in navigator) {
+if (false){//'serviceWorker' in navigator) {
 	navigator.serviceWorker.register('/static/worker.js', {scope: '/static/'})
 	.then((reg) => {
 		if(reg.installing) {
