@@ -27,6 +27,18 @@ var mgr = new Oidc.UserManager(settings)
 mgr.signinSilent({state:'some data'}).then(function(user) {
 	mgr.getUser().then(function(user) {
 		console.log("got user", user);
+		fetch("/profile/api/activate", {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${ user.access_token }`,
+			},
+			body: JSON.stringify({
+				password: 'Example#1',
+				verify_password: 'Example#1',
+				preferred_name: 'Sebastian',
+			}),
+		})
 	}).catch(function(err) {
 		console.log(err);
 	});
