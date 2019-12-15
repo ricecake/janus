@@ -11,7 +11,7 @@ import (
 )
 
 type Identity struct {
-	Code          string `gorm:"column:code;not null"`
+	Code          string `gorm:"column:code;not null;primary_key"`
 	Active        bool   `gorm:"column:active;not null"`
 	Email         string `gorm:"column:email;not null"`
 	PreferredName string `gorm:"column:preferred_name;not null"`
@@ -42,6 +42,17 @@ func CreateIdentity(ident *Identity) error {
 	log.Info("Creating user ", ident.Code)
 
 	return db.Create(ident).Error
+}
+
+func (this *Identity) SaveChanges() error {
+	db := util.GetDb()
+
+	err := db.Save(this).Error
+	if err != nil {
+		log.Errorf("Error while updating identity: %s", err)
+	}
+
+	return err
 }
 
 func FindIdentityById(id string) (ident Identity, err error) {
