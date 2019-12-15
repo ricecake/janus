@@ -2,6 +2,7 @@ package user_routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/ricecake/janus/util"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,5 +18,10 @@ import (
 func Configure(r *gin.RouterGroup) {
 	log.Info("Configuring user routes...")
 
-	r.GET("/profile/activate", userActivate)
+	r.GET("/activate", userActivate)
+
+	apiGroup := r.Group("/api")
+	apiGroup.Use(util.NewAuthMiddleware())
+
+	apiGroup.POST("/activate", userActivateApi)
 }
