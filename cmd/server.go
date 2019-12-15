@@ -65,6 +65,7 @@ func setupRouter(r *gin.Engine) {
 	r.Use(gin.RecoveryWithWriter(log.StandardLogger().Writer()))
 
 	rootGroup := r.Group("/")
+
 	staticDir := viper.GetString("http.static")
 	if staticDir != "" {
 		rootGroup.Static("/static", staticDir)
@@ -77,5 +78,6 @@ func setupRouter(r *gin.Engine) {
 
 	// Public routes are special, and need to live outside a namespace
 	public_routes.Configure(rootGroup)
-	user_routes.Configure(rootGroup)
+
+	user_routes.Configure(rootGroup.Group("/profile"))
 }
