@@ -17,7 +17,7 @@
 		{% block style %}
 		{% endblock %}
 
-		<style>
+		<!-- <style>
 			html {
 				background: rgb(0,203,0);
 				background: linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%); 
@@ -50,7 +50,7 @@
 				width: 8em;
 				padding-right: 4em;
 			} */
-		</style>
+		</style> -->
 
 		<script type="text/javascript" src="/content/libs/default.js"></script>
 

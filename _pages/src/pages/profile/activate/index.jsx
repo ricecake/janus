@@ -2,46 +2,29 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import BasePage from 'Component/BasePage';
-import HelloWorld from 'Component/HelloWorld';
+import ActivationDetails from 'Component/ActivationDetails';
 import Oidc from 'oidc-client';
 
-ReactDOM.render((
-	<BasePage>
-		<HelloWorld />
-	</BasePage>
-), document.getElementById('main'));
+
+
+var serverVars = JSON.parse(document.getElementById('openid-client-params').innerHTML);
 
 var url = window.location.origin;
 var settings = {
 	authority: url,
-	client_id: 'NR9eiBJ6SjO5v02lkx63Jw',
 	response_type: 'code',
 	scope: 'openid',
 	silent_redirect_uri: url + '/static/oidc.html?mode=silent',
 	automaticSilentRenew:true,
 	validateSubOnSilentRenew: true,
-	client_secret: "Example#1",
+	client_secret: "Edxample#1",
 	loadUserInfo: false,
+	... serverVars
 };
+
 var mgr = new Oidc.UserManager(settings)
-mgr.signinSilent({state:'some data'}).then(function(user) {
-	mgr.getUser().then(function(user) {
-		console.log("got user", user);
-		fetch("/profile/api/activate", {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${ user.access_token }`,
-			},
-			body: JSON.stringify({
-				password: 'Example#1',
-				verify_password: 'Example#1',
-				preferred_name: 'Sebastian',
-			}),
-		})
-	}).catch(function(err) {
-		console.log(err);
-	});
-}).catch(function(err) {
-	console.log(err);
-});
+ReactDOM.render((
+	<BasePage>
+		<ActivationDetails userManager={ mgr } />
+	</BasePage>
+), document.getElementById('main'));

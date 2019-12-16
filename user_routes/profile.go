@@ -1,15 +1,29 @@
 package user_routes
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/janus/model"
 	"github.com/ricecake/janus/util"
+	"github.com/spf13/viper"
 )
 
 func userActivate(c *gin.Context) {
-	body, renderErr := util.RenderTemplate("activate", util.TemplateContext{})
+	clientParams, marshErr := json.Marshal(map[string]string{
+		"client_id": viper.GetString("identity.issuer_id"),
+	})
+
+	if marshErr != nil {
+		c.Error(marshErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	body, renderErr := util.RenderTemplate("activate", util.TemplateContext{
+		"ClientParams": string(clientParams),
+	})
 
 	if renderErr != nil {
 		c.Error(renderErr).SetType(gin.ErrorTypePrivate)

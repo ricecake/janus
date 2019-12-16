@@ -1,5 +1,12 @@
 {% extends "lib/basepage" %}
 
+{% block headExtras %}
+{% autoescape off %}
+<script id="openid-client-params" type="application/json">{{ ClientParams }}</script>
+{% endautoescape %}
+{% endblock %}
+
+
 {% block javascript %}
 <script type="text/javascript" src="/content/pages/profile/activate.js"></script>
 {% endblock %}
