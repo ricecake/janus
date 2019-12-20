@@ -2,7 +2,7 @@ package public_routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/openshift/osin"
+	"github.com/ricecake/osin"
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/model"

@@ -17,7 +17,6 @@ var settings = {
 	silent_redirect_uri: url + '/static/oidc.html?mode=silent',
 	automaticSilentRenew:true,
 	validateSubOnSilentRenew: true,
-	client_secret: "Edxample#1",
 	loadUserInfo: false,
 	... serverVars
 };

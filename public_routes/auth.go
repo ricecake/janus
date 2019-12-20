@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/openshift/osin"
+	"github.com/ricecake/osin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
