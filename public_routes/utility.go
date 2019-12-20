@@ -44,6 +44,9 @@ func checkAuth(c *gin.Context) {
 	c.AbortWithStatusJSON(res.FailureCode, res.FailureReason)
 }
 
+// TODO this should just return the full redirect url in the location header
+// That way it can stash much more away easier, and doesn't
+// need to rely on the applicaiton to do the redirect stuff.
 func checkAuthBackground(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 
