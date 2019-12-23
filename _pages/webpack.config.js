@@ -25,7 +25,8 @@ module.exports = {
 		extensions: ["*", ".js", ".jsx"],
 		modules: [path.resolve('./node_modules')],
 		alias: {
-			Component: path.resolve(__dirname, 'src/components/')
+			Component: path.resolve(__dirname, 'src/components/'),
+			Include: path.resolve(__dirname, 'src/includes/'),
 		}
 	},
 	optimization: {
@@ -49,7 +50,10 @@ module.exports = {
 				test: /\.(js|jsx)$/,
 				exclude: /(node_modules|bower_components)/,
 				loader: "babel-loader",
-				options: { presets: ["@babel/env"] }
+				options: {
+					presets: ["@babel/env"],
+					"plugins": ["minify-dead-code-elimination"],
+				}
 			},
 			{
 				test: /\.css$/,

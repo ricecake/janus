@@ -6,24 +6,19 @@ import ActivationDetails from 'Component/ActivationDetails';
 import Oidc from 'oidc-client';
 
 
+import { Provider } from 'react-redux';
+import { OidcProvider } from 'redux-oidc';
+import store from 'Include/store';
+import userManager from 'Include/userManager';
 
-var serverVars = JSON.parse(document.getElementById('openid-client-params').innerHTML);
 
-var url = window.location.origin;
-var settings = {
-	authority: url,
-	response_type: 'code',
-	scope: 'openid',
-	silent_redirect_uri: url + '/static/oidc.html?mode=silent',
-	automaticSilentRenew:true,
-	validateSubOnSilentRenew: true,
-	loadUserInfo: false,
-	... serverVars
-};
 
-var mgr = new Oidc.UserManager(settings)
 ReactDOM.render((
-	<BasePage>
-		<ActivationDetails userManager={ mgr } />
-	</BasePage>
+	<Provider store={store}>
+		<OidcProvider store={store} userManager={userManager}>
+			<BasePage>
+				<ActivationDetails />
+			</BasePage>
+		</OidcProvider>
+	</Provider>
 ), document.getElementById('main'));

@@ -2,10 +2,12 @@ import React from "react";
 import { Component } from 'react';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-import { Grid } from '@material-ui/core/';
-import Oidc from 'oidc-client';
+import { Grid } from '@material-ui/core';
+import { connect } from "react-redux";
+import { changeName, changePassword, changePasswordVerifier, submitForm } from "Include/reducers/activation";
+import { bindActionCreators } from 'redux'
 
-export default class ActivationDetails extends Component {
+class ActivationDetails extends Component {
 	static defaultProps = {
 		preferred_name: '',
 		password: '',
@@ -15,18 +17,12 @@ export default class ActivationDetails extends Component {
 	constructor(props) {
 		super(props);
 
+		console.log(props);
+
 		this.state = {
 			... this.defaultProps,
 			... props
 		};
-
-		let it = this;
-		let mgr = this.state.userManager;
-		mgr.signinSilent().then(function(user) {
-			mgr.getUser().then(function(user) {
-				it.setState({access_token: user.access_token})
-			})
-		});
 	}
 
 	render(props) {
@@ -94,3 +90,10 @@ export default class ActivationDetails extends Component {
 		);
 	}
 }
+
+const stateToProps = (state) => state;
+const dispatchToProps = (dispatch) => bindActionCreators({
+	changeName, changePassword, changePasswordVerifier, submitForm
+}, dispatch);
+
+export default connect(stateToProps, dispatchToProps)(ActivationDetails);
