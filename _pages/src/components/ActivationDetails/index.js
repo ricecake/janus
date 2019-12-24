@@ -1,5 +1,4 @@
-import React from "react";
-import { Component } from 'react';
+import React, { PureComponent } from "react";
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { Grid } from '@material-ui/core';
@@ -7,22 +6,11 @@ import { connect } from "react-redux";
 import { changeName, changePassword, changePasswordVerifier, submitForm } from "Include/reducers/activation";
 import { bindActionCreators } from 'redux'
 
-class ActivationDetails extends Component {
-	static defaultProps = {
-		preferred_name: '',
-		password: '',
-		verify_password: '',
-	};
-
+class ActivationDetails extends PureComponent {
 	constructor(props) {
 		super(props);
 
 		console.log(props);
-
-		this.state = {
-			... this.defaultProps,
-			... props
-		};
 	}
 
 	render(props) {
@@ -42,9 +30,9 @@ class ActivationDetails extends Component {
 						type="text"
 						variant="outlined"
 						margin="normal"
-						error={this.state.preferred_name.length <= 0}
-						onChange={ (e) => this.setState({ preferred_name: e.target.value }) }
-						value={ this.state.preferred_name }
+						// error={this.state.preferred_name.length <= 0}
+						onChange={e => this.props.changeName(e.target.value)}
+						value={ this.props.preferred_name }
 					/>
 					<TextField
 						required
@@ -53,9 +41,9 @@ class ActivationDetails extends Component {
 						type="password"
 						variant="outlined"
 						margin="normal"
-						error={this.state.password.length <= 0}
-						onChange={ (e) => this.setState({ password: e.target.value }) }
-						value={ this.state.password }
+						// error={this.state.password.length <= 0}
+						onChange={e => this.props.changePassword(e.target.value)}
+						value={ this.props.password }
 					/>
 					<TextField
 						required
@@ -64,25 +52,12 @@ class ActivationDetails extends Component {
 						type="password"
 						variant="outlined"
 						margin="normal"
-						error={this.state.verify_password.length > 0 && this.state.verify_password != this.state.password }
-						onChange={ (e) => this.setState({ verify_password: e.target.value }) }
-						value={ this.state.verify_password }
+						// error={this.props.state.verify_password.length > 0 && this.props.state.verify_password != this.props.state.password }
+						onChange={e => this.props.changePasswordVerifier(e.target.value) }
+						value={ this.props.verify_password }
 					/>
 
-					<Button variant="contained" color="primary" onClick={()=>{
-						fetch("/profile/api/activate", {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								'Authorization': `Bearer ${ this.state.access_token }`,
-							},
-							body: JSON.stringify({
-								password: this.state.password,
-								verify_password: this.state.verify_password,
-								preferred_name: this.state.preferred_name,
-							}),
-						})
-					}}>
+					<Button variant="contained" color="primary" onClick={ this.props.submitForm }>
 						Activate User
 					</Button>
 				</Grid>
@@ -91,7 +66,7 @@ class ActivationDetails extends Component {
 	}
 }
 
-const stateToProps = (state) => state;
+const stateToProps = ({activation}) => activation;
 const dispatchToProps = (dispatch) => bindActionCreators({
 	changeName, changePassword, changePasswordVerifier, submitForm
 }, dispatch);
