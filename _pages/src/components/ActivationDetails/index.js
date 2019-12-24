@@ -26,11 +26,12 @@ class ActivationDetails extends PureComponent {
 					<TextField
 						required
 						name='preferred_name'
-						label="Name"
+						label="What should we call you?"
 						type="text"
 						variant="outlined"
 						margin="normal"
-						// error={this.state.preferred_name.length <= 0}
+						error={!this.props.name_valid}
+						helperText={this.props.name_valid?'':"We have to call you something!"}
 						onChange={e => this.props.changeName(e.target.value)}
 						value={ this.props.preferred_name }
 					/>
@@ -41,7 +42,8 @@ class ActivationDetails extends PureComponent {
 						type="password"
 						variant="outlined"
 						margin="normal"
-						// error={this.state.password.length <= 0}
+						error={!this.props.password_valid}
+						helperText="Password must be at least eight characters long"
 						onChange={e => this.props.changePassword(e.target.value)}
 						value={ this.props.password }
 					/>
@@ -52,12 +54,13 @@ class ActivationDetails extends PureComponent {
 						type="password"
 						variant="outlined"
 						margin="normal"
-						// error={this.props.state.verify_password.length > 0 && this.props.state.verify_password != this.props.state.password }
+						error={!this.props.password_match}
+						helperText={this.props.password_match? '':"Passwords don't seem to match..."}
 						onChange={e => this.props.changePasswordVerifier(e.target.value) }
 						value={ this.props.verify_password }
 					/>
 
-					<Button variant="contained" color="primary" onClick={ this.props.submitForm }>
+					<Button variant="contained" color="primary" onClick={ this.props.submitForm } disabled={!this.props.submitable}>
 						Activate User
 					</Button>
 				</Grid>
