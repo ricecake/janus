@@ -3,7 +3,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 import BasePage from 'Component/BasePage';
 import ActivationDetails from 'Component/ActivationDetails';
-import Oidc from 'oidc-client';
 
 
 import { Provider } from 'react-redux';

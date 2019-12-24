@@ -8,6 +8,7 @@ const defaultState = {
 	password_valid: false,
 	password_match: true,
 	name_valid: false,
+	loading: false,
 };
 
 
@@ -46,10 +47,8 @@ const reducer = handleActions({
 	[changePassword]: (state, { payload: { password } }) => (merge(state, { password: password, password_match: password === state.verify_password })),
 	[changePasswordVerifier]: (state, { payload: { verifier } }) => (merge(state, { verify_password: verifier, password_match: state.password === verifier })),
 	[combineActions(changeName, changePassword, changePasswordVerifier)]: (state, msg) => merge(state, validate(state, msg)),
-	[submitFormFinish]: (state, { payload }) => {
-		console.log(state, payload);
-		return state;
-	},
+	[submitFormStart]: (state)=> merge(state, { loading: true }),
+	[submitFormFinish]: (state)=> merge(state, { loading: false }),
 }, defaultState);
 
 const validate = (state, { payload }) => {
@@ -60,7 +59,7 @@ const validate = (state, { payload }) => {
 	newState.password_valid = mergeState.password.length >= 8;
 	newState.password_match = mergeState.password === mergeState.verify_password;
 
-	newState.submitable = newState.password_valid && newState.password_match && newState.name_valid;
+	newState.submitable = newState.password_valid && newState.password_match && newState.name_valid && !newState.loading;
 	return newState;
 };
 
