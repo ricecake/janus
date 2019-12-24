@@ -10,12 +10,47 @@ const defaultState = {
 	name_valid: false,
 };
 
-export const { changeName, changePassword, changePasswordVerifier, submitForm } = createActions({
+
+export const submitForm = () => (dispatch, getState) => {
+	console.log(getState());
+	if (getState().activation.submitable) {
+		dispatch(submitFormStart());
+		let state = getState();
+		fetch("/profile/api/activate", {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${ state.oidc.user.access_token }`,
+			},
+			body: JSON.stringify({
+				password: state.activation.password,
+				verify_password: state.activation.verify_password,
+				preferred_name: state.activation.preferred_name,
+			}),
+		})
+		.then(res => res.json())
+		.then(res => dispatch(submitFormFinish(res)));
+	}
+};
+
+export const { changeName, changePassword, changePasswordVerifier, submitFormStart, submitFormFinish } = createActions({
 	changeName: (name = "")=>({ name }),
 	changePassword: (password = "")=>({ password }),
 	changePasswordVerifier: (verifier = "")=>({ verifier }),
-	submitForm: ()=>({}),
+	submitFormStart: ()=>({}),
+	submitFormFinish: (data)=>({ data }),
 });
+
+const reducer = handleActions({
+	[changeName]: (state, { payload: { name } }) => (merge(state, { preferred_name: name })),
+	[changePassword]: (state, { payload: { password } }) => (merge(state, { password: password, password_match: password === state.verify_password })),
+	[changePasswordVerifier]: (state, { payload: { verifier } }) => (merge(state, { verify_password: verifier, password_match: state.password === verifier })),
+	[combineActions(changeName, changePassword, changePasswordVerifier)]: (state, msg) => merge(state, validate(state, msg)),
+	[submitFormFinish]: (state, { payload }) => {
+		console.log(state, payload);
+		return state;
+	},
+}, defaultState);
 
 const validate = (state, { payload }) => {
 	let mergeState = Object.assign({}, state, payload);
@@ -30,28 +65,5 @@ const validate = (state, { payload }) => {
 };
 
 const merge = (oldState, newState) => Object.assign({}, oldState, newState);
-
-const reducer = handleActions({
-	[changeName]: (state, { payload: { name } }) => (merge(state, { preferred_name: name })),
-	[changePassword]: (state, { payload: { password } }) => (merge(state, { password: password, password_match: password === state.verify_password })),
-	[changePasswordVerifier]: (state, { payload: { verifier } }) => (merge(state, { verify_password: verifier, password_match: state.password === verifier })),
-	[combineActions(changeName, changePassword, changePasswordVerifier)]: (state, msg) => merge(state, validate(state, msg)),
-	[submitForm]: (state, { payload }) => {
-		console.log(state, payload);
-		// fetch("/profile/api/activate", {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		'Content-Type': 'application/json',
-		// 		'Authorization': `Bearer ${ this.state.access_token }`,
-		// 	},
-		// 	body: JSON.stringify({
-		// 		password: this.state.password,
-		// 		verify_password: this.state.verify_password,
-		// 		preferred_name: this.state.preferred_name,
-		// 	}),
-		// });
-		return state;
-	},
-}, defaultState);
 
 export default reducer;

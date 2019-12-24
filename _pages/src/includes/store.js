@@ -1,4 +1,5 @@
 import { createStore, applyMiddleware, compose } from "redux";
+import ReduxThunk from 'redux-thunk';
 import { loadUser } from "redux-oidc";
 import reducer from "Include/reducers";
 import userManager from "Include/userManager";
@@ -17,7 +18,8 @@ const loggerMiddleware = store => next => action => {
 const initialState = {};
 
 const createStoreWithMiddleware = compose(
-  applyMiddleware(loggerMiddleware)
+  applyMiddleware(loggerMiddleware),
+  applyMiddleware(ReduxThunk),
 )(createStore);
 
 const store = createStoreWithMiddleware(reducer, initialState);
