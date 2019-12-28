@@ -1,10 +1,12 @@
 package util
 
 import (
+	"encoding/json"
+	"path/filepath"
+
 	"github.com/flosch/pongo2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"path/filepath"
 )
 
 var (
@@ -16,6 +18,14 @@ var (
 type TemplateContext map[string]interface{}
 
 func RenderHTMLTemplate(template string, context map[string]interface{}) (output []byte, renderErr error) {
+	clientParams, renderErr := json.Marshal(context)
+
+	if renderErr != nil {
+		return
+	}
+
+	context["json_params"] = string(clientParams)
+
 	return RenderTemplate("content", template, context)
 }
 

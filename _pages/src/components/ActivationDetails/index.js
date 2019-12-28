@@ -3,7 +3,7 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { Grid } from '@material-ui/core';
 import { connect } from "react-redux";
-import { changeName, changePassword, changePasswordVerifier, submitForm } from "Include/reducers/activation";
+import { changeName, changePassword, changePasswordVerifier, submitForm, startSignin } from "Include/reducers/activation";
 import { bindActionCreators } from 'redux'
 
 class ActivationDetails extends PureComponent {
@@ -14,6 +14,10 @@ class ActivationDetails extends PureComponent {
 	}
 
 	render(props) {
+		if (!this.props.user) {
+			this.props.startSignin();
+			return null;
+		}
 		return (
 			<div>
 				<h1>Activate User</h1>
@@ -69,9 +73,9 @@ class ActivationDetails extends PureComponent {
 	}
 }
 
-const stateToProps = ({activation}) => activation;
+const stateToProps = ({activation, oidc}) => ({...activation, user: oidc.user });
 const dispatchToProps = (dispatch) => bindActionCreators({
-	changeName, changePassword, changePasswordVerifier, submitForm
+	changeName, changePassword, changePasswordVerifier, submitForm, startSignin
 }, dispatch);
 
 export default connect(stateToProps, dispatchToProps)(ActivationDetails);

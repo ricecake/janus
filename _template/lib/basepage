@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+		{% autoescape off %}
+		<script id="server-params" type="application/json">{{ json_params }}</script>
+		{% endautoescape %}
+
 		{% block meta %}
 			<meta charset="utf-8">
 			<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
@@ -20,7 +24,7 @@
 		<!-- <style>
 			html {
 				background: rgb(0,203,0);
-				background: linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%); 
+				background: linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%);
 			}
 
 			#main {

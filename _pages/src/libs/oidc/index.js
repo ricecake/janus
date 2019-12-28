@@ -10,6 +10,7 @@ let url = new URL(document.location);
 let params = url.searchParams;
 
 switch (params.get("mode")) {
+	case "normal":
 	case "silent":
 		manager.signinCallback();
 		break;

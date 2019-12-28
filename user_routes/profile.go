@@ -1,7 +1,6 @@
 package user_routes
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -11,18 +10,8 @@ import (
 )
 
 func userActivate(c *gin.Context) {
-	clientParams, marshErr := json.Marshal(map[string]string{
-		"client_id": viper.GetString("identity.issuer_id"),
-	})
-
-	if marshErr != nil {
-		c.Error(marshErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-		return
-	}
-
 	body, renderErr := util.RenderHTMLTemplate("activate", util.TemplateContext{
-		"ClientParams": string(clientParams),
+		"client_id": viper.GetString("identity.issuer_id"),
 	})
 
 	if renderErr != nil {

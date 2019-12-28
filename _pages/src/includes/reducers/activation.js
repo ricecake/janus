@@ -1,4 +1,6 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
+import userManager from 'Include/userManager';
+import { USER_FOUND } from "redux-oidc";
 
 const defaultState = {
 	preferred_name: '',
@@ -9,6 +11,7 @@ const defaultState = {
 	password_match: true,
 	name_valid: false,
 	loading: false,
+	activated: false,
 };
 
 
@@ -34,6 +37,11 @@ export const submitForm = () => (dispatch, getState) => {
 	}
 };
 
+export const startSignin = () => (dispatch, getState) => {
+	userManager.signinSilent();
+	return;
+};
+
 export const { changeName, changePassword, changePasswordVerifier, submitFormStart, submitFormFinish } = createActions({
 	changeName: (name = "")=>({ name }),
 	changePassword: (password = "")=>({ password }),
@@ -46,9 +54,12 @@ const reducer = handleActions({
 	[changeName]: (state, { payload: { name } }) => (merge(state, { preferred_name: name })),
 	[changePassword]: (state, { payload: { password } }) => (merge(state, { password: password, password_match: password === state.verify_password })),
 	[changePasswordVerifier]: (state, { payload: { verifier } }) => (merge(state, { verify_password: verifier, password_match: state.password === verifier })),
-	[combineActions(changeName, changePassword, changePasswordVerifier)]: (state, msg) => merge(state, validate(state, msg)),
+
 	[submitFormStart]: (state)=> merge(state, { loading: true }),
-	[submitFormFinish]: (state)=> merge(state, { loading: false }),
+	[submitFormFinish]: (state, { payload })=> merge(state, { loading: false, activated: payload.Active }),
+	[USER_FOUND]: (state, { payload }) => merge(state, { preferred_name: payload.profile.preferred_name || state.preferred_name }),
+
+	[combineActions(changeName, changePassword, changePasswordVerifier)]: (state, msg) => merge(state, validate(state, msg)),
 }, defaultState);
 
 const validate = (state, { payload }) => {

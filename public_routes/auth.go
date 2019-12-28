@@ -168,7 +168,7 @@ func signupSubmit(c *gin.Context) {
 	user := &model.Identity{}
 
 	user.Email = c.PostForm("email")
-	user.PreferredName = c.PostForm("name")
+	user.PreferredName = c.PostForm("preferred_name")
 
 	if err := model.CreateIdentity(user); err != nil {
 		log.Fatal(err)
@@ -198,19 +198,7 @@ func signupSubmit(c *gin.Context) {
 		return
 	}
 
-	body, renderErr := util.RenderHTMLTemplate("signup_submit", util.TemplateContext{
-		"Name":  user.PreferredName,
-		"Email": user.Email,
-		"Code":  zipCode.Code,
-	})
-
-	if renderErr != nil {
-		c.Error(renderErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-		return
-	}
-
-	c.Data(200, "text/html", body)
+	c.Status(204)
 }
 func logoutPage(c *gin.Context)   {}
 func logoutSubmit(c *gin.Context) {}

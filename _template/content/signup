@@ -1,17 +1,5 @@
 {% extends "lib/basepage" %}
 
-{% block main %}
-<div id="main" >
-    <div class="dialog signup" >
-      <h1>{{ Name }} Signup</h1>
-      <form method="POST">
-        <fieldset>
-            <div><label>Name: <input type='text'  name="name" placeholder="Gustavo"></label></div>
-            <div><label>Email: <input type='email' name="email" placeholder="user@domain.com"></label></div>
-        </fieldset>
-        <button type="submit">Submit</button>
-        <a href="/login?{{ RawQuery }}">Login</a>
-      </form>
-    </div>
-</div>
+{% block javascript %}
+<script type="text/javascript" src="/content/pages/signup.js"></script>
 {% endblock %}
