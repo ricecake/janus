@@ -21,7 +21,7 @@ func userActivate(c *gin.Context) {
 		return
 	}
 
-	body, renderErr := util.RenderTemplate("activate", util.TemplateContext{
+	body, renderErr := util.RenderHTMLTemplate("activate", util.TemplateContext{
 		"ClientParams": string(clientParams),
 	})
 

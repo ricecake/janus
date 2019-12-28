@@ -1,0 +1,9 @@
+<html>
+	<body>
+		To activate your {{ idp_name }} account, please visit: <br/>
+
+		<a href="{{ idp_url }}/zip/{{ Code }}">This page</a><br/>
+
+		and follow the provided instructions.
+	</body>
+</html>

@@ -39,7 +39,6 @@ to quickly create a Cobra application.`,
 		}()
 
 		util.LoadKey(viper.GetString("security.key"))
-		util.InitTemplates()
 
 		gin.SetMode(viper.GetString("http.mode"))
 		ginInterface := viper.GetString("http.interface")

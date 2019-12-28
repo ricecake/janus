@@ -85,7 +85,7 @@ func loginPage(c *gin.Context) {
 		return
 	}
 
-	body, renderErr := util.RenderTemplate("login", util.TemplateContext{
+	body, renderErr := util.RenderHTMLTemplate("login", util.TemplateContext{
 		"Name":     client.DisplayName,
 		"Param":    c.Request.URL.Query(),
 		"RawQuery": c.Request.URL.RawQuery,
@@ -150,7 +150,7 @@ func signupPage(c *gin.Context) {
 		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
 		return
 	}
-	body, renderErr := util.RenderTemplate("signup", util.TemplateContext{
+	body, renderErr := util.RenderHTMLTemplate("signup", util.TemplateContext{
 		"Name":     client.DisplayName,
 		"Param":    c.Request.URL.Query(),
 		"RawQuery": c.Request.URL.RawQuery,
@@ -186,7 +186,19 @@ func signupSubmit(c *gin.Context) {
 		return
 	}
 
-	body, renderErr := util.RenderTemplate("signup_submit", util.TemplateContext{
+	emailErr := util.SendMail(user.PreferredName, user.Email, "activation", util.TemplateContext{
+		"Name":  user.PreferredName,
+		"Email": user.Email,
+		"Code":  zipCode.Code,
+	})
+
+	if emailErr != nil {
+		c.Error(emailErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	body, renderErr := util.RenderHTMLTemplate("signup_submit", util.TemplateContext{
 		"Name":  user.PreferredName,
 		"Email": user.Email,
 		"Code":  zipCode.Code,
