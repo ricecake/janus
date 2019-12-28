@@ -164,14 +164,30 @@ func signupPage(c *gin.Context) {
 
 	c.Data(200, "text/html", body)
 }
+
+type SignupParams struct {
+	PreferredName string `form:"preferred_name" json:"preferred_name"`
+	Email         string `form:"email"          json:"email"`
+}
+
 func signupSubmit(c *gin.Context) {
 	user := &model.Identity{}
 
-	user.Email = c.PostForm("email")
-	user.PreferredName = c.PostForm("preferred_name")
+	var signupParams SignupParams
+	bindErr := c.ShouldBind(&signupParams)
+	if bindErr != nil {
+		c.Error(bindErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	user.Email = signupParams.Email
+	user.PreferredName = signupParams.PreferredName
 
 	if err := model.CreateIdentity(user); err != nil {
-		log.Fatal(err)
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
 	}
 
 	zipCode := model.ZipCode{

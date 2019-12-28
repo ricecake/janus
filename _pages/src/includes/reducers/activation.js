@@ -48,7 +48,7 @@ export const { changeName, changePassword, changePasswordVerifier, submitFormSta
 	changePasswordVerifier: (verifier = "")=>({ verifier }),
 	submitFormStart: ()=>({}),
 	submitFormFinish: (data)=>({ data }),
-});
+}, { prefix: "janus/activation" });
 
 const reducer = handleActions({
 	[changeName]: (state, { payload: { name } }) => (merge(state, { preferred_name: name })),

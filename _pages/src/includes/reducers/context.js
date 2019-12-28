@@ -15,7 +15,7 @@ if (serverParamsElm) {
 
 const defaultState = { query: query, serverParams: serverParams };
 
-export const {} = createActions({});
+export const {} = createActions({}, { prefix: "janus/context" });
 
 const reducer = handleActions({}, defaultState);
 

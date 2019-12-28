@@ -14,7 +14,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 
 import { connect } from "react-redux";
-import { initiateSignup } from "Include/reducers/signup";
+import { initiateSignup, changeName, changeEmail } from "Include/reducers/signup";
 import { bindActionCreators } from 'redux'
 
 const useStyles = makeStyles(theme => ({
@@ -61,6 +61,8 @@ const SignupForm = (props) => {
 				fullWidth
 				id="preferred_name"
 				label="What should we call you?"
+				onChange={e => props.changeName(e.target.value)}
+				value={ props.preferred_name }
 				autoFocus
 			  />
 			</Grid>
@@ -73,15 +75,18 @@ const SignupForm = (props) => {
 				label="Email Address"
 				name="email"
 				autoComplete="email"
+				onChange={e => props.changeEmail(e.target.value)}
+				value={ props.email }
 			  />
 			</Grid>
 		  </Grid>
 		  <Button
-			type="submit"
 			fullWidth
 			variant="contained"
 			color="primary"
 			className={classes.submit}
+			onClick={ props.initiateSignup }
+			disabled={!props.submitable}
 		  >
 			Sign Up
 		  </Button>
@@ -99,6 +104,6 @@ const SignupForm = (props) => {
 }
 
 const stateToProps = ({signup, context}) => ({...signup, context });
-const dispatchToProps = (dispatch) => bindActionCreators({ initiateSignup }, dispatch);
+const dispatchToProps = (dispatch) => bindActionCreators({ initiateSignup, changeName, changeEmail }, dispatch);
 
 export default connect(stateToProps, dispatchToProps)(SignupForm);
