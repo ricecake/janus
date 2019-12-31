@@ -11,7 +11,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 
 import { connect } from "react-redux";
-import { initiateLogin } from "Include/reducers/login";
+import { initiateLogin, changeEmail, changePassword } from "Include/reducers/login";
 import { bindActionCreators } from 'redux'
 
 
@@ -48,7 +48,7 @@ const LoginForm = (props) => {
 		<Typography component="h1" variant="h5">
 		  Sign in
 		</Typography>
-		<form className={classes.form} method="POST" noValidate>
+		<form className={classes.form} onClick={ props.initiateLogin } noValidate>
 		  <TextField
 			variant="outlined"
 			margin="normal"
@@ -59,6 +59,8 @@ const LoginForm = (props) => {
 			name="email"
 			autoComplete="email"
 			autoFocus
+			onChange={e => props.changeEmail(e.target.value)}
+			value={ props.email }
 		  />
 		  <TextField
 			variant="outlined"
@@ -70,22 +72,25 @@ const LoginForm = (props) => {
 			type="password"
 			id="password"
 			autoComplete="current-password"
+			onChange={e => props.changePassword(e.target.value)}
+			value={ props.password }
 		  />
 		  <Button
-			type="submit"
 			fullWidth
+			type="submit"
 			variant="contained"
 			color="primary"
 			className={classes.submit}
+			disabled={!props.submitable}
 		  >
 			Sign In
 		  </Button>
-		  <Grid container>
-			<Grid item xs>
+		  <Grid container justify="flex-end">
+			{/* <Grid item xs>
 			  <Link href="#" variant="body2">
 				Forgot password?
 			  </Link>
-			</Grid>
+			</Grid> */}
 			<Grid item>
 			  <Link href={`/signup?${ props.context.serverParams.RawQuery }`} variant="body2">
 				{"Don't have an account? Sign Up"}
@@ -99,6 +104,10 @@ const LoginForm = (props) => {
 }
 
 const stateToProps = ({login, context}) => ({...login, context });
-const dispatchToProps = (dispatch) => bindActionCreators({ initiateLogin }, dispatch);
+const dispatchToProps = (dispatch) => bindActionCreators({
+	initiateLogin,
+	changeEmail,
+	changePassword,
+}, dispatch);
 
 export default connect(stateToProps, dispatchToProps)(LoginForm);

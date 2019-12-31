@@ -34,6 +34,7 @@ class ActivationDetails extends PureComponent {
 						type="text"
 						variant="outlined"
 						margin="normal"
+						autoComplete="preferred_name"
 						error={!this.props.name_valid}
 						helperText={this.props.name_valid?'':"We have to call you something!"}
 						onChange={e => this.props.changeName(e.target.value)}

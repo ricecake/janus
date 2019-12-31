@@ -120,7 +120,7 @@ func loginSubmit(c *gin.Context) {
 	}
 
 	res := attemptIdentifyUser(c, model.IdentificationRequest{
-		Strategy: model.PASSWORD,
+		Strategy: model.NONE,
 		Context:  &client.Context,
 	})
 

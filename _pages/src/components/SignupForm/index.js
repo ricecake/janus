@@ -51,7 +51,7 @@ const SignupForm = (props) => {
 		<Typography component="h1" variant="h5">
 		  Sign up
 		</Typography>
-		<form className={classes.form} noValidate>
+		<form className={classes.form} onClick={ props.initiateSignup } noValidate>
 		  <Grid container spacing={2}>
 			<Grid item xs={12}>
 			  <TextField
@@ -83,10 +83,10 @@ const SignupForm = (props) => {
 		  </Grid>
 		  <Button
 			fullWidth
+			type="submit"
 			variant="contained"
 			color="primary"
 			className={classes.submit}
-			onClick={ props.initiateSignup }
 			disabled={!props.submitable}
 		  >
 			Sign Up
