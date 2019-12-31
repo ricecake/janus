@@ -51,7 +51,7 @@ const SignupForm = (props) => {
 		<Typography component="h1" variant="h5">
 		  Sign up
 		</Typography>
-		<form className={classes.form} onClick={ props.initiateSignup } noValidate>
+		<form className={classes.form} onSubmit={ props.initiateSignup } noValidate>
 		  <Grid container spacing={2}>
 			<Grid item xs={12}>
 			  <TextField

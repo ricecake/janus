@@ -14,23 +14,25 @@ export const {changeName, changeEmail, signupStart, signupFinish} = createAction
 	changeEmail: (email = "") => ({ email }),
 },'SIGNUP_START', 'SIGNUP_FINISH', { prefix: "janus/signup" });
 
-export const initiateSignup = () => (dispatch, getState) => {
-	if (getState().signup.submitable) {
-		dispatch(signupStart());
-		let state = getState();
-		fetch("/signup", {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				preferred_name: state.signup.preferred_name,
-				email: state.signup.email,
-			}),
-		})
-		.then(res => dispatch(signupFinish()));
-	}
-
+export const initiateSignup = (event) => {
+	event.preventDefault();
+	return (dispatch, getState) => {
+		if (getState().signup.submitable) {
+			dispatch(signupStart());
+			let state = getState();
+			fetch("/signup", {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					preferred_name: state.signup.preferred_name,
+					email: state.signup.email,
+				}),
+			})
+			.then(res => dispatch(signupFinish()));
+		}
+	};
 };
 
 const reducer = handleActions({
