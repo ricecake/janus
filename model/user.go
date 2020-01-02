@@ -110,11 +110,21 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 		Issuer:     viper.GetString("identity.issuer"),
 	}
 
-	if claims["profile"] {
-		token.Email = this.Email
-		token.PreferredName = this.PreferredName
-		token.FamilyName = this.FamilyName
-		token.GivenName = this.GivenName
+	if claims["openid"] {
+		if claims["profile"] {
+			token.Email = this.Email
+			token.PreferredName = this.PreferredName
+			token.FamilyName = this.FamilyName
+			token.GivenName = this.GivenName
+		}
+		if claims["roles"] {
+		}
+		if claims["cliques"] {
+		}
+		if claims["actions"] {
+		}
+		if claims["auth_info"] {
+		}
 	}
 
 	return token

@@ -1,6 +1,8 @@
 package public_routes
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/osin"
 	"github.com/spf13/viper"
@@ -67,8 +69,11 @@ func accessToken(c *gin.Context) {
 			if err != nil {
 				response.InternalError = err
 			} else {
-
-				token := ident.IdentityToken(map[string]bool{})
+				scopes := make(map[string]bool)
+				for _, s := range strings.Fields(ar.Scope) {
+					scopes[s] = true
+				}
+				token := ident.IdentityToken(scopes)
 
 				token.ClientID = ar.Client.GetId()
 				token.Nonce = authDetails.Nonce

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -129,7 +130,12 @@ func checkAuthRedirect(c *gin.Context) {
 
 		user := res.Identity
 
-		token := user.IdentityToken(map[string]bool{})
+		scopes := make(map[string]bool)
+		for _, s := range strings.Fields(c.Query("scope")) {
+			scopes[s] = true
+		}
+
+		token := user.IdentityToken(scopes)
 		token.ClientID = idp.ClientId
 		token.Context = client.Context
 		encToken, err := util.EncodeJWTOpen(token)
