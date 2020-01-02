@@ -1,78 +1,121 @@
-import React, { PureComponent } from "react";
+import React from 'react';
+import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
+import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
-import { Grid } from '@material-ui/core';
+import Grid from '@material-ui/core/Grid';
+import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import Typography from '@material-ui/core/Typography';
+import { makeStyles } from '@material-ui/core/styles';
+import Container from '@material-ui/core/Container';
+
 import { connect } from "react-redux";
 import { changeName, changePassword, changePasswordVerifier, submitForm, startSignin } from "Include/reducers/activation";
 import { bindActionCreators } from 'redux'
 
-class ActivationDetails extends PureComponent {
-	constructor(props) {
-		super(props);
+const useStyles = makeStyles(theme => ({
+	paper: {
+	  marginTop: theme.spacing(8),
+	  display: 'flex',
+	  flexDirection: 'column',
+	  alignItems: 'center',
+	},
+	avatar: {
+	  margin: theme.spacing(1),
+	  backgroundColor: theme.palette.secondary.main,
+	},
+	form: {
+	  width: '100%', // Fix IE 11 issue.
+	  marginTop: theme.spacing(1),
+	},
+	submit: {
+	  margin: theme.spacing(3, 0, 2),
+	},
+  }));
 
-		console.log(props);
+
+const ActivationDetails = (props) => {
+	if (!props.user) {
+		props.startSignin();
+		return null;
 	}
+	const classes = useStyles();
 
-	render(props) {
-		if (!this.props.user) {
-			this.props.startSignin();
-			return null;
-		}
-		return (
-			<div>
-				<h1>Activate User</h1>
-				<Grid
-					container
-					direction="column"
-					justify="center"
-					alignItems="center"
-				>
-					<TextField
-						required
-						name='preferred_name'
-						label="What should we call you?"
-						type="text"
-						variant="outlined"
-						margin="normal"
-						autoComplete="preferred_name"
-						error={!this.props.name_valid}
-						helperText={this.props.name_valid?'':"We have to call you something!"}
-						onChange={e => this.props.changeName(e.target.value)}
-						value={ this.props.preferred_name }
-					/>
-					<TextField
-						required
-						name='password'
-						label="Password"
-						type="password"
-						variant="outlined"
-						margin="normal"
-						error={!this.props.password_valid}
-						helperText="Password must be at least eight characters long"
-						onChange={e => this.props.changePassword(e.target.value)}
-						value={ this.props.password }
-					/>
-					<TextField
-						required
-						name='verify_password'
-						label="Verify Password"
-						type="password"
-						variant="outlined"
-						margin="normal"
-						error={!this.props.password_match}
-						helperText={this.props.password_match? '':"Passwords don't seem to match..."}
-						onChange={e => this.props.changePasswordVerifier(e.target.value) }
-						value={ this.props.verify_password }
-					/>
-
-					<Button variant="contained" color="primary" onClick={ this.props.submitForm } disabled={!this.props.submitable}>
-						Activate User
-					</Button>
-				</Grid>
-			</div>
-		);
-	}
-}
+	return (
+		<Container component="main" maxWidth="xs">
+		<CssBaseline />
+		<div className={classes.paper}>
+		  <Avatar className={classes.avatar}>
+			<LockOutlinedIcon />
+		  </Avatar>
+		  <Typography component="h1" variant="h5">
+			Activate User
+		  </Typography>
+		  <form className={classes.form} onSubmit={ props.initiateSignup } noValidate>
+			<Grid container spacing={2}>
+			  <Grid item xs={12}>
+				<TextField
+					required
+					fullWidth
+					autoFocus
+					name='preferred_name'
+					label="What should we call you?"
+					type="text"
+					variant="outlined"
+					margin="normal"
+					autoComplete="preferred_name"
+					error={!props.name_valid}
+					helperText={props.name_valid?'':"We have to call you something!"}
+					onChange={e => props.changeName(e.target.value)}
+					value={ props.preferred_name }
+				/>
+			  </Grid>
+			  <Grid item xs={12}>
+			  <TextField
+					required
+					fullWidth
+					name='password'
+					label="Password"
+					type="password"
+					variant="outlined"
+					margin="normal"
+					error={!props.password_valid}
+					helperText="Password must be at least eight characters long"
+					onChange={e => props.changePassword(e.target.value)}
+					value={ props.password }
+				/>
+			  </Grid>
+			  <Grid item xs={12}>
+			  <TextField
+					required
+					fullWidth
+					name='verify_password'
+					label="Verify Password"
+					type="password"
+					variant="outlined"
+					margin="normal"
+					error={!props.password_match}
+					helperText={props.password_match? '':"Passwords don't seem to match..."}
+					onChange={e => props.changePasswordVerifier(e.target.value) }
+					value={ props.verify_password }
+				/>
+			  </Grid>
+			</Grid>
+			<Button
+				fullWidth
+				type="submit"
+				variant="contained"
+				color="primary"
+				onClick={ props.submitForm }
+				disabled={!props.submitable}
+			>
+				Activate User
+			</Button>
+		  </form>
+		</div>
+	  </Container>
+	);
+};
 
 const stateToProps = ({activation, oidc}) => ({...activation, user: oidc.user });
 const dispatchToProps = (dispatch) => bindActionCreators({

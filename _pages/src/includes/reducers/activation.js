@@ -59,7 +59,7 @@ const reducer = handleActions({
 	[submitFormFinish]: (state, { payload })=> merge(state, { loading: false, activated: payload.Active }),
 	[USER_FOUND]: (state, { payload }) => merge(state, { preferred_name: payload.profile.preferred_name || state.preferred_name }),
 
-	[combineActions(changeName, changePassword, changePasswordVerifier)]: (state, msg) => merge(state, validate(state, msg)),
+	[combineActions(changeName, changePassword, changePasswordVerifier, USER_FOUND)]: (state, msg) => merge(state, validate(state, msg)),
 }, defaultState);
 
 const validate = (state, { payload }) => {
