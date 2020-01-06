@@ -208,6 +208,7 @@ type ZipCode struct {
 	Code        string
 	TTL         int
 	RedirectUri string
+	Params      map[string]string
 }
 
 func (zip *ZipCode) Save() error {
@@ -230,6 +231,12 @@ func (zip *ZipCode) Save() error {
 
 		redirect.Scheme = redirectBase.Scheme
 		redirect.Host = redirectBase.Host
+
+		baseQuery := redirect.Query()
+		for key, value := range zip.Params {
+			baseQuery.Add(key, value)
+		}
+		redirect.RawQuery = baseQuery.Encode()
 
 		redirectURL = redirect.String()
 	}

@@ -27,6 +27,7 @@ type IdentityActivationArgs struct {
 	PreferredName  string `form:"preferred_name"  json:"preferred_name"  binding:"omitempty"`
 	Password       string `form:"password"        json:"password"        binding:"omitempty,min=8"`
 	VerifyPassword string `form:"verify_password" json:"verify_password" binding:"omitempty,min=8"`
+	StateCode      string `form:"code"            json:"code"            binding:"omitempty"`
 }
 
 func userActivateApi(c *gin.Context) {
@@ -41,6 +42,12 @@ func userActivateApi(c *gin.Context) {
 	if err := c.ShouldBind(&activateArgs); err != nil {
 		c.AbortWithError(400, err)
 		return
+	}
+
+	if activateArgs.StateCode != "" {
+		redirectData := map[string]string{}
+		model.StashFetch(activateArgs.StateCode, &redirectData)
+		c.Header("X-Redirect-Location", redirectData["Redirect"])
 	}
 
 	if activateArgs.Password != activateArgs.VerifyPassword {

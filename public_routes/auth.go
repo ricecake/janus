@@ -2,6 +2,7 @@ package public_routes
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/osin"
@@ -190,11 +191,28 @@ func signupSubmit(c *gin.Context) {
 		return
 	}
 
+	var code string
+	if referer, err := url.Parse(c.Request.Header.Get("Referer")); err == nil {
+		referer.Path = "/login"
+		stashCode, stashErr := model.StashTTL(&map[string]string{
+			"Redirect": referer.String(),
+		}, 86400)
+		if stashErr != nil {
+			c.Error(stashErr).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
+		code = stashCode
+	}
+
 	zipCode := model.ZipCode{
 		Identity:    user.Code,
 		Client:      viper.GetString("identity.issuer_id"),
 		TTL:         86400, // One day
 		RedirectUri: "/profile/activate",
+		Params: map[string]string{
+			"code": code,
+		},
 	}
 	if zipErr := zipCode.Save(); zipErr != nil {
 		c.Error(zipErr).SetType(gin.ErrorTypePrivate)

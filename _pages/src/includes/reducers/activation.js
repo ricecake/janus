@@ -15,26 +15,36 @@ const defaultState = {
 };
 
 
-export const submitForm = () => (dispatch, getState) => {
-	console.log(getState());
-	if (getState().activation.submitable) {
-		dispatch(submitFormStart());
-		let state = getState();
-		fetch("/profile/api/activate", {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${ state.oidc.user.access_token }`,
-			},
-			body: JSON.stringify({
-				password: state.activation.password,
-				verify_password: state.activation.verify_password,
-				preferred_name: state.activation.preferred_name,
-			}),
-		})
-		.then(res => res.json())
-		.then(res => dispatch(submitFormFinish(res)));
-	}
+export const submitForm = (event) =>{
+	event.preventDefault();
+	return (dispatch, getState) => {
+		console.log(getState());
+		if (getState().activation.submitable) {
+			dispatch(submitFormStart());
+			let state = getState();
+			fetch("/profile/api/activate", {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${ state.oidc.user.access_token }`,
+				},
+				body: JSON.stringify({
+					password: state.activation.password,
+					verify_password: state.activation.verify_password,
+					preferred_name: state.activation.preferred_name,
+					code: state.context.query.code,
+				}),
+			})
+			.then(res =>{
+				res.json().then(body => dispatch(submitFormFinish(body))).then(() => {
+					let headers = res.headers;
+					if (headers.has("X-Redirect-Location")) {
+						window.location = headers.get("X-Redirect-Location");
+					}
+				});
+			});
+		}
+	};
 };
 
 export const startSignin = () => (dispatch, getState) => {
