@@ -259,6 +259,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 			HttpOnly: true,
 		})
 	} else {
+		// TODO: make sure that the session we have is valid, don't just trust the token
 		sessionCode = *identData.Session
 	}
 

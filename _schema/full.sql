@@ -27,7 +27,6 @@ CREATE TABLE context (
 );
 
 CREATE TABLE action (
-    id serial NOT NULL PRIMARY KEY,
     context text NOT NULL REFERENCES context(code),
     name ltree not null,
     unique(context, name)
@@ -35,13 +34,11 @@ CREATE TABLE action (
 -- need to add a constraint so that we always have two actions for each context: root, and system, and all actions must be children of an existing action
 --  maybe a trigger on context create that adds them, and a constraint trigger on action create?
 CREATE TABLE role (
-    id serial NOT NULL PRIMARY KEY,
     context text NOT NULL REFERENCES context(code),
     name TEXT NOT NULL,
     unique(context, name)
 );
 CREATE TABLE clique (
-    id serial NOT NULL PRIMARY KEY,
     context text NOT NULL REFERENCES context(code),
     name TEXT NOT NULL,
     unique(context, name)
@@ -55,23 +52,29 @@ CREATE TABLE client (
 );
 
 CREATE TABLE role_to_action (
-    role integer NOT NULL REFERENCES role(id),
-    action integer not null references action(id),
-    unique(role, action)
-    -- Might be able to add a context column, and do a multi column foreign key, and not need to deal with int primary keys?
+    context text NOT NULL REFERENCES context(code),
+    role text NOT NULL,
+    action ltree not null,
+    unique(context, role, action),
+    foreign key (context, role) references role(context, name),
+    foreign key (context, action) references action(context, name)
 );
 
 CREATE TABLE ratelimit_prototype (
-    action integer unique NOT NULL references action(id),
+    context text NOT NULL REFERENCES context(code),
+    action ltree NOT NULL,
     minimum integer NOT NULL,
     maximum integer NOT NULL,
     rate integer NOT NULL,
     unit interval NOT NULL,
+    foreign key (context, action) references action(context, name),
     CONSTRAINT rate_limiter_template_check CHECK ((maximum > minimum)),
-    CONSTRAINT rate_limiter_template_rate_check CHECK ((rate >= 0))
+    CONSTRAINT rate_limiter_template_rate_check CHECK ((rate >= 0)),
+    unique(context, action)
 );
 CREATE TABLE ratelimit_instance (
-    action integer unique NOT NULL references action(id),
+    context text NOT NULL REFERENCES context(code),
+    action ltree NOT NULL,
     value text NOT NULL,
     durable boolean DEFAULT false NOT NULL,
     minimum integer NOT NULL,
@@ -80,17 +83,29 @@ CREATE TABLE ratelimit_instance (
     rate integer NOT NULL,
     unit interval NOT NULL,
     last_checked timestamp with time zone DEFAULT now() NOT NULL,
+    foreign key (context, action) references action(context, name),
     CONSTRAINT ratelimiter_instance_check CHECK ((maximum > minimum)),
     CONSTRAINT ratelimiter_instance_rate_check CHECK ((rate >= 0)),
-    unique(action, value)
+    unique(context, action, value)
 );
 
 
 CREATE TABLE identity_clique_role (
+    context text NOT NULL REFERENCES context(code),
     identity text not null references identity(code),
-    clique integer not null references clique(id),
-    role integer not null references role(id),
-    unique(identity, clique, role)
+    clique text not null,
+    role text not null,
+    unique(context, identity, clique, role),
+    foreign key (context, role) references clique(context, name),
+    foreign key (context, role) references role(context, name)
+);
+
+CREATE TABLE identity_role (
+    context text NOT NULL REFERENCES context(code),
+    identity text not null references identity(code),
+    role text not null,
+    unique(context, identity, role),
+    foreign key (context, role) references role(context, name)
 );
 
 
@@ -134,6 +149,7 @@ ALTER TABLE role_to_action OWNER to postgres;
 ALTER TABLE ratelimit_prototype OWNER to postgres;
 ALTER TABLE ratelimit_instance OWNER to postgres;
 ALTER TABLE identity_clique_role OWNER to postgres;
+ALTER TABLE identity_role OWNER TO postgres;
 ALTER TABLE session_token OWNER to postgres;
 ALTER TABLE access_context OWNER to postgres;
 ALTER TABLE revocation OWNER to postgres;
@@ -150,6 +166,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE role_to_action TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ratelimit_prototype TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE ratelimit_instance TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE identity_clique_role TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE identity_role TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE session_token TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE access_context TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE revocation TO janus;

@@ -1,16 +1,24 @@
 package model
 
 type Role struct {
-	Context int
+	Context string
+	Name    string
+}
+
+type UserCliqueRole struct {
+	Context string
+	User    string
+	Clique  string
+	Role    string
 }
 
 type UserRole struct {
-	User  int
-	Group int
-	Role  int
+	Context string
+	User    string
+	Role    string
 }
 
 type RoleAction struct {
-	Role   int
-	Action int
+	Role   string
+	Action string
 }

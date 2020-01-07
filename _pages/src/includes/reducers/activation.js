@@ -48,7 +48,9 @@ export const submitForm = (event) =>{
 };
 
 export const startSignin = () => (dispatch, getState) => {
-	userManager.signinSilent();
+	userManager.signinSilent().catch(()=>{
+		userManager.signinRedirect();
+	});
 	return;
 };
 
