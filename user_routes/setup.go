@@ -2,7 +2,7 @@ package user_routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/janus/http_middleware"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,7 +21,7 @@ func Configure(r *gin.RouterGroup) {
 	r.GET("/activate", userActivate)
 
 	apiGroup := r.Group("/api")
-	apiGroup.Use(util.NewAuthMiddleware())
+	apiGroup.Use(http_middleware.NewAuthMiddleware())
 
 	apiGroup.POST("/activate", userActivateApi)
 }

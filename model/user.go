@@ -291,3 +291,42 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 		}
 	}
 }
+
+type AclCheckRequest struct {
+	Identity string  `gorm:"column:identity;not null"`
+	Context  string  `gorm:"column:context;not null"`
+	Clique   *string `gorm:"column:clique;"`
+	Role     string  `gorm:"column:role;not null"`
+	Action   string  `gorm:"column:action;not null"`
+}
+
+func (this AclCheckRequest) TableName() string {
+	return "identity_access_summary"
+}
+
+func AclCheck(req AclCheckRequest) (allowed bool, err error) {
+	if req.Identity == "" {
+		err = fmt.Errorf("No Identity passed")
+		return
+	}
+	if req.Context == "" {
+		err = fmt.Errorf("No Context passed")
+		return
+	}
+	if req.Action == "" {
+		err = fmt.Errorf("No Action passed")
+		return
+	}
+
+	db := util.GetDb()
+	var count int
+
+	model := db.Model(req).Where(req)
+	if req.Clique == nil {
+		model = model.Where("clique is null")
+	}
+	err = model.Count(&count).Error
+	allowed = count > 0
+
+	return
+}

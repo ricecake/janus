@@ -1,4 +1,4 @@
-package util
+package http_middleware
 
 import (
 	"errors"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ricecake/janus/util"
 )
 
 func NewAuthMiddleware() gin.HandlerFunc {
@@ -20,7 +22,7 @@ func NewAuthMiddleware() gin.HandlerFunc {
 
 		var jwtParts map[string]interface{}
 
-		decErr := DecodeJWTOpen(headerParts[1], &jwtParts)
+		decErr := util.DecodeJWTOpen(headerParts[1], &jwtParts)
 		if decErr != nil {
 			log.Error("Bad token: ", decErr)
 			c.AbortWithError(401, errors.New("Invalid authorization")).SetType(gin.ErrorTypePublic)

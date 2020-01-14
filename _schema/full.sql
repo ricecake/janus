@@ -96,7 +96,7 @@ CREATE TABLE identity_clique_role (
     clique text not null,
     role text not null,
     unique(context, identity, clique, role),
-    foreign key (context, role) references clique(context, name),
+    foreign key (context, clique) references clique(context, name),
     foreign key (context, role) references role(context, name)
 );
 
@@ -171,5 +171,20 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE session_token TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE access_context TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE revocation TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE stash_data TO janus;
+
+create or replace view identity_access_summary as
+    select i.code as identity, ir.context, null as clique, ir.role, rta.action
+    from identity i
+    join identity_role ir on ir.identity = i.code
+    join role_to_action rta on rta.role = ir.role and ir.context = rta.context
+union
+    select i.code as identity, icr.context, icr.clique, icr.role, rta.action
+    from identity i
+    join identity_clique_role icr on icr.identity = i.code
+    join role_to_action rta on rta.context = icr.context and rta.role = icr.role
+;
+
+ALTER view identity_access_summary OWNER TO postgres;
+GRANT SELECT ON identity_access_summary TO janus;
 
 COMMIT;

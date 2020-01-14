@@ -1,6 +1,6 @@
 package model
 
 type Action struct {
-	Context int
+	Context string
 	Name    string
 }

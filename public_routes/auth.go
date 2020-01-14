@@ -125,13 +125,32 @@ func loginSubmit(c *gin.Context) {
 		Context:  &client.Context,
 	})
 
-	ar.Authorized = res.Success
+	permitted := res.Success
 
-	if res.Success {
+	if permitted {
+		allowed, err := model.AclCheck(model.AclCheckRequest{
+			Identity: res.Identity.Code,
+			Context:  client.Context,
+			Action:   client.ClientId,
+		})
+
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
+
+		permitted = permitted && allowed
+	}
+
+	ar.Authorized = permitted
+
+	if permitted {
 		userDetails, err := establishSession(c, client.Context, *res)
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
 		}
 		userDetails.Nonce = c.Query("nonce")
 		ar.UserData = userDetails

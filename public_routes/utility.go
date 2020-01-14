@@ -63,8 +63,22 @@ func checkAuthBackground(c *gin.Context) {
 	})
 
 	if res.Success {
-		c.Status(204)
-		return
+		allowed, err := model.AclCheck(model.AclCheckRequest{
+			Identity: res.Identity.Code,
+			Context:  client.Context,
+			Action:   client.ClientId,
+		})
+
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
+
+		if allowed {
+			c.Status(204)
+			return
+		}
 	}
 
 	redirect := c.GetHeader("X-Auth-Redirect")
@@ -79,19 +93,65 @@ func checkAuthBackground(c *gin.Context) {
 		return
 	}
 
+	idpClient, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
+	if clientErr != nil {
+		c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	redirectBase, err := url.Parse(idpClient.BaseUri)
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	redirectBase.Path = "/check/auth/redirect"
+
+	queryParams := url.Values{
+		"scope":         []string{"openid"},
+		"response_type": []string{"code"},
+		"state":         []string{stashCode},
+		"client_id":     []string{client.ClientId},
+		"redirect_uri":  []string{redirectBase.String()},
+	}
+	redirectBase.Path = "/login"
+	redirectBase.RawQuery = queryParams.Encode()
+
 	c.Header("X-Auth-State", stashCode)
 	c.Header("X-Auth-Scope", "openid")
+	c.Header("X-Redirect-Location", redirectBase.String())
 
-	c.AbortWithStatusJSON(res.FailureCode, res.FailureReason)
+	c.AbortWithStatusJSON(401, res.FailureReason)
 }
 
 func checkAuthRedirect(c *gin.Context) {
+	stateVar := c.Query("state")
+	var data map[string]string
+	if err := model.StashFetch(stateVar, &data); err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	if errMsg := c.Query("error"); errMsg != "" {
+		c.Error(fmt.Errorf(errMsg)).SetType(gin.ErrorTypePublic)
+		c.String(401, c.Query("error_description"))
+		c.Abort()
+		return
+	}
+
 	var encData model.AuthCodeData
 	if err := util.DecodeJWTClose(c.Query("code"), viper.GetString("security.passphrase"), &encData); err != nil {
 		c.Error(err).SetType(gin.ErrorTypePrivate)
 		c.AbortWithStatusJSON(500, "system error")
 	}
 
+	if encData.State != stateVar {
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
 	//TODO: validate that the code isn't expired.
 	// Need to make a generic function/interface for doing that, since it happens a lot
 
@@ -101,25 +161,30 @@ func checkAuthRedirect(c *gin.Context) {
 		return
 	}
 
-	stateVar := c.Query("state")
-	if encData.State != stateVar {
-		c.AbortWithStatusJSON(500, "system error")
-		return
-	}
-
-	var data map[string]string
-	if err := model.StashFetch(stateVar, &data); err != nil {
-		c.Error(err).SetType(gin.ErrorTypePrivate)
-		c.AbortWithStatusJSON(500, "system error")
-		return
-	}
-
 	res := attemptIdentifyUser(c, model.IdentificationRequest{
 		Strategy: model.SESSION_TOKEN,
 		Context:  &client.Context,
 	})
 
 	if res.Success {
+		allowed, err := model.AclCheck(model.AclCheckRequest{
+			Identity: res.Identity.Code,
+			Context:  client.Context,
+			Action:   client.ClientId,
+		})
+
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
+
+		if !allowed {
+			c.String(401, "Access to this system is not allowed")
+			c.Abort()
+			return
+		}
+
 		idp, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
 		if clientErr != nil {
 			log.Error("Error with own client?")
