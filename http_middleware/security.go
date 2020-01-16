@@ -27,17 +27,16 @@ func SecurityMiddleware() gin.HandlerFunc {
 	}
 
 	secureMiddleware := secure.New(secure.Options{
-		IsDevelopment:         viper.GetBool("development.insecure"),
-		SSLRedirect:           !viper.GetBool("development.insecure"),
-		SSLHost:               viper.GetString("http.host"),
-		STSSeconds:            viper.GetInt64("security.hsts"),
-		SSLProxyHeaders:       map[string]string{"X-Forwarded-Proto": "https"},
-		STSIncludeSubdomains:  true,
-		STSPreload:            true,
-		FrameDeny:             true,
-		ContentTypeNosniff:    true,
-		BrowserXssFilter:      true,
-		ContentSecurityPolicy: cspHeader,
+		IsDevelopment:           viper.GetBool("development.insecure"),
+		SSLRedirect:             !viper.GetBool("development.insecure"),
+		SSLHost:                 viper.GetString("http.host"),
+		STSSeconds:              viper.GetInt64("security.hsts"),
+		SSLProxyHeaders:         map[string]string{"X-Forwarded-Proto": "https"},
+		STSIncludeSubdomains:    true,
+		STSPreload:              true,
+		CustomFrameOptionsValue: "SAMEORIGIN",
+		BrowserXssFilter:        true,
+		ContentSecurityPolicy:   cspHeader,
 	})
 	return func(c *gin.Context) {
 		log.Info("Entering Security Middleware")
