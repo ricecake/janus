@@ -1,5 +1,5 @@
 {% extends "lib/basepage" %}
 
 {% block javascript %}
-<script type="text/javascript" src="/content/pages/signup.js"></script>
+<script type="text/javascript" src="/content/pages/signup.js" nonce="{{ CspNonce }}"></script>
 {% endblock %}

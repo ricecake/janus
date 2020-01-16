@@ -13,7 +13,7 @@ CREATE TABLE identity (
     family_name text
 );
 CREATE TABLE auth_password (
-    identity text not null unique references identity(code),
+    identity text not null unique references identity(code) ON DELETE CASCADE,
     totp_active boolean not null default false,
     hash text NOT NULL,
     totp text,
@@ -27,24 +27,24 @@ CREATE TABLE context (
 );
 
 CREATE TABLE action (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     name ltree not null,
     unique(context, name)
 );
 -- need to add a constraint so that we always have two actions for each context: root, and system, and all actions must be children of an existing action
 --  maybe a trigger on context create that adds them, and a constraint trigger on action create?
 CREATE TABLE role (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     name TEXT NOT NULL,
     unique(context, name)
 );
 CREATE TABLE clique (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     name TEXT NOT NULL,
     unique(context, name)
 );
 CREATE TABLE client (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     display_name text NOT NULL,
     client_id text NOT NULL UNIQUE,
     secret text NOT NULL,
@@ -52,28 +52,28 @@ CREATE TABLE client (
 );
 
 CREATE TABLE role_to_action (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     role text NOT NULL,
     action ltree not null,
     unique(context, role, action),
-    foreign key (context, role) references role(context, name),
-    foreign key (context, action) references action(context, name)
+    foreign key (context, role) references role(context, name) ON DELETE CASCADE,
+    foreign key (context, action) references action(context, name) ON DELETE CASCADE
 );
 
 CREATE TABLE ratelimit_prototype (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     action ltree NOT NULL,
     minimum integer NOT NULL,
     maximum integer NOT NULL,
     rate integer NOT NULL,
     unit interval NOT NULL,
-    foreign key (context, action) references action(context, name),
+    foreign key (context, action) references action(context, name) ON DELETE CASCADE,
     CONSTRAINT rate_limiter_template_check CHECK ((maximum > minimum)),
     CONSTRAINT rate_limiter_template_rate_check CHECK ((rate >= 0)),
     unique(context, action)
 );
 CREATE TABLE ratelimit_instance (
-    context text NOT NULL REFERENCES context(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     action ltree NOT NULL,
     value text NOT NULL,
     durable boolean DEFAULT false NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE ratelimit_instance (
     rate integer NOT NULL,
     unit interval NOT NULL,
     last_checked timestamp with time zone DEFAULT now() NOT NULL,
-    foreign key (context, action) references action(context, name),
+    foreign key (context, action) references action(context, name) ON DELETE CASCADE,
     CONSTRAINT ratelimiter_instance_check CHECK ((maximum > minimum)),
     CONSTRAINT ratelimiter_instance_rate_check CHECK ((rate >= 0)),
     unique(context, action, value)
@@ -91,27 +91,27 @@ CREATE TABLE ratelimit_instance (
 
 
 CREATE TABLE identity_clique_role (
-    context text NOT NULL REFERENCES context(code),
-    identity text not null references identity(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
+    identity text not null references identity(code) ON DELETE CASCADE,
     clique text not null,
     role text not null,
     unique(context, identity, clique, role),
-    foreign key (context, clique) references clique(context, name),
-    foreign key (context, role) references role(context, name)
+    foreign key (context, clique) references clique(context, name) ON DELETE CASCADE,
+    foreign key (context, role) references role(context, name) ON DELETE CASCADE
 );
 
 CREATE TABLE identity_role (
-    context text NOT NULL REFERENCES context(code),
-    identity text not null references identity(code),
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
+    identity text not null references identity(code) ON DELETE CASCADE,
     role text not null,
     unique(context, identity, role),
-    foreign key (context, role) references role(context, name)
+    foreign key (context, role) references role(context, name) ON DELETE CASCADE
 );
 
 
 CREATE TABLE session_token (
     code text not null primary key,
-    identity text NOT NULL references identity(code),
+    identity text NOT NULL references identity(code) ON DELETE CASCADE,
     user_agent text,
     ip_address text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -120,8 +120,8 @@ CREATE TABLE session_token (
 
 CREATE TABLE access_context (
     code text not null primary key,
-    session text  REFERENCES session_token(code),
-    client text NOT NULL REFERENCES client(client_id),
+    session text  REFERENCES session_token(code) ON DELETE CASCADE,
+    client text NOT NULL REFERENCES client(client_id) ON DELETE CASCADE,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 

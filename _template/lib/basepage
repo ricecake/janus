@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		{% autoescape off %}
-		<script id="server-params" type="application/json">{{ json_params }}</script>
+		<script id="server-params" type="application/json" nonce="{{ CspNonce }}">{{ json_params }}</script>
 		{% endautoescape %}
 
 		{% block meta %}
@@ -12,7 +12,7 @@
 			<meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"/>
 		{% endblock %}
 
-			<link rel="icon" href="/static/janus-icon.svg"  sizes="any" type="image/svg+xml">
+			<link rel="icon" href="/static/janus-icon.svg"  sizes="any" type="image/svg+xml" nonce="{{ CspNonce }}">
 
 		{% block title %}
 			<title>IDP</title>
@@ -21,42 +21,7 @@
 		{% block style %}
 		{% endblock %}
 
-		<!-- <style>
-			html {
-				background: rgb(0,203,0);
-				background: linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%);
-			}
-
-			#main {
-				width: 100%;
-				height: 100vh;
-			}
-
-			.dialog {
-				background-color:#2c9dd569;
-				margin: 0 auto;
-				margin-top: 25vh;
-				width: 25%;
-				padding: .5em 2em 2em 2em;
-				border-radius: 30px;
-			}
-
-			.dialog button {
-				border: none;
-				background: rgba(0,203,0,1);
-				border-radius: 15px;
-				margin-top: 1em;
-				width: 50%;
-				height: 4em;
-			}
-
-			/* .login fieldset label {
-				width: 8em;
-				padding-right: 4em;
-			} */
-		</style> -->
-
-		<script type="text/javascript" src="/content/libs/default.js"></script>
+		<script type="text/javascript" src="/content/libs/default.js" nonce="{{ CspNonce }}"></script>
 
 		{% block headExtras %}
 		{% endblock %}
@@ -72,8 +37,8 @@
 		{% block footer %}
 		{% endblock %}
 
-		<script type="text/javascript" src="/content/runtime.js"></script>
-		<script type="text/javascript" src="/content/vendors.js"></script>
+		<script type="text/javascript" src="/content/runtime.js" nonce="{{ CspNonce }}"></script>
+		<script type="text/javascript" src="/content/vendors.js" nonce="{{ CspNonce }}"></script>
 
 		{% block javascript %}
 		{% endblock %}

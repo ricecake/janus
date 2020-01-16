@@ -11,12 +11,15 @@ require (
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
 	github.com/pborman/uuid v1.2.0
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/ricecake/osin v1.1.0
 	github.com/sendgrid/rest v2.4.1+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.1
+	github.com/ulule/limiter/v3 v3.4.0
+	github.com/unrolled/secure v1.0.7
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	gopkg.in/square/go-jose.v2 v2.4.1
 )

@@ -90,6 +90,7 @@ func loginPage(c *gin.Context) {
 		"Name":     client.DisplayName,
 		"Param":    c.Request.URL.Query(),
 		"RawQuery": c.Request.URL.RawQuery,
+		"CspNonce": c.GetString("CspNonce"),
 	})
 
 	if renderErr != nil {
@@ -174,6 +175,7 @@ func signupPage(c *gin.Context) {
 		"Name":     client.DisplayName,
 		"Param":    c.Request.URL.Query(),
 		"RawQuery": c.Request.URL.RawQuery,
+		"CspNonce": c.GetString("CspNonce"),
 	})
 
 	if renderErr != nil {

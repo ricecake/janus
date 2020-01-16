@@ -383,3 +383,16 @@ type IDToken struct {
 	GivenName     string `json:"given_name,omitempty"`
 	PreferredName string `json:"preferred_name,omitempty"`
 }
+
+func Cleanup() {
+	db := util.GetDb()
+
+	simpleRecordTypes := []interface{}{
+		StashToken{},
+		SessionToken{},
+		RevocationEntry{},
+	}
+	for _, recType := range simpleRecordTypes {
+		db.Where("created_at + expires_in * interval '1 second' < now()").Delete(recType)
+	}
+}

@@ -12,6 +12,7 @@ import (
 func userActivate(c *gin.Context) {
 	body, renderErr := util.RenderHTMLTemplate("activate", util.TemplateContext{
 		"client_id": viper.GetString("identity.issuer_id"),
+		"CspNonce":  c.GetString("CspNonce"),
 	})
 
 	if renderErr != nil {

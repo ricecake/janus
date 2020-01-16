@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/ricecake/janus/http_middleware"
 	"github.com/ricecake/janus/public_routes"
 	"github.com/ricecake/janus/user_routes"
 	"github.com/ricecake/janus/util"
@@ -60,8 +61,10 @@ func init() {
 
 func setupRouter(r *gin.Engine) {
 
+	r.Use(http_middleware.RateLimiter())
 	r.Use(gin.Logger())
 	r.Use(gin.RecoveryWithWriter(log.StandardLogger().Writer()))
+	r.Use(http_middleware.SecurityMiddleware())
 
 	rootGroup := r.Group("/")
 
