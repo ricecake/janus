@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/http_middleware"
+	"github.com/ricecake/janus/model"
 	"github.com/ricecake/janus/public_routes"
 	"github.com/ricecake/janus/user_routes"
 	"github.com/ricecake/janus/util"
@@ -29,10 +31,14 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		ticker := time.NewTicker(10 * time.Second)
 		quit := make(chan struct{})
 		go func() {
 			for {
 				select {
+				case <-ticker.C:
+					model.Cleanup()
 				case <-quit:
 					return
 				}
