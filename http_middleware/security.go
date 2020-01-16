@@ -102,7 +102,10 @@ func SecurityMiddleware() gin.HandlerFunc {
 		// Some paths are never allowed via cors
 		for _, forbidPath := range viper.GetStringSlice("security.cors.forbid") {
 			if strings.HasPrefix(requestPath, forbidPath) {
-				log.Error("CORS Policy expressly forbifs URL")
+				log.WithFields(log.Fields{
+					"request_url": requestPath,
+					"prefix_rule": forbidPath,
+				}).Error("CORS Policy expressly forbifs URL")
 				allow = false
 				break
 			}
