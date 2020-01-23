@@ -300,7 +300,7 @@ type AccessToken struct {
 	UserCode   string `json:"sub"`
 	Expiration int64  `json:"exp"`
 	IssuedAt   int64  `json:"iat"`
-	TokenCode  string `json:"jti"`
+	Code       string `json:"jti"`
 	ClientId   string `json:"azp"`
 
 	Nonce         string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
@@ -309,7 +309,7 @@ type AccessToken struct {
 	Scope         string `json:"scope,omitempty"`
 }
 type RefreshToken struct {
-	TokenCode   string      `json:"jti"`
+	Code        string      `json:"jti"`
 	AccessToken AccessToken `json:"ati"`
 
 	ExpiresIn   int32
@@ -325,7 +325,7 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		Issuer:     viper.GetString("identity.issuer"),
 		Expiration: data.CreatedAt.Add(time.Duration(data.ExpiresIn) * time.Second).Unix(),
 		IssuedAt:   data.CreatedAt.Unix(),
-		TokenCode:  util.CompactUUID(),
+		Code:       util.CompactUUID(),
 		Scope:      data.Scope,
 		ClientId:   data.Client.GetId(),
 	}
@@ -344,7 +344,7 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 
 	if generaterefresh {
 		plainRefreshToken := RefreshToken{
-			TokenCode:   util.CompactUUID(),
+			Code:        util.CompactUUID(),
 			AccessToken: accessTokenData,
 			ExpiresIn:   data.ExpiresIn,
 			Scope:       data.Scope,

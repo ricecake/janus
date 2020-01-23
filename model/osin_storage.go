@@ -81,7 +81,7 @@ func (s *DbStorage) RemoveAccess(code string) error {
 		return err
 	}
 
-	return InsertRevocation(encData.TokenCode, int(encData.Expiration-encData.IssuedAt))
+	return InsertRevocation(encData.Code, int(encData.Expiration-encData.IssuedAt))
 }
 
 func (s *DbStorage) LoadRefresh(code string) (*osin.AccessData, error) {
@@ -102,7 +102,7 @@ func (s *DbStorage) LoadRefresh(code string) (*osin.AccessData, error) {
 		return nil, osin.ErrNotFound
 	}
 
-	if EntityRevoked(encData.TokenCode) {
+	if EntityRevoked(encData.Code) {
 		return nil, osin.ErrNotFound
 	}
 
@@ -119,7 +119,13 @@ func (s *DbStorage) LoadRefresh(code string) (*osin.AccessData, error) {
 }
 
 func (s *DbStorage) RemoveRefresh(code string) error {
-	return nil
+	var encData RefreshToken
+	if err := util.DecodeJWTClose(code, viper.GetString("security.passphrase"), &encData); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return InsertRevocation(encData.Code, int(encData.ExpiresIn))
 }
 
 func (s *DbStorage) SaveAccess(data *osin.AccessData) error {
