@@ -274,6 +274,10 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 	}
 
 	user := identData.Identity
+	perms, permsErr := model.ActionsForIdentity(user.Code)
+	if permsErr != nil {
+		return nil, permsErr
+	}
 
 	var sessionCode string
 	if identData.Session == nil {
@@ -346,8 +350,11 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 	})
 
 	return &model.UserAuthDetails{
-		Code:    user.Code,
-		Browser: sessionCode,
-		Context: accessContext.Code,
+		Code:      user.Code,
+		Browser:   sessionCode,
+		Context:   accessContext.Code,
+		Strength:  identData.Strength,
+		Method:    identData.Method,
+		Permitted: perms,
 	}, nil
 }

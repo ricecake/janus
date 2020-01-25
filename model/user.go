@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -266,6 +268,10 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 
 		zipCode, zipErr := FetchZipCode(*req.ZipCode)
 		if zipErr != nil {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "missing code",
+			}
 		}
 
 		db := util.GetDb()
@@ -328,5 +334,28 @@ func AclCheck(req AclCheckRequest) (allowed bool, err error) {
 	err = model.Count(&count).Error
 	allowed = count > 0
 
+	return
+}
+
+func ActionsForIdentity(identCode string) (allowed []string, err error) {
+	if identCode == "" {
+		err = fmt.Errorf("No Identity passed")
+		return
+	}
+
+	db := util.GetDb()
+	var results []AclCheckRequest
+
+	err = db.Where("identity = ?", identCode).Find(&results).Error
+
+	for _, acl := range results {
+		action := acl.Action
+		if acl.Clique != nil {
+			action = strings.Join([]string{*acl.Clique, action}, ".")
+		}
+		allowed = append(allowed, action)
+	}
+
+	sort.Strings(allowed)
 	return
 }

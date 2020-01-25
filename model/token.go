@@ -256,12 +256,13 @@ func FetchZipCode(code string) (zip ZipCode, zipErr error) {
 type TokenGenerator struct{}
 
 type UserAuthDetails struct {
-	Code     string
-	Nonce    string
-	Browser  string
-	Context  string
-	Strength int
-	Method   string
+	Code      string
+	Nonce     string
+	Browser   string
+	Context   string
+	Strength  string
+	Method    string
+	Permitted []string
 }
 type AuthCodeData struct {
 	Code                string
@@ -303,10 +304,15 @@ type AccessToken struct {
 	Code       string `json:"jti"`
 	ClientId   string `json:"azp"`
 
-	Nonce         string `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
-	ValidResource string `json:"aud,omitempty"`
-	ContextCode   string `json:"ctx,omitempty"`
-	Scope         string `json:"scope,omitempty"`
+	Nonce         string   `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
+	ValidResource string   `json:"aud,omitempty"`
+	ContextCode   string   `json:"ctx,omitempty"`
+	Scope         string   `json:"scope,omitempty"`
+	Permitted     []string `json:"perm,omitempty"`
+
+	Browser  string `json:"bro,omitempty"`
+	Strength string `json:"acr,omitempty"`
+	Method   string `json:"amr,omitempty"`
 }
 type RefreshToken struct {
 	Code        string      `json:"jti"`
@@ -335,6 +341,10 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		accessTokenData.Nonce = authDetails.Nonce
 		accessTokenData.ContextCode = authDetails.Context
 		accessTokenData.UserCode = authDetails.Code
+		accessTokenData.Permitted = authDetails.Permitted
+		accessTokenData.Browser = authDetails.Browser
+		accessTokenData.Strength = authDetails.Strength
+		accessTokenData.Method = authDetails.Method
 	}
 
 	accessToken, err = util.EncodeJWTOpen(accessTokenData)
