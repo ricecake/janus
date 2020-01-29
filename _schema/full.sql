@@ -2,7 +2,6 @@ CREATE DATABASE janus_app;
 \c janus_app
 BEGIN;
 CREATE EXTENSION citext;
-CREATE EXTENSION ltree;
 
 CREATE TABLE identity (
     code text  NOT NULL PRIMARY KEY,
@@ -28,7 +27,7 @@ CREATE TABLE context (
 
 CREATE TABLE action (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
-    name ltree not null,
+    name text not null,
     unique(context, name)
 );
 -- need to add a constraint so that we always have two actions for each context: root, and system, and all actions must be children of an existing action
@@ -54,7 +53,7 @@ CREATE TABLE client (
 CREATE TABLE role_to_action (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     role text NOT NULL,
-    action ltree not null,
+    action text not null,
     unique(context, role, action),
     foreign key (context, role) references role(context, name) ON DELETE CASCADE,
     foreign key (context, action) references action(context, name) ON DELETE CASCADE
@@ -62,7 +61,7 @@ CREATE TABLE role_to_action (
 
 CREATE TABLE ratelimit_prototype (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
-    action ltree NOT NULL,
+    action text NOT NULL,
     minimum integer NOT NULL,
     maximum integer NOT NULL,
     rate integer NOT NULL,
@@ -74,7 +73,7 @@ CREATE TABLE ratelimit_prototype (
 );
 CREATE TABLE ratelimit_instance (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
-    action ltree NOT NULL,
+    action text NOT NULL,
     value text NOT NULL,
     durable boolean DEFAULT false NOT NULL,
     minimum integer NOT NULL,
