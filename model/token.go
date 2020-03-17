@@ -100,6 +100,7 @@ func EnsureAccessContext(con *AccessContext) error {
 
 type RevocationEntry struct {
 	EntityCode string    `gorm:"column:entity_code;not null"`
+	Field      string    `gorm:"column:field;not null; default:'jti'"`
 	CreatedAt  time.Time `gorm:"column:created_at;not null"`
 	ExpiresIn  int       `gorm:"column:expires_in;not null"`
 }

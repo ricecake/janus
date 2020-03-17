@@ -1,8 +1,9 @@
 package model
 
 type Role struct {
-	Context string
-	Name    string
+	Context   string
+	Name      string
+	Automatic bool
 }
 
 type UserCliqueRole struct {

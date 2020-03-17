@@ -274,7 +274,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 	}
 
 	user := identData.Identity
-	perms, permsErr := model.ActionsForIdentity(user.Code)
+	perms, permsErr := model.ActionsForIdentity(user.Code, context)
 	if permsErr != nil {
 		return nil, permsErr
 	}

@@ -120,6 +120,7 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 			token.GivenName = this.GivenName
 		}
 		if claims["roles"] {
+			//TODO: 1) this, 2) make sure to include automatic roles
 		}
 		if claims["cliques"] {
 		}
@@ -337,7 +338,7 @@ func AclCheck(req AclCheckRequest) (allowed bool, err error) {
 	return
 }
 
-func ActionsForIdentity(identCode string) (allowed []string, err error) {
+func ActionsForIdentity(identCode, context string) (allowed []string, err error) {
 	if identCode == "" {
 		err = fmt.Errorf("No Identity passed")
 		return
@@ -346,7 +347,7 @@ func ActionsForIdentity(identCode string) (allowed []string, err error) {
 	db := util.GetDb()
 	var results []AclCheckRequest
 
-	err = db.Where("identity = ?", identCode).Find(&results).Error
+	err = db.Where("identity = ? AND context = ?", identCode, context).Find(&results).Error
 
 	for _, acl := range results {
 		action := acl.Action
