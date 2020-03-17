@@ -328,9 +328,14 @@ func AclCheck(req AclCheckRequest) (allowed bool, err error) {
 	db := util.GetDb()
 	var count int
 
-	model := db.Model(req).Where(req)
+	model := db.Model(req)
 	if req.Clique == nil {
-		model = model.Where("clique is null")
+		model = model.Where(req).Where("clique is null")
+	} else {
+		clique := req.Clique
+		req.Clique = nil
+		model = model.Where(req).Where("clique = ? or clique is null", clique)
+		req.Clique = clique
 	}
 	err = model.Count(&count).Error
 	allowed = count > 0
