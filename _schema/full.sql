@@ -35,6 +35,7 @@ CREATE TABLE action (
 CREATE TABLE role (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    automatic boolean default false,
     unique(context, name)
 );
 CREATE TABLE clique (
@@ -126,6 +127,7 @@ CREATE TABLE access_context (
 
 CREATE TABLE revocation (
     entity_code text not null PRIMARY KEY,
+    field text not null default 'jti',
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     expires_in integer
 );
@@ -176,6 +178,11 @@ create or replace view identity_access_summary as
     from identity i
     join identity_role ir on ir.identity = i.code
     join role_to_action rta on rta.role = ir.role and ir.context = rta.context
+union
+    select i.code as identity, rta.context, null as clique, r.name as role, rta.action
+    from identity i, role r
+    join role_to_action rta on rta.context = r.context and rta.role = r.name
+    where r.automatic
 union
     select i.code as identity, icr.context, icr.clique, icr.role, rta.action
     from identity i
