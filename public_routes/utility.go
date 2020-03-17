@@ -266,6 +266,28 @@ func processZipCode(c *gin.Context) {
 	c.AbortWithStatusJSON(401, res.FailureReason)
 }
 
+func listRevocation(c *gin.Context) {
+	revoked, revErr := model.ListRevocations()
+	if revErr != nil {
+		c.Error(revErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatus(500)
+	}
+
+	revMap := make(map[string]map[string]map[string]int)
+	for _, revocation := range revoked {
+		typeMap, ok := revMap[revocation.Field]
+		if !ok {
+			typeMap = make(map[string]map[string]int)
+			revMap[revocation.Field] = typeMap
+		}
+		typeMap[revocation.EntityCode] = map[string]int{
+			"created_at": int(revocation.CreatedAt.Unix()),
+			"expires_in": revocation.ExpiresIn,
+		}
+	}
+	c.JSON(200, revMap)
+}
+
 func establishSession(c *gin.Context, context string, identData model.IdentificationResult) (*model.UserAuthDetails, error) {
 	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
 	if clientErr != nil {

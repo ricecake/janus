@@ -128,6 +128,14 @@ func EntityRevoked(entity string) bool {
 	return !db.Where("entity_code = ?", entity).First(&RevocationEntry{}).RecordNotFound()
 }
 
+func ListRevocations() ([]RevocationEntry, error) {
+	db := util.GetDb()
+	var results []RevocationEntry
+
+	err := db.Find(&results).Error
+	return results, err
+}
+
 type StashToken struct {
 	UUID      string    `gorm:"column:uuid;       not null" json:"-"`
 	Data      []byte    `gorm:"column:data;       not null" json:"-"`

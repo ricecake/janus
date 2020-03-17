@@ -41,4 +41,5 @@ func Configure(r *gin.RouterGroup) {
 
 	r.GET("/check/username", checkUsername)
 	r.POST("/check/auth", checkAuth)
+	r.GET("/revocation", listRevocation)
 }
