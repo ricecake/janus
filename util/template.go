@@ -74,7 +74,6 @@ func ensureTemplates() {
 		pageSet.Debug = viper.GetBool("template.debug")
 
 		for index, element := range viper.GetStringMap("template.globals") {
-			log.Info(index, element)
 			pageSet.Globals[index] = element
 		}
 

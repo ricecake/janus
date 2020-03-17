@@ -119,7 +119,7 @@ func InsertRevocation(entity string, ttl int) error {
 
 	log.Info("Revoking entity ", revocationEntry.EntityCode)
 
-	return db.Create(&revocationEntry).Error
+	return db.Set("gorm:insert_option", "ON CONFLICT DO NOTHING").Create(&revocationEntry).Error
 }
 
 func EntityRevoked(entity string) bool {

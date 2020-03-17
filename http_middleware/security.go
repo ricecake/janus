@@ -39,8 +39,8 @@ func SecurityMiddleware() gin.HandlerFunc {
 		ContentSecurityPolicy:   cspHeader,
 	})
 	return func(c *gin.Context) {
-		log.Info("Entering Security Middleware")
-		defer log.Info("Exiting Security Middleware")
+		log.Trace("Entering Security Middleware")
+		defer log.Trace("Exiting Security Middleware")
 
 		cspNonce, err := secureMiddleware.ProcessAndReturnNonce(c.Writer, c.Request)
 		if err != nil {
@@ -53,7 +53,7 @@ func SecurityMiddleware() gin.HandlerFunc {
 
 		if c.Request.Method != "OPTIONS" {
 			if status := c.Writer.Status(); status > 300 && status < 399 {
-				log.Info("Sec Middleware redirect")
+				log.Trace("Sec Middleware redirect")
 				c.Abort()
 				return
 			}
@@ -61,14 +61,15 @@ func SecurityMiddleware() gin.HandlerFunc {
 
 		origin := c.Request.Header.Get("Origin")
 		if origin == "" {
-			log.Info("Sec Middleware no-origin")
+			log.Trace("Sec Middleware no-origin")
 			return
 		}
 
 		host := c.Request.Host
-		log.Printf("Host: %s Origin: %s", host, origin)
+		// This should get set as log metadata once there are request contexts
+		// log.Printf("Host: %s Origin: %s", host, origin)
 		if origin == "http://"+host || origin == "https://"+host {
-			log.Info("Sec Middleware not cors")
+			log.Trace("Sec Middleware not cors")
 			return
 		}
 

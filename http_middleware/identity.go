@@ -12,7 +12,7 @@ import (
 
 func NewAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Info("Starting auth")
+		log.Trace("Starting auth")
 		headerParts := strings.SplitN(c.GetHeader("Authorization"), " ", 2)
 		if len(headerParts) != 2 || strings.ToLower(headerParts[0]) != "bearer" {
 			log.Error("Malformed header")
