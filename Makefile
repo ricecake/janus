@@ -16,7 +16,7 @@ release:
 	go build -ldflags "-s -w" -o bin/janus
 
 content:
-	cd _pages; npm run build
+	$(MAKE) -C _pages
 
 package: release content
 	rm -rf _package/janus;
