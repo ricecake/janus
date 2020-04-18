@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/model"
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 )
 
 func discovery(c *gin.Context) {

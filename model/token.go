@@ -9,8 +9,9 @@ import (
 	"github.com/ricecake/osin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"gopkg.in/square/go-jose.v2"
 
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 )
 
 type SessionToken struct {
@@ -128,12 +129,21 @@ func EntityRevoked(entity string) bool {
 	return !db.Where("entity_code = ?", entity).First(&RevocationEntry{}).RecordNotFound()
 }
 
-func ListRevocations() ([]RevocationEntry, error) {
+func ListRevocations() (*util.RevMap, error) {
 	db := util.GetDb()
 	var results []RevocationEntry
 
 	err := db.Find(&results).Error
-	return results, err
+	if err != nil {
+		return nil, err
+	}
+
+	revMap := util.NewRevMap()
+	for _, rev := range results {
+		revMap.Add(rev.Field, rev.EntityCode, int(rev.CreatedAt.Unix()), rev.ExpiresIn)
+	}
+
+	return revMap, nil
 }
 
 type StashToken struct {
@@ -414,4 +424,20 @@ func Cleanup() {
 	for _, recType := range simpleRecordTypes {
 		db.Where("created_at + expires_in * interval '1 second' < now()").Delete(recType)
 	}
+}
+
+type LocalVerifierCache struct {
+}
+
+func NewLocalVerifierCache() (newCacher *LocalVerifierCache) {
+	newCacher = &LocalVerifierCache{}
+	return newCacher
+}
+
+func (verifier *LocalVerifierCache) Fetch() (*jose.JSONWebKeySet, *util.RevMap, error) {
+	revoked, revErr := ListRevocations()
+	if revErr != nil {
+		return nil, nil, revErr
+	}
+	return util.Keys, revoked, nil
 }

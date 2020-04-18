@@ -13,11 +13,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ricecake/janus/http_middleware"
+	"github.com/ricecake/karma_chameleon/http_middleware"
 	"github.com/ricecake/janus/model"
 	"github.com/ricecake/janus/public_routes"
 	"github.com/ricecake/janus/user_routes"
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 )
 
 // serverCmd represents the server command

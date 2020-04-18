@@ -3,7 +3,7 @@ package model
 import (
 	log "github.com/sirupsen/logrus"
 
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 )
 
 type Context struct {

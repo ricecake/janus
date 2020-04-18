@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/ricecake/janus/model"
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 )
 
 func defaultPage(c *gin.Context)   {}
@@ -273,19 +273,7 @@ func listRevocation(c *gin.Context) {
 		c.AbortWithStatus(500)
 	}
 
-	revMap := make(map[string]map[string]map[string]int)
-	for _, revocation := range revoked {
-		typeMap, ok := revMap[revocation.Field]
-		if !ok {
-			typeMap = make(map[string]map[string]int)
-			revMap[revocation.Field] = typeMap
-		}
-		typeMap[revocation.EntityCode] = map[string]int{
-			"created_at": int(revocation.CreatedAt.Unix()),
-			"expires_in": revocation.ExpiresIn,
-		}
-	}
-	c.JSON(200, revMap)
+	c.JSON(200, revoked)
 }
 
 func establishSession(c *gin.Context, context string, identData model.IdentificationResult) (*model.UserAuthDetails, error) {

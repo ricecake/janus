@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/janus/model"
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 	"github.com/spf13/viper"
 )
 

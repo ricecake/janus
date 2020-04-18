@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ricecake/janus/util"
+	"github.com/ricecake/karma_chameleon/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
