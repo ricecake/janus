@@ -51,6 +51,18 @@ CREATE TABLE client (
     base_uri text
 );
 
+CREATE TABLE resource (
+    context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
+    display_name text NOT NULL,
+    code text NOT NULL UNIQUE,
+)
+
+CREATE TABLE client_to_resource (
+    client_id text not null references client(client_id) on delete CASCADE,
+    resource text not null references resource(code) on delete cascade,
+    unique(client_id, resource)
+)
+
 CREATE TABLE role_to_action (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     role text NOT NULL,
@@ -192,5 +204,32 @@ union
 
 ALTER view identity_access_summary OWNER TO postgres;
 GRANT SELECT ON identity_access_summary TO janus;
+
+-- This is for the "What can you log into page"
+create or replace view identity_allowed_clients as
+    select
+        identity,
+        jsonb_pretty(jsonb_agg(context_data))
+    from (
+        select
+            ias.identity,
+            jsonb_build_object(
+                'context', c.code,
+                'display_name', c.name,
+                'clients', jsonb_agg(jsonb_build_object(
+                    'client_id', cl.client_id,
+                    'display_name', cl.display_name,
+                    'base_uri', cl.base_uri
+                ))) as context_data
+        from identity_access_summary ias
+        join context c on c.code = ias.context
+        join client cl on cl.context = c.code and cl.client_id = ias.action
+        group by ias.identity, c.code, c.name
+        order by c.code
+    ) a
+    group by identity;
+
+ALTER view identity_allowed_clients OWNER TO postgres;
+GRANT SELECT ON identity_allowed_clients TO janus;
 
 COMMIT;
