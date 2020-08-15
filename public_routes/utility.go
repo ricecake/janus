@@ -343,7 +343,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 	}
 
 	accessContext := model.AccessContext{
-		Session:   sessionCode,
+		Session:   &sessionCode,
 		Client:    client.ClientId,
 		CreatedAt: time.Now(),
 	}
@@ -366,5 +366,9 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 		Strength:  identData.Strength,
 		Method:    identData.Method,
 		Permitted: perms,
+		// TODO: Can this be populated with at least the set of clients the user can hit?
+		// Maybe intersect that with the set of resources that this client might direct a user to hit?
+		// That would require tracking that, which wouldn't be the worst idea...
+		//		ValidResource: []string{client.ClientId},
 	}, nil
 }

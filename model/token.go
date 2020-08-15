@@ -78,7 +78,7 @@ func ReplaceSessionToken(sessid, newSessid string) error {
 
 type AccessContext struct {
 	Code      string    `gorm:"column:code;not null"`
-	Session   string    `gorm:"column:session;not null"`
+	Session   *string   `gorm:"column:session;not null"`
 	Client    string    `gorm:"column:client;not null"`
 	CreatedAt time.Time `gorm:"column:created_at;not null"`
 }
@@ -275,13 +275,14 @@ func FetchZipCode(code string) (zip ZipCode, zipErr error) {
 type TokenGenerator struct{}
 
 type UserAuthDetails struct {
-	Code      string
-	Nonce     string
-	Browser   string
-	Context   string
-	Strength  string
-	Method    string
-	Permitted []string
+	Code          string
+	Nonce         string
+	Browser       string
+	Context       string
+	Strength      string
+	Method        string
+	ValidResource []string
+	Permitted     []string
 }
 type AuthCodeData struct {
 	Code                string
@@ -324,7 +325,7 @@ type AccessToken struct {
 	ClientId   string `json:"azp"`
 
 	Nonce         string   `json:"nonce,omitempty"` // Non-manditory fields MUST be "omitempty"
-	ValidResource string   `json:"aud,omitempty"`
+	ValidResource []string `json:"aud,omitempty"`
 	ContextCode   string   `json:"ctx,omitempty"`
 	Scope         string   `json:"scope,omitempty"`
 	Permitted     []string `json:"perm,omitempty"`
@@ -364,6 +365,7 @@ func (a *TokenGenerator) GenerateAccessToken(data *osin.AccessData, generaterefr
 		accessTokenData.Browser = authDetails.Browser
 		accessTokenData.Strength = authDetails.Strength
 		accessTokenData.Method = authDetails.Method
+		accessTokenData.ValidResource = authDetails.ValidResource
 	}
 
 	accessToken, err = util.EncodeJWTOpen(accessTokenData)

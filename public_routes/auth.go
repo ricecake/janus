@@ -26,7 +26,9 @@ func init() {
 	sconfig.AllowedAuthorizeTypes = osin.AllowedAuthorizeType{osin.CODE, osin.TOKEN}
 	sconfig.AllowedAccessTypes = osin.AllowedAccessType{
 		osin.AUTHORIZATION_CODE,
+		osin.CLIENT_CREDENTIALS,
 		osin.REFRESH_TOKEN,
+		osin.PASSWORD,
 		osin.IMPLICIT,
 	}
 	server = osin.NewServer(sconfig, model.NewDbStorage())
@@ -259,6 +261,7 @@ func logoutPage(c *gin.Context)   {}
 func logoutSubmit(c *gin.Context) {}
 
 type AuthParams struct {
+	Username *string `form:"username" json:"username"`
 	Email    *string `form:"email" json:"email"`
 	Password *string `form:"password" json:"password"`
 	Totp     *string `form:"totp" json:"totp"`
@@ -268,7 +271,12 @@ func attemptIdentifyUser(c *gin.Context, authData model.IdentificationRequest) *
 	if authData.Strategy == model.NONE || authData.Strategy == model.PASSWORD {
 		var authParams AuthParams
 		if c.ShouldBind(&authParams) == nil {
-			if authParams.Email != nil {
+			// For RFC compliance, sometimes this field
+			// must be "Username", even though it's email in the structure
+			if authParams.Username != nil {
+				authData.Strategy = model.PASSWORD
+				authData.Email = authParams.Username
+			} else if authParams.Email != nil {
 				authData.Strategy = model.PASSWORD
 				authData.Email = authParams.Email
 			}

@@ -2,6 +2,7 @@ package public_routes
 
 import (
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/osin"
@@ -56,41 +57,113 @@ func accessToken(c *gin.Context) {
 	defer response.Close()
 
 	if ar := server.HandleAccessRequest(response, c.Request); ar != nil {
+		var authorized bool
+		var auth_decided bool
+
 		switch ar.Type {
-		case osin.AUTHORIZATION_CODE:
-			ar.Authorized = true
-		case osin.REFRESH_TOKEN:
-			ar.Authorized = true
-		}
+		case osin.PASSWORD:
+			client, clientErr := model.FindClientById(ar.Client.GetId())
+			if clientErr != nil {
+				response.InternalError = clientErr
+				break
+			}
+			context := client.Context
 
-		if ar.UserData != nil {
-			authDetails := ar.UserData.(*model.UserAuthDetails)
-			ident, err := model.FindIdentityById(authDetails.Code)
-			if err != nil {
-				response.InternalError = err
-			} else {
-				scopes := make(map[string]bool)
-				for _, s := range strings.Fields(ar.Scope) {
-					scopes[s] = true
+			identData := attemptIdentifyUser(c, model.IdentificationRequest{
+				Strategy: model.PASSWORD,
+				Context:  &client.Context,
+			})
+
+			permitted := identData.Success
+			user := identData.Identity
+
+			if permitted {
+				allowed, err := model.AclCheck(model.AclCheckRequest{
+					Identity: identData.Identity.Code,
+					Context:  client.Context,
+					Action:   client.ClientId,
+				})
+
+				if err != nil {
+					response.InternalError = err
+					break
 				}
-				token := ident.IdentityToken(scopes)
 
-				token.ClientID = ar.Client.GetId()
-				token.Nonce = authDetails.Nonce
+				permitted = permitted && allowed
+			}
 
-				encToken, err := util.EncodeJWTOpen(token)
+			if !auth_decided {
+				authorized = permitted
+				auth_decided = true
+			}
+
+			perms, permsErr := model.ActionsForIdentity(user.Code, context)
+			if permsErr != nil {
+				response.InternalError = permsErr
+				break
+			}
+
+			accessContext := model.AccessContext{
+				Client:    client.ClientId,
+				CreatedAt: time.Now(),
+			}
+			if err := model.EnsureAccessContext(&accessContext); err != nil {
+				response.InternalError = err
+				break
+			}
+
+			ar.UserData = &model.UserAuthDetails{
+				Code:          user.Code,
+				Context:       accessContext.Code,
+				Strength:      identData.Strength,
+				Method:        identData.Method,
+				ValidResource: []string{client.ClientId},
+				Permitted:     perms,
+			}
+
+			fallthrough
+		case osin.AUTHORIZATION_CODE:
+			if !auth_decided {
+				authorized = true
+				auth_decided = true
+			}
+			fallthrough
+		case osin.REFRESH_TOKEN:
+			if !auth_decided {
+				authorized = true
+				auth_decided = true
+			}
+			if ar.UserData != nil {
+				authDetails := ar.UserData.(*model.UserAuthDetails)
+				ident, err := model.FindIdentityById(authDetails.Code)
 				if err != nil {
 					response.InternalError = err
 				} else {
-					response.Output["id_token"] = encToken
+					scopes := make(map[string]bool)
+					for _, s := range strings.Fields(ar.Scope) {
+						scopes[s] = true
+					}
+					token := ident.IdentityToken(scopes)
+
+					token.ClientID = ar.Client.GetId()
+					token.Nonce = authDetails.Nonce
+
+					encToken, err := util.EncodeJWTOpen(token)
+					if err != nil {
+						response.InternalError = err
+					} else {
+						response.Output["id_token"] = encToken
+					}
 				}
 			}
+		}
 
-			// Record errors as internal server errors.
-			if response.InternalError != nil {
-				response.IsError = true
-				response.ErrorId = osin.E_SERVER_ERROR
-			}
+		ar.Authorized = authorized
+
+		// Record errors as internal server errors.
+		if response.InternalError != nil {
+			response.IsError = true
+			response.ErrorId = osin.E_SERVER_ERROR
 		}
 
 		server.FinishAccessRequest(response, c.Request, ar)
