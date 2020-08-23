@@ -97,6 +97,10 @@ func accessToken(c *gin.Context) {
 				auth_decided = true
 			}
 
+			if !authorized {
+				break
+			}
+
 			perms, permsErr := model.ActionsForIdentity(user.Code, context)
 			if permsErr != nil {
 				response.InternalError = permsErr
