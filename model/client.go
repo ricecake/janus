@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/ricecake/karma_chameleon/util"
@@ -68,4 +69,28 @@ func FindClientById(id string) (client Client, err error) {
 		err = fmt.Errorf("Invalid client id")
 	}
 	return client, err
+}
+
+func ActionsForClient(identCode, context string) (allowed []string, err error) {
+	/**
+	For Now, this is just going to return all actions in a context.
+	Long term, should have tables that can put clients into groups,
+	and also assign actions to specific clients.
+	**/
+	if identCode == "" {
+		err = fmt.Errorf("No Identity passed")
+		return
+	}
+
+	db := util.GetDb()
+	var results []Action
+
+	err = db.Where("context = ?", context).Find(&results).Error
+
+	for _, act := range results {
+		allowed = append(allowed, act.Name)
+	}
+
+	sort.Strings(allowed)
+	return
 }

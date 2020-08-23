@@ -61,6 +61,36 @@ func accessToken(c *gin.Context) {
 		var auth_decided bool
 
 		switch ar.Type {
+		case osin.CLIENT_CREDENTIALS:
+			client, clientErr := model.FindClientById(ar.Client.GetId())
+			if clientErr != nil {
+				response.InternalError = clientErr
+				break
+			}
+			if client.ClientSecretMatches("") {
+				// Don't allow public clients to be used this way
+				if !auth_decided {
+					authorized = false
+					auth_decided = true
+				}
+
+			}
+
+			perms, actErr := model.ActionsForClient(client.ClientId, client.Context)
+			if actErr != nil {
+				response.InternalError = actErr
+				break
+			}
+
+			authorized = true
+			ar.UserData = &model.UserAuthDetails{
+				Code:      client.ClientId,
+				Context:   client.Context,
+				Strength:  "1",
+				Method:    "client credentials",
+				Permitted: perms,
+			}
+
 		case osin.PASSWORD:
 			client, clientErr := model.FindClientById(ar.Client.GetId())
 			if clientErr != nil {
