@@ -27,7 +27,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
-	github.com/ugorji/go/codec v1.2.3 // indirect
+	github.com/ugorji/go v1.2.3 // indirect
 	github.com/ulule/limiter/v3 v3.8.0 // indirect
 	github.com/unrolled/secure v1.0.8 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect

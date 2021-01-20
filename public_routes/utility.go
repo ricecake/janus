@@ -77,6 +77,8 @@ func checkAuthBackground(c *gin.Context) {
 
 		if allowed {
 			c.Status(204)
+			c.Header("X-Identity-Email", res.Identity.Email)
+			c.Header("X-Identity-Name", res.Identity.PreferredName)
 			return
 		}
 	}

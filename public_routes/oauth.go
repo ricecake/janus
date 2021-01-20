@@ -1,6 +1,7 @@
 package public_routes
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -50,7 +51,36 @@ func publicKeys(c *gin.Context) {
 	c.JSON(200, util.Keys)
 }
 
-func userInfo(c *gin.Context) {}
+func userInfo(c *gin.Context) {
+	s := strings.SplitN(c.Request.Header.Get("Authorization"), " ", 2)
+	if len(s) != 2 || strings.ToLower(s[0]) != "bearer" {
+		c.AbortWithError(401, errors.New("Invalid authorization header")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	var encData model.AccessToken
+	if err := util.DecodeJWTOpen(s[1], &encData); err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(401, errors.New("Invalid authorization header")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	user, err := model.FindIdentityById(encData.UserCode)
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(401, errors.New("Invalid authorization header")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	scopes := make(map[string]bool)
+	for _, s := range strings.Fields(encData.Scope) {
+		scopes[s] = true
+	}
+
+	idToken := user.IdentityToken(scopes)
+
+	c.JSON(200, idToken)
+}
 
 func accessToken(c *gin.Context) {
 	response := server.NewResponse()
@@ -58,7 +88,7 @@ func accessToken(c *gin.Context) {
 
 	if ar := server.HandleAccessRequest(response, c.Request); ar != nil {
 		var authorized bool
-		var auth_decided bool
+		var authDecided bool
 
 		switch ar.Type {
 		case osin.CLIENT_CREDENTIALS:
@@ -69,9 +99,9 @@ func accessToken(c *gin.Context) {
 			}
 			if client.ClientSecretMatches("") {
 				// Don't allow public clients to be used this way
-				if !auth_decided {
+				if !authDecided {
 					authorized = false
-					auth_decided = true
+					authDecided = true
 				}
 
 			}
@@ -122,9 +152,9 @@ func accessToken(c *gin.Context) {
 				permitted = permitted && allowed
 			}
 
-			if !auth_decided {
+			if !authDecided {
 				authorized = permitted
-				auth_decided = true
+				authDecided = true
 			}
 
 			if !authorized {
@@ -157,15 +187,15 @@ func accessToken(c *gin.Context) {
 
 			fallthrough
 		case osin.AUTHORIZATION_CODE:
-			if !auth_decided {
+			if !authDecided {
 				authorized = true
-				auth_decided = true
+				authDecided = true
 			}
 			fallthrough
 		case osin.REFRESH_TOKEN:
-			if !auth_decided {
+			if !authDecided {
 				authorized = true
-				auth_decided = true
+				authDecided = true
 			}
 			if ar.UserData != nil {
 				authDetails := ar.UserData.(*model.UserAuthDetails)
