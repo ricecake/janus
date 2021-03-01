@@ -168,6 +168,23 @@ func checkAuthRedirect(c *gin.Context) {
 		Context:  &client.Context,
 	})
 
+	redirectBase, err := url.Parse(data["redirect"])
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	idpBase, err := url.Parse(viper.GetString("identity.issuer"))
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	trunkDomain := util.TrunkUrlFragment([]string{redirectBase.Host, idpBase.Host})
+	cookieName := fmt.Sprintf("janus.auth.session.%s", client.Context)
+
 	if res.Success {
 		allowed, err := model.AclCheck(model.AclCheckRequest{
 			Identity: res.Identity.Code,
@@ -212,23 +229,8 @@ func checkAuthRedirect(c *gin.Context) {
 			return
 		}
 
-		redirectBase, err := url.Parse(data["redirect"])
-		if err != nil {
-			c.Error(err).SetType(gin.ErrorTypePrivate)
-			c.AbortWithStatusJSON(500, "system error")
-			return
-		}
-
-		idpBase, err := url.Parse(viper.GetString("identity.issuer"))
-		if err != nil {
-			c.Error(err).SetType(gin.ErrorTypePrivate)
-			c.AbortWithStatusJSON(500, "system error")
-			return
-		}
-
-		cookieName := fmt.Sprintf("janus.auth.session.%s", client.Context)
 		http.SetCookie(c.Writer, &http.Cookie{
-			Domain:   util.TrunkUrlFragment([]string{redirectBase.Host, idpBase.Host}),
+			Domain:   trunkDomain,
 			Name:     cookieName,
 			Value:    encToken,
 			Path:     "/",
@@ -237,6 +239,8 @@ func checkAuthRedirect(c *gin.Context) {
 		})
 
 		c.Redirect(302, data["redirect"])
+	} else {
+		clearSessionCookie(c, cookieName, trunkDomain)
 	}
 }
 
@@ -373,4 +377,15 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 		// That would require tracking that, which wouldn't be the worst idea...
 		//		ValidResource: []string{client.ClientId},
 	}, nil
+}
+
+func clearSessionCookie(c *gin.Context, cookieName, domain string) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Domain:   domain,
+		Name:     cookieName,
+		Value:    "",
+		Path:     "/",
+		Secure:   !viper.GetBool("development.insecure"),
+		HttpOnly: true,
+	})
 }

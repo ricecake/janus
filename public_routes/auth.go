@@ -291,9 +291,9 @@ func attemptIdentifyUser(c *gin.Context, authData model.IdentificationRequest) *
 		}
 	}
 
+	cookieName := fmt.Sprintf("janus.auth.session.%s", *authData.Context)
 	if authData.Strategy == model.NONE || authData.Strategy == model.SESSION_TOKEN {
 		if authData.Context != nil {
-			cookieName := fmt.Sprintf("janus.auth.session.%s", *authData.Context)
 			for _, cookie := range c.Request.Cookies() {
 				if cookie.Name == cookieName {
 					if cookieVal := cookie.Value; cookieVal != "" {
@@ -306,5 +306,14 @@ func attemptIdentifyUser(c *gin.Context, authData model.IdentificationRequest) *
 		}
 	}
 
-	return model.IdentifyFromCredentials(authData)
+	authResult := model.IdentifyFromCredentials(authData)
+	if !authResult.Success {
+		for _, cookie := range c.Request.Cookies() {
+			if cookie.Name == cookieName {
+				clearSessionCookie(c, cookieName, cookie.Domain)
+			}
+		}
+	}
+
+	return authResult
 }
