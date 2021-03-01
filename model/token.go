@@ -19,7 +19,7 @@ type SessionToken struct {
 	Identity  string    `gorm:"column:identity;not null"`
 	UserAgent string    `gorm:"column:user_agent;not null"`
 	IpAddress string    `gorm:"column:ip_address;not null"`
-	CreatedAt time.Time `gorm:"column:created_at;not null"`
+	CreatedAt time.Time `gorm:"column:created_at;not null;autoCreateTime"`
 	ExpiresIn int       `gorm:"column:expires_in;not null"`
 }
 
@@ -31,6 +31,7 @@ func CreateSessionToken(tok *SessionToken) error {
 	db := util.GetDb()
 
 	if tok.Code == "" {
+		log.Info("Generating new session code")
 		tok.Code = util.CompactUUID()
 	}
 	log.Info("Creating session ", tok.Code)
@@ -67,7 +68,7 @@ func ReplaceSessionToken(sessid, newSessid string) error {
 		ExpiresIn:  int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()),
 	}
 
-	if err := db.Create(&revocationEntry).Error; err != nil {
+	if err := db.Set("gorm:insert_option", "ON CONFLICT DO NOTHING").Create(&revocationEntry).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -80,7 +81,7 @@ type AccessContext struct {
 	Code      string    `gorm:"column:code;not null"`
 	Session   *string   `gorm:"column:session;not null"`
 	Client    string    `gorm:"column:client;not null"`
-	CreatedAt time.Time `gorm:"column:created_at;not null"`
+	CreatedAt time.Time `gorm:"column:created_at;not null;autoCreateTime"`
 }
 
 func (this AccessContext) TableName() string {
@@ -91,8 +92,10 @@ func EnsureAccessContext(con *AccessContext) error {
 	db := util.GetDb()
 
 	if db.Where("session = ? AND client = ?", con.Session, con.Client).Find(&con).RecordNotFound() {
+		if con.Code == "" {
+			con.Code = util.CompactUUID()
+		}
 		log.Info("Creating context ", con.Code)
-		con.Code = util.CompactUUID()
 		return db.Create(&con).Error
 	}
 
@@ -102,7 +105,7 @@ func EnsureAccessContext(con *AccessContext) error {
 type RevocationEntry struct {
 	EntityCode string    `gorm:"column:entity_code;not null"`
 	Field      string    `gorm:"column:field;not null; default:'jti'"`
-	CreatedAt  time.Time `gorm:"column:created_at;not null"`
+	CreatedAt  time.Time `gorm:"column:created_at;not null;autoCreateTime"`
 	ExpiresIn  int       `gorm:"column:expires_in;not null"`
 }
 
@@ -149,7 +152,7 @@ func ListRevocations() (*util.RevMap, error) {
 type StashToken struct {
 	UUID      string    `gorm:"column:uuid;       not null" json:"-"`
 	Data      []byte    `gorm:"column:data;       not null" json:"-"`
-	CreatedAt time.Time `gorm:"column:created_at; not null" json:"-"`
+	CreatedAt time.Time `gorm:"column:created_at; not null; autoCreateTime" json:"-"`
 	ExpiresIn int       `gorm:"column:expires_in; not null" json:"-"`
 }
 

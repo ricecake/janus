@@ -257,9 +257,9 @@ func signupSubmit(c *gin.Context) {
 
 	c.Status(204)
 }
-func logoutPage(c *gin.Context)   {}
-func logoutSubmit(c *gin.Context) {}
 
+func logoutPage(c *gin.Context)   {}
+func logoutSubmit(c *gin.Context) {} // TODO: this should revoked the users session token
 type AuthParams struct {
 	Username *string `form:"username" json:"username"`
 	Email    *string `form:"email" json:"email"`

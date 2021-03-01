@@ -18,6 +18,21 @@ import (
 func defaultPage(c *gin.Context)   {}
 func checkUsername(c *gin.Context) {}
 
+func authDetails(c *gin.Context) {
+	/* TODO:
+	Given a username, should return what auth mechanisms are valid for that user,
+	as well as any two factor type options, and settings for those auth choices.
+	If it's password, it should do something like returning password, and if two factor is required for this user.
+	If it's webauthn, should return basic webauthn settings for picking an identity.
+	Need to make it so that the login for just prompts for username at first, and then shows the available options.
+	Should ideally show a password/otp input, and a button for webauthn if it's available.
+	Or should the page just try webauthn if it's available?  Maybe only if we can check that the identity is present.
+	Need to add some tables for tracking webauthn identities.
+
+	Should look into using that gorm schema generator, and adding swagger stuff while I'm in here.
+	*/
+}
+
 func checkAuth(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 
@@ -82,6 +97,8 @@ func checkAuthBackground(c *gin.Context) {
 			return
 		}
 	}
+
+	log.Errorf("Failed to auth: %s", res.FailureReason)
 
 	redirect := c.GetHeader("X-Auth-Redirect")
 	if redirect == "" {
@@ -236,6 +253,7 @@ func checkAuthRedirect(c *gin.Context) {
 			Path:     "/",
 			Secure:   !viper.GetBool("development.insecure"),
 			HttpOnly: true,
+			MaxAge:   int(token.Expiration),
 		})
 
 		c.Redirect(302, data["redirect"])
@@ -342,6 +360,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 			Path:     "/",
 			Secure:   !viper.GetBool("development.insecure"),
 			HttpOnly: true,
+			MaxAge:   int(token.Expiration),
 		})
 	} else {
 		// TODO: make sure that the session we have is valid, don't just trust the token
@@ -387,5 +406,6 @@ func clearSessionCookie(c *gin.Context, cookieName, domain string) {
 		Path:     "/",
 		Secure:   !viper.GetBool("development.insecure"),
 		HttpOnly: true,
+		MaxAge:   -1,
 	})
 }
