@@ -253,7 +253,7 @@ func checkAuthRedirect(c *gin.Context) {
 			Path:     "/",
 			Secure:   !viper.GetBool("development.insecure"),
 			HttpOnly: true,
-			MaxAge:   int(token.Expiration),
+			MaxAge:   int(time.Until(time.Unix(token.Expiration, 0)).Seconds()),
 		})
 
 		c.Redirect(302, data["redirect"])
@@ -360,7 +360,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 			Path:     "/",
 			Secure:   !viper.GetBool("development.insecure"),
 			HttpOnly: true,
-			MaxAge:   int(token.Expiration),
+			MaxAge:   int(time.Until(time.Unix(token.Expiration, 0)).Seconds()),
 		})
 	} else {
 		// TODO: make sure that the session we have is valid, don't just trust the token
