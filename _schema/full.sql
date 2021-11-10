@@ -209,10 +209,12 @@ GRANT SELECT ON identity_access_summary TO janus;
 create or replace view identity_allowed_clients as
     select
         identity,
+        email,
         jsonb_pretty(jsonb_agg(context_data))
     from (
         select
             ias.identity,
+            i.email,
             jsonb_build_object(
                 'context', c.code,
                 'display_name', c.name,
@@ -222,12 +224,13 @@ create or replace view identity_allowed_clients as
                     'base_uri', cl.base_uri
                 ))) as context_data
         from identity_access_summary ias
+        join identity i on i.code = ias.identity
         join context c on c.code = ias.context
         join client cl on cl.context = c.code and cl.client_id = ias.action
-        group by ias.identity, c.code, c.name
+        group by ias.identity, i.email, c.code, c.name
         order by c.code
     ) a
-    group by identity;
+    group by identity, email;
 
 ALTER view identity_allowed_clients OWNER TO postgres;
 GRANT SELECT ON identity_allowed_clients TO janus;

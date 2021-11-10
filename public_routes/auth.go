@@ -63,21 +63,40 @@ func loginPage(c *gin.Context) {
 			Context:  &client.Context,
 		})
 		if res.Success {
-			ar.Authorized = res.Success
-			userDetails, err := establishSession(c, client.Context, *res)
+			permitted := res.Success
+
+			allowed, err := model.AclCheck(model.AclCheckRequest{
+				Identity: res.Identity.Code,
+				Context:  client.Context,
+				Action:   client.ClientId,
+			})
+
 			if err != nil {
 				c.Error(err).SetType(gin.ErrorTypePrivate)
 				c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+				return
 			}
-			userDetails.Nonce = c.Query("nonce")
-			ar.UserData = userDetails
-			server.FinishAuthorizeRequest(response, c.Request, ar)
 
-			if response.IsError && response.InternalError != nil {
-				log.Printf("internal error: %v", response.InternalError)
+			permitted = permitted && allowed
+
+			if permitted {
+				ar.Authorized = permitted
+
+				userDetails, err := establishSession(c, client.Context, *res)
+				if err != nil {
+					c.Error(err).SetType(gin.ErrorTypePrivate)
+					c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+				}
+				userDetails.Nonce = c.Query("nonce")
+				ar.UserData = userDetails
+				server.FinishAuthorizeRequest(response, c.Request, ar)
+
+				if response.IsError && response.InternalError != nil {
+					log.Printf("internal error: %v", response.InternalError)
+				}
+				osin.OutputJSON(response, c.Writer, c.Request)
+				return
 			}
-			osin.OutputJSON(response, c.Writer, c.Request)
-			return
 		}
 	}
 
