@@ -231,6 +231,7 @@ type ZipCode struct {
 	TTL         int
 	RedirectUri string
 	Params      map[string]string
+	Signup      bool
 }
 
 func (zip *ZipCode) Save() error {

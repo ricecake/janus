@@ -9,8 +9,8 @@ import (
 	"github.com/ricecake/osin"
 	"github.com/spf13/viper"
 
-	"github.com/ricecake/janus/model"
 	"github.com/ricecake/karma_chameleon/util"
+	"janus/model"
 )
 
 func discovery(c *gin.Context) {

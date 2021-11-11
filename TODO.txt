@@ -1,0 +1,11 @@
+Need to move all the ui stuff into ui folder.
+need to convert it to using a single entry point, and react router, instead of weird, bespoke html pages.
+Need to make sure that that singe entry point still gets templated, to load the csp nonce
+
+remove using redux oidc stuff for login to profile pages.
+	instead, just do something closer to the background auth checking.  We're the idp, we can just look at the cookie.
+
+See if different entry points work as desired, with only including what's needed for each page, or if big spa with delayed loading works just as well.
+
+Need to make sure that we can still provide data from the backend to the page as it renders.
+	this is for stuff like "app name".  Ideally, we still pass it by templating in tags that get rendered to json

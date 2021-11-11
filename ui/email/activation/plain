@@ -1,0 +1,5 @@
+To activate your {{ .IDP_Name }} account, please visit:
+
+{{ .IDP_Site }}/zip/{{ .Code }}
+
+and follow the provided instructions.

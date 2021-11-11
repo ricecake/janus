@@ -16,12 +16,11 @@
 *.out
 
 *.bak
-bin
 *.tar.gz
 *.tgz
-_package/janus
+*.db
 
-_pages/build
-_pages/node_modules
-
+bin
+node_modules
+util/content/*
 scratch

@@ -11,8 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/ricecake/janus/model"
 	"github.com/ricecake/karma_chameleon/util"
+	"janus/model"
 )
 
 func defaultPage(c *gin.Context)   {}
@@ -272,6 +272,18 @@ func processZipCode(c *gin.Context) {
 	})
 
 	if res.Success {
+		if res.ZipCode.Signup {
+			// If it's a signup, activate the user since they just verified
+			identity := res.Identity
+			identity.Active = true
+
+			saveErr := identity.SaveChanges()
+			if saveErr != nil {
+				c.AbortWithError(400, saveErr)
+				return
+			}
+
+		}
 		idp, clientErr := model.FindClientById(res.ZipCode.Client)
 		if clientErr != nil {
 			c.Error(clientErr).SetType(gin.ErrorTypePrivate)

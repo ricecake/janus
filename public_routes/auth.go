@@ -9,8 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/ricecake/janus/model"
-	"github.com/ricecake/karma_chameleon/util"
+	"janus/model"
+	"janus/util"
 )
 
 var (
@@ -65,6 +65,8 @@ func loginPage(c *gin.Context) {
 		if res.Success {
 			permitted := res.Success
 
+			//TODO: this and the other one needs to account for what happens if this is the initial login to activate the user
+			//	maybe hitting the zip link should just activate the user?  At that point, they're confirmed...
 			allowed, err := model.AclCheck(model.AclCheckRequest{
 				Identity: res.Identity.Code,
 				Context:  client.Context,
@@ -107,20 +109,13 @@ func loginPage(c *gin.Context) {
 		return
 	}
 
-	body, renderErr := util.RenderHTMLTemplate("login", util.TemplateContext{
-		"Name":     client.DisplayName,
-		"Param":    c.Request.URL.Query(),
-		"RawQuery": c.Request.URL.RawQuery,
+	c.HTML(200, "template.html", gin.H{
 		"CspNonce": c.GetString("CspNonce"),
+		"preload": gin.H{
+			"Name":     client.DisplayName,
+			"RawQuery": c.Request.URL.RawQuery,
+		},
 	})
-
-	if renderErr != nil {
-		c.Error(renderErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-		return
-	}
-
-	c.Data(200, "text/html", body)
 }
 
 func loginSubmit(c *gin.Context) {
@@ -192,20 +187,14 @@ func signupPage(c *gin.Context) {
 		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
 		return
 	}
-	body, renderErr := util.RenderHTMLTemplate("signup", util.TemplateContext{
-		"Name":     client.DisplayName,
-		"Param":    c.Request.URL.Query(),
-		"RawQuery": c.Request.URL.RawQuery,
+
+	c.HTML(200, "template.html", gin.H{
 		"CspNonce": c.GetString("CspNonce"),
+		"preload": gin.H{
+			"Name":     client.DisplayName,
+			"RawQuery": c.Request.URL.RawQuery,
+		},
 	})
-
-	if renderErr != nil {
-		c.Error(renderErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-		return
-	}
-
-	c.Data(200, "text/html", body)
 }
 
 type SignupParams struct {
@@ -251,6 +240,7 @@ func signupSubmit(c *gin.Context) {
 		Identity:    user.Code,
 		Client:      viper.GetString("identity.issuer_id"),
 		TTL:         86400, // One day
+		Signup:      true,
 		RedirectUri: "/profile/activate",
 		Params: map[string]string{
 			"code": code,

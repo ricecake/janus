@@ -1,37 +1,47 @@
-all: test build content
+all: format lint compile test
+
+compile: deps build
+
+quick: js-build go-build
 
 test:
 	go test -v ./...
 
-format:
+format: go-fmt js-fmt
+
+js-fmt:
+	npm run format
+
+go-fmt:
 	go fmt ./...
 
-deps:
+lint: go-lint js-lint
+
+go-lint:
+	go vet
+
+js-lint:
+	echo "nope"
+
+deps: js-deps go-deps
+
+js-deps:
+	npm install
+
+go-deps:
 	go mod tidy
 
-build:
+js: js-deps js-build
+
+js-build:
+	npm run build
+
+go: go-deps go-build
+
+go-build:
 	go build -o bin/janus
 
-release:
+build: js-build go-build
+
+release: go-deps js
 	go build -ldflags "-s -w" -o bin/janus
-
-content:
-	$(MAKE) -C _pages
-
-package: release content
-	rm -rf _package/janus;
-	mkdir -p _package/janus;
-
-	cp -R bin _package/janus/bin;
-
-	mkdir -p _package/janus/assets;
-	cp -R _template _package/janus/assets/template;
-	cp -R _static _package/janus/assets/static;
-	cp -R _pages/build _package/janus/assets/content;
-
-	mkdir -p _package/janus/util
-	cp _package/janus.service _package/janus/util;
-	cp _package/backupCommand.sh _package/janus/util;
-	cp -R _schema _package/janus/util/schema;
-
-	tar -czf _package/janus.tar.gz -C _package janus;

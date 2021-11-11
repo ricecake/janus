@@ -1,9 +1,10 @@
-module github.com/ricecake/janus
+module janus
 
-go 1.13
+go 1.16
 
 require (
 	github.com/flosch/pongo2 v0.0.0-20200913210552-0d938eb266f3 // indirect
+	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
@@ -20,7 +21,7 @@ require (
 	github.com/ricecake/karma_chameleon v0.0.0-20210119201005-e6cac86d64d3
 	github.com/ricecake/osin v1.1.0
 	github.com/sendgrid/rest v2.6.2+incompatible // indirect
-	github.com/sendgrid/sendgrid-go v3.7.2+incompatible // indirect
+	github.com/sendgrid/sendgrid-go v3.7.2+incompatible
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.5.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect

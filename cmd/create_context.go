@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/ricecake/janus/model"
+	"janus/model"
 )
 
 // ContextCmd represents the Context command

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ricecake/janus/model"
 	"github.com/ricecake/karma_chameleon/util"
 	"github.com/spf13/viper"
+	"janus/model"
 )
 
 func userActivate(c *gin.Context) {
