@@ -2,6 +2,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
+const util = require('util');
 const glob = require('glob');
 const path = require('path');
 const webpack = require('webpack');
@@ -35,6 +36,7 @@ if (process.env.production) {
 
 module.exports = {
 	mode: mode,
+	devtool: 'source-map',
 	entry: {
 		app: path.resolve(__dirname, 'ui/app.jsx'),
 	},
@@ -56,6 +58,23 @@ module.exports = {
 			filename: 'template.html',
 			favicon: path.resolve(__dirname) + '/ui/static/janus-icon.svg',
 			template: path.resolve(__dirname, 'ui/serverTemplate.ejs'),
+			templateParameters: (compilation, assets, assetTags, options) => {
+				assetTags.headTags.forEach(
+					(tag) => (tag.attributes['nonce'] = '{{.CspNonce}}')
+				);
+				assetTags.bodyTags.forEach(
+					(tag) => (tag.attributes['nonce'] = '{{.CspNonce}}')
+				);
+				return {
+					compilation,
+					webpackConfig: compilation.options,
+					htmlWebpackPlugin: {
+						tags: assetTags,
+						files: assets,
+						options,
+					},
+				};
+			},
 		}),
 		new CopyWebpackPlugin({
 			patterns: [
@@ -69,6 +88,28 @@ module.exports = {
 					favicon:
 						path.resolve(__dirname) + '/ui/static/janus-icon.svg',
 					filename: page,
+					templateParameters: (
+						compilation,
+						assets,
+						assetTags,
+						options
+					) => {
+						assetTags.headTags.forEach(
+							(tag) => (tag.attributes['nonce'] = '{{.CspNonce}}')
+						);
+						assetTags.bodyTags.forEach(
+							(tag) => (tag.attributes['nonce'] = '{{.CspNonce}}')
+						);
+						return {
+							compilation,
+							webpackConfig: compilation.options,
+							htmlWebpackPlugin: {
+								tags: assetTags,
+								files: assets,
+								options,
+							},
+						};
+					},
 				})
 		),
 	],

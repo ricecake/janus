@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title><%= htmlWebpackPlugin.options.title %></title>
-    <script>window.__PRELOADED_STATE__ = {{.preload | json}}</script>
+    <script nonce="{{.CspNonce}}">window.__PRELOADED_STATE__ = {{.preload | json}}</script>
   </head>
   <body>
   </body>

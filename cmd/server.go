@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,7 +21,6 @@ import (
 	"janus/user_routes"
 	"janus/util"
 
-	static "github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/karma_chameleon/http_middleware"
 	kutil "github.com/ricecake/karma_chameleon/util"
@@ -80,8 +80,6 @@ func setupRouter(r *gin.Engine) {
 	r.Use(gin.RecoveryWithWriter(log.StandardLogger().Writer()))
 	r.Use(http_middleware.SecurityMiddleware())
 
-	r.Use(static.Serve("/", EmbedFolder(util.Content, "content")))
-
 	tmpl := template.New("react")
 	tmpl.Funcs(template.FuncMap{
 		"json": func(data gin.H) template.JS {
@@ -93,8 +91,47 @@ func setupRouter(r *gin.Engine) {
 		},
 	})
 
-	html := template.Must(tmpl.ParseFS(util.Content, "content/template.html"))
-	r.SetHTMLTemplate(html)
+	r.SetHTMLTemplate(tmpl)
+
+	walkErr := fs.WalkDir(util.Content, "content", func(currPath string, dir fs.DirEntry, err error) error {
+		if path.Ext(currPath) == ".html" {
+			relative, relErr := filepath.Rel("content", currPath)
+			if relErr != nil {
+				return relErr
+			}
+			tplData, readErr := fs.ReadFile(util.Content, currPath)
+			if readErr != nil {
+				return readErr
+			}
+
+			_, parseErr := tmpl.New(relative).Parse(string(tplData))
+			return parseErr
+		}
+		return nil
+	})
+
+	if walkErr != nil {
+		log.Fatal(walkErr)
+	}
+
+	staticFs := EmbedFolder(util.Content, "content")
+	r.Use(func(c *gin.Context) {
+		reqPath := c.Request.URL.Path
+		if found, index := staticFs.Exists("/", c.Request.URL.Path); found {
+			if index {
+				reqPath = path.Join(reqPath, "index.html")
+			}
+
+			if path.Ext(reqPath) == ".html" {
+				c.HTML(200, strings.TrimPrefix(reqPath, "/"), gin.H{
+					"CspNonce": c.GetString("CspNonce"),
+				})
+			} else {
+				c.FileFromFS(reqPath, staticFs)
+			}
+			c.Abort()
+		}
+	})
 
 	rootGroup := r.Group("/")
 
@@ -108,33 +145,35 @@ type embedFileSystem struct {
 	http.FileSystem
 }
 
-func (e embedFileSystem) Exists(prefix string, reqPath string) bool {
+func (e embedFileSystem) Exists(prefix string, reqPath string) (found, index bool) {
 	if reqPath != "/" {
 		reqPath = strings.TrimSuffix(reqPath, "/")
 	}
 
 	file, err := e.Open(reqPath)
 	if err != nil {
-		return false
+		return false, false
 	}
 
 	stats, err := file.Stat()
 	if err != nil {
-		return false
+		return false, false
 	}
 
+	isIndex := false
 	if stats.IsDir() {
 		index := path.Join(reqPath, "index.html")
 		_, err := e.Open(index)
 		if err != nil {
-			return false
+			return false, false
 		}
+		isIndex = true
 	}
 
-	return true
+	return true, isIndex
 }
 
-func EmbedFolder(fsEmbed embed.FS, targetPath string) static.ServeFileSystem {
+func EmbedFolder(fsEmbed embed.FS, targetPath string) embedFileSystem {
 	fsys, err := fs.Sub(fsEmbed, targetPath)
 	if err != nil {
 		panic(err)
