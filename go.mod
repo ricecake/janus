@@ -4,8 +4,7 @@ go 1.16
 
 require (
 	github.com/flosch/pongo2 v0.0.0-20200913210552-0d938eb266f3 // indirect
-	github.com/gin-gonic/gin v1.6.3
-	github.com/go-playground/validator/v10 v10.4.1 // indirect
+	github.com/gin-gonic/gin v1.7.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/uuid v1.1.5 // indirect
 	github.com/jinzhu/gorm v1.9.16 // indirect
