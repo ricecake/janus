@@ -1,11 +1,14 @@
 package model
 
 import (
+	"encoding/base64"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/duo-labs/webauthn/protocol"
+	"github.com/duo-labs/webauthn/webauthn"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
@@ -34,6 +37,19 @@ type AuthPassword struct {
 
 func (this AuthPassword) TableName() string {
 	return "auth_password"
+}
+
+type WebauthnCredential struct {
+	Identity               string
+	Id                     string
+	PublicKey              string
+	AttestationType        string
+	AuthenticatorGUID      string
+	AuthenticatorSignCount int
+}
+
+func (wc WebauthnCredential) TableName() string {
+	return "webauthn_credential"
 }
 
 func CreateIdentity(ident *Identity) error {
@@ -100,6 +116,19 @@ func (this *Identity) SetPassword(password string) (err error) {
 	return err
 }
 
+func (this *Identity) AddWebauthnCredential(wc *webauthn.Credential) (err error) {
+	db := util.GetDb()
+	cred := WebauthnCredential{
+		Identity:               this.Code,
+		Id:                     base64.StdEncoding.EncodeToString(wc.ID),
+		PublicKey:              base64.StdEncoding.EncodeToString(wc.PublicKey),
+		AttestationType:        wc.AttestationType,
+		AuthenticatorGUID:      base64.StdEncoding.EncodeToString(wc.Authenticator.AAGUID),
+		AuthenticatorSignCount: int(wc.Authenticator.SignCount),
+	}
+	return db.Create(&cred).Error
+}
+
 func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 	issued := time.Now()
 	expires := issued.Add(time.Duration(viper.GetInt("identity.ttl")) * time.Hour)
@@ -133,6 +162,78 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 	return token
 }
 
+func (user Identity) WebAuthnID() []byte {
+	return []byte(user.Code)
+}
+
+func (user Identity) WebAuthnName() string {
+	return user.Email
+}
+
+func (user Identity) WebAuthnDisplayName() string {
+	return user.PreferredName
+}
+
+func (user Identity) WebAuthnIcon() string {
+	return ""
+}
+
+func (user Identity) WebAuthnCredentials() (creds []webauthn.Credential) {
+	db := util.GetDb()
+	var webCreds []WebauthnCredential
+	err := db.Where("identity = ?", user.Code).Find(&webCreds).Error
+	if err != nil {
+		log.Error(err)
+	} else {
+		for _, cred := range webCreds {
+			id, err := base64.StdEncoding.DecodeString(cred.Id)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			pubkey, err := base64.StdEncoding.DecodeString(cred.PublicKey)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			guid, err := base64.StdEncoding.DecodeString(cred.AuthenticatorGUID)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+
+			creds = append(creds, webauthn.Credential{
+				ID:              id,
+				PublicKey:       pubkey,
+				AttestationType: cred.AttestationType,
+				Authenticator: webauthn.Authenticator{
+					AAGUID:    guid,
+					SignCount: uint32(cred.AuthenticatorSignCount),
+				},
+			})
+
+		}
+	}
+
+	return
+}
+
+// CredentialExcludeList returns a CredentialDescriptor array filled
+// with all the user's credentials
+func (user Identity) CredentialExcludeList() []protocol.CredentialDescriptor {
+
+	credentialExcludeList := []protocol.CredentialDescriptor{}
+	for _, cred := range user.WebAuthnCredentials() {
+		descriptor := protocol.CredentialDescriptor{
+			Type:         protocol.PublicKeyCredentialType,
+			CredentialID: cred.ID,
+		}
+		credentialExcludeList = append(credentialExcludeList, descriptor)
+	}
+
+	return credentialExcludeList
+}
+
 type IdentificationStrategy int
 
 const (
@@ -151,6 +252,7 @@ type IdentificationRequest struct {
 	Totp         *string
 	SessionToken *string
 	ZipCode      *string
+	Credential   *webauthn.Credential
 }
 type IdentificationResult struct {
 	Success       bool
@@ -296,6 +398,34 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			Strength: "1",
 			Method:   "email possession",
 		}
+	case WEBAUTHN:
+		db := util.GetDb()
+
+		var webCred WebauthnCredential
+		credId := base64.StdEncoding.EncodeToString(req.Credential.ID)
+		if db.Where("id = ?", credId).Find(&webCred).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad credential",
+			}
+		}
+
+		var ident Identity
+		if db.Where("code = ?", webCred.Identity).Find(&ident).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad user",
+			}
+		}
+
+		return &IdentificationResult{
+			Success:  true,
+			Strategy: req.Strategy,
+			Identity: &ident,
+			Strength: "3",
+			Method:   "webauthn",
+		}
+
 	default:
 		return &IdentificationResult{
 			FailureCode:   500,

@@ -156,6 +156,8 @@ const Signup = lazy(() => import('Page/signup'));
 const Activate = lazy(() => import('Page/profile/activate'));
 const OidcCallback = lazy(() => import('Page/callbacks/oidc'));
 
+const Webauthn = lazy(() => import('Page/profile/webauthn'));
+
 export const App = (props) => {
 	const { classes } = props;
 
@@ -180,6 +182,10 @@ export const App = (props) => {
 									<Route
 										path="activate"
 										element={withSuspense(<Activate />)}
+									/>
+									<Route
+										path="webauthn"
+										element={withSuspense(<Webauthn />)}
 									/>
 								</Route>
 								<Route path="callbacks">

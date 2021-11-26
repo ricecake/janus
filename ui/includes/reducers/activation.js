@@ -50,6 +50,8 @@ export const submitForm = (event) => {
 };
 
 export const startSignin = () => (dispatch, getState) => {
+	//todo: move this into a standlone helper in usermanager, that can just be "ensureLoginEffect"
+	sessionStorage.setItem('loc', window.location.href);
 	userManager.signinSilent().catch(() => {
 		userManager.signinRedirect();
 	});

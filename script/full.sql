@@ -19,6 +19,16 @@ CREATE TABLE auth_password (
     created_at timestamp with time zone DEFAULT now() not null
 );
 
+CREATE TABLE webauthn_credential (
+    identity text not null references identity(code) ON DELETE CASCADE,
+    id text not null primary key,
+    public_key text not null,
+    attestation_type text not null,
+    authenticator_guid text not null,
+    authenticator_sign_count integer not null
+);
+
+create index ON webauthn_credential (identity);
 
 CREATE TABLE context (
     code text  NOT NULL PRIMARY KEY,
@@ -153,6 +163,7 @@ CREATE TABLE stash_data (
 
 ALTER TABLE identity OWNER to postgres;
 ALTER TABLE auth_password OWNER to postgres;
+ALTER TABLE webauthn_credential OWNER to postgres;
 ALTER TABLE context OWNER to postgres;
 ALTER TABLE action OWNER to postgres;
 ALTER TABLE role OWNER to postgres;
@@ -170,6 +181,7 @@ ALTER TABLE stash_data OWNER to postgres;
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE identity TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE auth_password TO janus;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE webauthn_credential TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE context TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE action TO janus;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE role TO janus;

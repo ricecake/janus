@@ -43,4 +43,10 @@ func Configure(r *gin.RouterGroup) {
 	r.GET("/check/authenticators", authDetails)
 	r.POST("/check/auth", checkAuth)
 	r.GET("/revocation", listRevocation)
+
+	setupWebauthn()
+	r.POST("/webauthn/register/start", registerStart)
+	r.POST("/webauthn/register/finish", registerFinish)
+	r.POST("/webauthn/login/start/:email", loginStart)
+	r.POST("/webauthn/login/finish/:email", loginFinish)
 }
