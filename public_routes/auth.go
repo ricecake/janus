@@ -334,15 +334,16 @@ func attemptIdentifyUser(c *gin.Context, authData model.IdentificationRequest) *
 	if authData.Strategy == model.NONE || authData.Strategy == model.SESSION_TOKEN {
 		if authData.Context != nil {
 			cookieName := fmt.Sprintf("janus.auth.session.%s", *authData.Context)
+			cookies := []string{}
 			for _, cookie := range c.Request.Cookies() {
 				if cookie.Name == cookieName {
 					if cookieVal := cookie.Value; cookieVal != "" {
 						authData.Strategy = model.SESSION_TOKEN
-						authData.SessionToken = &cookieVal
+						cookies = append(cookies, cookieVal)
 					}
-					break
 				}
 			}
+			authData.SessionToken = &cookies
 		}
 	}
 

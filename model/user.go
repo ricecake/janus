@@ -251,7 +251,7 @@ type IdentificationRequest struct {
 	Email        *string
 	Password     *string
 	Totp         *string
-	SessionToken *string
+	SessionToken *[]string
 	ZipCode      *string
 	Credential   *webauthn.Credential
 }
@@ -306,67 +306,78 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			Method:   "password",
 		}
 	case SESSION_TOKEN:
-		if req.SessionToken == nil || req.Context == nil {
+		if req.SessionToken == nil || len(*req.SessionToken) == 0 || req.Context == nil {
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: "No token",
 			}
 		}
-		var encData IDToken
-		if err := util.DecodeJWTOpen(*req.SessionToken, &encData); err != nil {
+		results := []*IdentificationResult{}
+		for _, token := range *req.SessionToken {
+			var encData IDToken
+			if err := util.DecodeJWTOpen(token, &encData); err != nil {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: err.Error(),
+				})
+				continue
+			}
+
+			now := time.Now()
+			if now.Unix() >= encData.Expiration {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Expired",
+				})
+				continue
+			}
+
+			clientId := viper.GetString("identity.issuer_id")
+			if encData.ClientID != clientId {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad token",
+				})
+				continue
+			}
+
+			if encData.Context != *req.Context {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad token",
+				})
+				continue
+			}
+
+			db := util.GetDb()
+			var ident Identity
+			if db.Where("code = ?", encData.UserCode).Find(&ident).RecordNotFound() {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad user",
+				})
+				continue
+			}
+
+			if EntityRevoked(encData.TokenId) {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad session",
+				})
+				continue
+			}
+
 			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: err.Error(),
+				Success:  true,
+				Strategy: req.Strategy,
+				Identity: &ident,
+				Strength: "0",
+				Method:   "session",
+				Session:  &encData.TokenId,
 			}
 		}
+		return results[0]
 
-		now := time.Now()
-		if now.Unix() >= encData.Expiration {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Expired",
-			}
-		}
-
-		clientId := viper.GetString("identity.issuer_id")
-		if encData.ClientID != clientId {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad token",
-			}
-		}
-
-		if encData.Context != *req.Context {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad token",
-			}
-		}
-
-		db := util.GetDb()
-		var ident Identity
-		if db.Where("code = ?", encData.UserCode).Find(&ident).RecordNotFound() {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad user",
-			}
-		}
-
-		if EntityRevoked(encData.TokenId) {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad session",
-			}
-		}
-
-		return &IdentificationResult{
-			Success:  true,
-			Strategy: req.Strategy,
-			Identity: &ident,
-			Strength: "0",
-			Method:   "session",
-			Session:  &encData.TokenId,
-		}
 	case ZIPCODE:
 		if req.ZipCode == nil {
 			return &IdentificationResult{
