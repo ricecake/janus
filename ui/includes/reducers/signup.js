@@ -1,72 +1,84 @@
-import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
+import { doWebauthnRegister } from 'Include/webauthn';
 
 const defaultState = {
-	preferred_name: '',
 	email: '',
-	name_valid: false,
-	email_valid: false,
 	loading: false,
 	enrolled: false,
+	webauthn: false,
+	password: false,
 };
 
-export const { changeName, changeEmail, signupStart, signupFinish } =
-	createActions(
-		{
-			changeName: (preferred_name = '') => ({ preferred_name }),
-			changeEmail: (email = '') => ({ email }),
-		},
-		'SIGNUP_START',
-		'SIGNUP_FINISH',
-		{ prefix: 'janus/signup' }
-	);
+export const {
+	signupStart,
+	signupFinish,
+	webauthnStart,
+	webauthnFinish,
+	passwordStart,
+	passwordFinish,
+} = createActions(
+	'SIGNUP_START',
+	'SIGNUP_FINISH',
+	'WEBAUTHN_START',
+	'WEBAUTHN_FINISH',
+	'PASSWORD_START',
+	'PASSWORD_FINISH',
+	{ prefix: 'janus/signup' }
+);
 
-export const initiateSignup = (event) => {
-	event.preventDefault();
+export const initiateSignup = (preferred_name, email) => {
 	return (dispatch, getState) => {
-		if (getState().signup.submitable) {
-			dispatch(signupStart());
-			let state = getState();
-			fetch('/signup', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					preferred_name: state.signup.preferred_name,
-					email: state.signup.email,
-				}),
-			}).then((res) => dispatch(signupFinish()));
-		}
+		dispatch(signupStart());
+		fetch('/signup', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				preferred_name,
+				email,
+			}),
+		}).then((res) => dispatch(signupFinish(email)));
+	};
+};
+
+export const initiateWebauthnEnroll = () => {
+	return (dispatch, getState) => {
+		dispatch(webauthnStart());
+		doWebauthnRegister().then(() => dispatch(webauthnFinish()));
+	};
+};
+
+export const initiatePasswordEnroll = (password, verify_password) => {
+	return (dispatch, getState) => {
+		dispatch(passwordStart());
+		fetch('/signup/password', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				password: password,
+				verify_password: verify_password,
+			}),
+		}).then((res) => dispatch(passwordFinish()));
 	};
 };
 
 const reducer = handleActions(
 	{
-		[changeName]: (state, { payload: name }) => merge(state, name),
-		[changeEmail]: (state, { payload: email }) => merge(state, email),
 		[signupStart]: (state) => merge(state, { loading: true }),
-		[signupFinish]: (state) =>
-			merge(state, { enrolled: true, loading: false }),
-		[combineActions(changeName, changeEmail)]: (state, msg) =>
-			merge(state, validate(state, msg)),
+		[webauthnStart]: (state) => merge(state, { loading: true }),
+		[passwordStart]: (state) => merge(state, { loading: true }),
+		[signupFinish]: (state, { payload: email }) =>
+			merge(state, { enrolled: true, loading: false, email: email }),
+		[webauthnFinish]: (state) =>
+			merge(state, { webauthn: true, loading: false }),
+		[passwordFinish]: (state) =>
+			merge(state, { password: true, loading: false }),
 	},
 	defaultState
 );
-
-const validate = (state, { payload }) => {
-	let mergeState = Object.assign({}, state, payload);
-	let newState = {};
-
-	newState.name_valid = mergeState.preferred_name.length > 0;
-	newState.email_valid = mergeState.email.length > 0;
-
-	newState.submitable =
-		newState.name_valid &&
-		newState.email_valid &&
-		!newState.loading &&
-		!newState.enrolled;
-	return newState;
-};
 
 const merge = (oldState, newState) => Object.assign({}, oldState, newState);
 

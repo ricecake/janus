@@ -2,15 +2,14 @@ package public_routes
 
 import (
 	"fmt"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/osin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
+	kcutil "github.com/ricecake/karma_chameleon/util"
 	"janus/model"
-	"janus/util"
 )
 
 var (
@@ -203,6 +202,13 @@ type SignupParams struct {
 }
 
 func signupSubmit(c *gin.Context) {
+	client, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
+	if clientErr != nil {
+		c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
 	user := &model.Identity{}
 
 	var signupParams SignupParams
@@ -215,6 +221,9 @@ func signupSubmit(c *gin.Context) {
 
 	user.Email = signupParams.Email
 	user.PreferredName = signupParams.PreferredName
+	user.Active = true
+
+	// TODO: add the concept of active and verified.  Active users can do user things.  Verified users can log in outside of idp context.  Premature?
 
 	if err := model.CreateIdentity(user); err != nil {
 		c.Error(err).SetType(gin.ErrorTypePrivate)
@@ -222,53 +231,75 @@ func signupSubmit(c *gin.Context) {
 		return
 	}
 
-	var code string
-	if referer, err := url.Parse(c.Request.Header.Get("Referer")); err == nil {
-		referer.Path = "/login"
-		stashCode, stashErr := model.StashTTL(&map[string]string{
-			"Redirect": referer.String(),
-		}, 86400)
-		if stashErr != nil {
-			c.Error(stashErr).SetType(gin.ErrorTypePrivate)
-			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-			return
-		}
-		code = stashCode
-	}
-
-	zipCode := model.ZipCode{
-		Identity:    user.Code,
-		Client:      viper.GetString("identity.issuer_id"),
-		TTL:         86400, // One day
-		Signup:      true,
-		RedirectUri: "/profile/activate",
-		Params: map[string]string{
-			"code": code,
-		},
-	}
-	if zipErr := zipCode.Save(); zipErr != nil {
-		c.Error(zipErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-		return
-	}
-
-	emailErr := util.SendMail(user.PreferredName, user.Email, "activation", util.TemplateContext{
-		"Name":  user.PreferredName,
-		"Email": user.Email,
-		"Code":  zipCode.Code,
-	})
-
-	if emailErr != nil {
-		c.Error(emailErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+	_, err := establishSession(c, client.Context, model.IdentificationResult{Identity: user})
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
 		return
 	}
 
 	c.Status(204)
 }
 
-func logoutPage(c *gin.Context)   {}
-func logoutSubmit(c *gin.Context) {} // TODO: this should revoked the users session token
+type SignupPasswordArgs struct {
+	Password       string `form:"password"        json:"password"        binding:"omitempty,min=8"`
+	VerifyPassword string `form:"verify_password" json:"verify_password" binding:"omitempty,min=8"`
+}
+
+func signupPassword(c *gin.Context) {
+	idp, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
+	if clientErr != nil {
+		log.Error("Error with own client?")
+		c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy: model.SESSION_TOKEN,
+		Context:  &idp.Context,
+	})
+	if !res.Success {
+		c.AbortWithError(res.FailureCode, fmt.Errorf(res.FailureReason))
+		return
+	}
+
+	var signupPassword SignupPasswordArgs
+	if err := c.ShouldBind(&signupPassword); err != nil {
+		c.AbortWithError(400, err)
+		return
+	}
+
+	if signupPassword.Password != signupPassword.VerifyPassword {
+		c.AbortWithError(400, fmt.Errorf("passwords do not match")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	passErr := res.Identity.SetPassword(signupPassword.Password)
+	if passErr != nil {
+		c.AbortWithError(400, passErr)
+		return
+	}
+
+	c.Status(201)
+}
+
+func logoutPage(c *gin.Context) {
+	for _, cookie := range c.Request.Cookies() {
+		if cookieVal := cookie.Value; cookieVal != "" {
+			var encData model.IDToken
+			if decodeErr := kcutil.DecodeJWTOpen(cookieVal, &encData); decodeErr == nil {
+				revokeErr := model.RevokeSessionToken(encData.TokenId)
+				if revokeErr != nil {
+					log.Error(revokeErr)
+				}
+			}
+
+			clearSessionCookie(c, cookie.Name, cookie.Domain)
+		}
+	}
+	c.String(200, "Logged out")
+}
+
 type AuthParams struct {
 	Username *string `form:"username" json:"username"`
 	Email    *string `form:"email" json:"email"`

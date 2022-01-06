@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
 import BasePage from 'Component/BasePage';
 
-import { Provider } from 'react-redux';
 import { OidcProvider } from 'redux-oidc';
 import store from 'Include/store';
-import userManager from 'Include/userManager';
+import userManager, { withLogin } from 'Include/userManager';
 
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -29,12 +28,8 @@ function bufferEncode(value) {
 		.replace(/=/g, '');
 }
 
-export const WebauthnPage = (props) => {
-	if (!props.user) {
-		//		userManager.signinRedirect({ state: window.location.href });
-		props.startSignin();
-		return null;
-	}
+export const WebauthnPage = withLogin((props) => {
+	console.log(props);
 
 	useEffect(() => {
 		fetch('/webauthn/register/start', {
@@ -43,21 +38,15 @@ export const WebauthnPage = (props) => {
 			.then((response) => response.json())
 			.then((data) => {
 				console.log(data);
-				data.publicKey.challenge = Uint8Array.from(
-					atob(data.publicKey.challenge),
-					(c) => c.charCodeAt(0)
+				data.publicKey.challenge = bufferDecode(
+					data.publicKey.challenge
 				);
-				data.publicKey.user.id = Uint8Array.from(
-					atob(data.publicKey.user.id),
-					(c) => c.charCodeAt(0)
-				);
+				data.publicKey.user.id = bufferDecode(data.publicKey.user.id);
 
 				if (data.publicKey.excludeCredentials) {
 					data.publicKey.excludeCredentials.forEach(
 						(cred, index, excludes) => {
-							excludes[index].id = Uint8Array.from(
-								atob(cred.id, (c) => c.charCodeAt(0))
-							);
+							excludes[index].id = bufferDecode(cred.id);
 						}
 					);
 				}
@@ -65,15 +54,6 @@ export const WebauthnPage = (props) => {
 				return navigator.credentials.create(data);
 			})
 			.then((data) => {
-				const bufferEncode = (value) => {
-					return btoa(
-						String.fromCharCode.apply(null, new Uint8Array(value))
-					)
-						.replace(/\+/g, '-')
-						.replace(/\//g, '_')
-						.replace(/=/g, '');
-				};
-
 				let attestationObject = data.response.attestationObject;
 				let clientDataJSON = data.response.clientDataJSON;
 				let rawId = data.rawId;
@@ -157,7 +137,7 @@ export const WebauthnPage = (props) => {
 			</OidcProvider>
 		</React.Fragment>
 	);
-};
+});
 
 const stateToProps = ({ activation, oidc }) => ({
 	...activation,

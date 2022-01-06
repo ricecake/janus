@@ -29,10 +29,11 @@ func (this Identity) TableName() string {
 }
 
 type AuthPassword struct {
-	Identity  string    `gorm:"column:identity;not null"`
-	Hash      []byte    `gorm:"column:hash;not null"`
-	Totp      *[]byte   `gorm:"column:totp;not null"`
-	CreatedAt time.Time `gorm:"column:created_at;not null;autoCreateTime"`
+	Identity   string    `gorm:"column:identity;not null"`
+	Hash       []byte    `gorm:"column:hash;not null"`
+	Totp       *[]byte   `gorm:"column:totp;not null"`
+	TotpActive bool      `gorm:"column:totp_active;not null"`
+	CreatedAt  time.Time `gorm:"column:created_at;not null;autoCreateTime"`
 }
 
 func (this AuthPassword) TableName() string {
