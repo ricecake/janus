@@ -8,16 +8,21 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
+import FingerprintOutlinedIcon from '@material-ui/icons/FingerprintOutlined';
+import EmailOutlinedIcon from '@material-ui/icons/EmailOutlined';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
-import { Link } from 'Component/Helpers';
+import { Link, Show, Hide } from 'Component/Helpers';
 
 import { connect } from 'react-redux';
 import {
-	initiateLogin,
-	changeEmail,
-	changePassword,
+	fetchAuthMethods,
+	doWebauthn,
+	doPasswordAuth,
 } from 'Include/reducers/login';
 import { bindActionCreators } from 'redux';
+import { webauthnCapable } from 'Include/webauthn';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -41,6 +46,9 @@ const useStyles = makeStyles((theme) => ({
 
 const LoginForm = (props) => {
 	const classes = useStyles();
+	const [email, setEmail] = React.useState('');
+	const [password, setPassword] = React.useState('');
+	const [picked, setPicked] = React.useState(false);
 
 	return (
 		<Container component="main" maxWidth="sm">
@@ -54,8 +62,10 @@ const LoginForm = (props) => {
 				</Typography>
 				<form
 					className={classes.form}
-					onSubmit={props.initiateLogin}
-					noValidate
+					onSubmit={(e) => {
+						e.preventDefault();
+						props.fetchAuthMethods(email);
+					}}
 				>
 					<TextField
 						variant="outlined"
@@ -67,48 +77,119 @@ const LoginForm = (props) => {
 						name="email"
 						autoComplete="email"
 						autoFocus
-						onChange={(e) => props.changeEmail(e.target.value)}
-						value={props.email}
+						disabled={props.methods}
+						onChange={(e) => setEmail(e.target.value)}
+						error={!!email && !/^\S+@\S+\.\S+$/.test(email)}
 					/>
-					<TextField
-						variant="outlined"
-						margin="normal"
-						required
-						fullWidth
-						name="password"
-						label="Password"
-						type="password"
-						id="password"
-						autoComplete="current-password"
-						onChange={(e) => props.changePassword(e.target.value)}
-						value={props.password}
-					/>
-					<Button
-						fullWidth
-						type="submit"
-						variant="contained"
-						color="primary"
-						className={classes.submit}
-						disabled={!props.submitable}
-					>
-						Sign In
-					</Button>
-					<Grid container justify="flex-end">
-						{/* <Grid item xs>
+					<Hide If={props.methods}>
+						<Grid container justify="flex-end">
+							<Button
+								variant="contained"
+								color="primary"
+								type="submit"
+								disabled={
+									!email || !/^\S+@\S+\.\S+$/.test(email)
+								}
+							>
+								Next
+							</Button>
+						</Grid>
+					</Hide>
+				</form>
+				<Show If={props.loading}>
+					<LinearProgress />
+				</Show>
+
+				<Show If={props.methods && !picked}>
+					<ButtonGroup fullWidth orientation="vertical">
+						<Show If={webauthnCapable() && props.Webauthn}>
+							<Button
+								startIcon={<FingerprintOutlinedIcon />}
+								onClick={() => {
+									setPicked('webauthn');
+									props.doWebauthn(email);
+								}}
+								fullWidth
+								variant="contained"
+							>
+								Platform Authentication
+							</Button>
+						</Show>
+						<Show If={props.Password}>
+							<Button
+								startIcon={<LockOutlinedIcon />}
+								onClick={() => {
+									setPicked('password');
+								}}
+								fullWidth
+								variant="contained"
+							>
+								Password Authentication
+							</Button>
+						</Show>
+						<Show If={false && props.Email}>
+							<Button
+								startIcon={<EmailOutlinedIcon />}
+								onClick={() => {
+									setPicked('email');
+									props.doWebauthn(email);
+								}}
+								fullWidth
+								variant="contained"
+							>
+								Magic Link Email
+							</Button>
+						</Show>
+					</ButtonGroup>
+				</Show>
+
+				<form
+					className={classes.form}
+					onSubmit={(e) => {
+						e.preventDefault();
+						props.doPasswordAuth(email, password);
+					}}
+				>
+					<Show If={props.Password && picked === 'password'}>
+						<TextField
+							variant="outlined"
+							margin="normal"
+							required
+							fullWidth
+							name="password"
+							label="Password"
+							type="password"
+							id="password"
+							autoComplete="current-password"
+							onChange={(e) => setPassword(e.target.value)}
+						/>
+						<Button
+							fullWidth
+							type="submit"
+							variant="contained"
+							color="primary"
+							className={classes.submit}
+							disabled={!password}
+						>
+							Sign In
+						</Button>
+					</Show>
+				</form>
+				<Grid container justify="flex-end">
+					{/* <Grid item xs>
 			  <Link to="#" variant="body2">
 				Forgot password?
 			  </Link>
 			</Grid> */}
-						<Grid item>
-							<Link
-								to={`/signup?${props.context.serverParams.RawQuery}`}
-								variant="body2"
-							>
-								{"Don't have an account? Sign Up"}
-							</Link>
-						</Grid>
+					<Grid item>
+						<Link
+							to={`/signup?${props.context.serverParams.RawQuery}`}
+							variant="body2"
+						>
+							{"Don't have an account? Sign Up"}
+						</Link>
 					</Grid>
-				</form>
+				</Grid>
 			</div>
 		</Container>
 	);
@@ -118,9 +199,9 @@ const stateToProps = ({ login, context }) => ({ ...login, context });
 const dispatchToProps = (dispatch) =>
 	bindActionCreators(
 		{
-			initiateLogin,
-			changeEmail,
-			changePassword,
+			fetchAuthMethods,
+			doWebauthn,
+			doPasswordAuth,
 		},
 		dispatch
 	);

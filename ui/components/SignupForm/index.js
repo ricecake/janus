@@ -204,6 +204,11 @@ const SetupPassword = ({
 						autoComplete="new-password"
 						onChange={(e) => setVerify(e.target.value)}
 						error={!!verify && verify !== pass}
+						helperText={
+							!!verify && verify !== pass
+								? ''
+								: "Passwords don't seem to match..."
+						}
 					/>
 				</Grid>
 				<Button

@@ -18,6 +18,10 @@ import (
 func defaultPage(c *gin.Context)   {}
 func checkUsername(c *gin.Context) {}
 
+type AuthDetailParams struct {
+	Email string `form:"email" json:"email"`
+}
+
 func authDetails(c *gin.Context) {
 	/* TODO:
 	Given a username, should return what auth mechanisms are valid for that user,
@@ -31,6 +35,29 @@ func authDetails(c *gin.Context) {
 
 	Should look into using that gorm schema generator, and adding swagger stuff while I'm in here.
 	*/
+
+	var authParams AuthDetailParams
+	if err := c.ShouldBind(&authParams); err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "Bad request")
+		return
+	}
+
+	ident, err := model.FindIdentityByEmail(authParams.Email)
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "Bad request")
+		return
+	}
+
+	methods, err := ident.ValidAuthMethods()
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "Bad request")
+		return
+	}
+
+	c.JSON(200, methods)
 }
 
 func checkAuth(c *gin.Context) {

@@ -59,3 +59,48 @@ export const doWebauthnRegister = () =>
 				}),
 			});
 		});
+
+export const doWebauthnLogin = (email) =>
+	fetch(`/webauthn/login/start/${email}`, {
+		method: 'POST',
+	})
+		.then((res) => res.json())
+		.then((credentialRequestOptions) => {
+			credentialRequestOptions.publicKey.challenge = bufferDecode(
+				credentialRequestOptions.publicKey.challenge
+			);
+			credentialRequestOptions.publicKey.allowCredentials.forEach(
+				function (listItem) {
+					listItem.id = bufferDecode(listItem.id);
+				}
+			);
+
+			return navigator.credentials.get({
+				publicKey: credentialRequestOptions.publicKey,
+			});
+		})
+		.then((assertion) => {
+			let authData = assertion.response.authenticatorData;
+			let clientDataJSON = assertion.response.clientDataJSON;
+			let rawId = assertion.rawId;
+			let sig = assertion.response.signature;
+			let userHandle = assertion.response.userHandle;
+
+			return fetch(`/webauthn/login/finish/${email}`, {
+				method: 'POST',
+				headers: {
+					'Content-type': 'application/json',
+				},
+				body: JSON.stringify({
+					id: assertion.id,
+					rawId: bufferEncode(rawId),
+					type: assertion.type,
+					response: {
+						authenticatorData: bufferEncode(authData),
+						clientDataJSON: bufferEncode(clientDataJSON),
+						signature: bufferEncode(sig),
+						userHandle: bufferEncode(userHandle),
+					},
+				}),
+			});
+		});

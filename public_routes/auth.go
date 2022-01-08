@@ -280,7 +280,7 @@ func signupPassword(c *gin.Context) {
 		return
 	}
 
-	c.Status(201)
+	c.Status(204)
 }
 
 func logoutPage(c *gin.Context) {

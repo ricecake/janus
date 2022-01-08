@@ -163,6 +163,30 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 	return token
 }
 
+type AvailableAuthMethods struct {
+	Email    bool
+	Password bool
+	Totp     bool
+	Webauthn bool
+}
+
+func (user Identity) ValidAuthMethods() (methods AvailableAuthMethods, err error) {
+	db := util.GetDb()
+
+	methods.Email = true
+
+	var pwCount int64
+	var wauthnCount int64
+
+	db.Model(&AuthPassword{}).Where("identity = ?", user.Code).Count(&pwCount)
+	db.Model(&WebauthnCredential{}).Where("identity = ?", user.Code).Count(&wauthnCount)
+
+	methods.Password = pwCount > 0
+	methods.Webauthn = wauthnCount > 0
+
+	return
+}
+
 func (user Identity) WebAuthnID() []byte {
 	return []byte(user.Code)
 }
