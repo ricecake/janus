@@ -21,13 +21,20 @@ const bufferEncode = (value) => {
 		.replace(/=/g, '');
 };
 
+const handleFetchError = (res) => {
+	if (!res.ok) {
+		throw res;
+	}
+	return res;
+};
+
 export const doWebauthnRegister = () =>
 	fetch('/webauthn/register/start', {
 		method: 'POST',
 	})
+		.then(handleFetchError)
 		.then((response) => response.json())
 		.then((data) => {
-			console.log(data);
 			data.publicKey.challenge = bufferDecode(data.publicKey.challenge);
 			data.publicKey.user.id = bufferDecode(data.publicKey.user.id);
 
@@ -57,13 +64,14 @@ export const doWebauthnRegister = () =>
 						clientDataJSON: bufferEncode(clientDataJSON),
 					},
 				}),
-			});
+			}).then(handleFetchError);
 		});
 
 export const doWebauthnLogin = (email) =>
 	fetch(`/webauthn/login/start/${email}`, {
 		method: 'POST',
 	})
+		.then(handleFetchError)
 		.then((res) => res.json())
 		.then((credentialRequestOptions) => {
 			credentialRequestOptions.publicKey.challenge = bufferDecode(
@@ -102,5 +110,5 @@ export const doWebauthnLogin = (email) =>
 						userHandle: bufferEncode(userHandle),
 					},
 				}),
-			});
+			}).then(handleFetchError);
 		});

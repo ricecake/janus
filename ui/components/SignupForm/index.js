@@ -6,8 +6,6 @@ import Avatar from '@material-ui/core/Avatar';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
 import Container from '@material-ui/core/Container';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -211,14 +209,21 @@ const SetupPassword = ({
 						}
 					/>
 				</Grid>
-				<Button
-					disabled={loading}
-					type="submit"
-					variant="contained"
-					color="primary"
+				<Grid
+					container
+					direction="row"
+					justifyContent="space-around"
+					alignItems="center"
 				>
-					Finish
-				</Button>
+					<Button
+						disabled={loading}
+						type="submit"
+						variant="contained"
+						color="primary"
+					>
+						Finish
+					</Button>
+				</Grid>
 			</form>
 		</Box>
 	);
@@ -237,44 +242,71 @@ const SetupWebauthn = ({
 				<LinearProgress />
 			</Show>
 			<Hide If={loading || webauthn}>
-				<Typography>
-					Configure advanced, secure signin using your device.
-					<br />
-					Your biometric information or PIN will not be shared.
-				</Typography>
-				<Button
-					onClick={() => initiateWebauthnEnroll()}
-					variant="contained"
-					color="primary"
-					disabled={webauthn || loading}
+				<Grid
+					container
+					direction="column"
+					justifyContent="space-around"
+					alignItems="center"
 				>
-					Start Setup
-				</Button>
+					<Typography>
+						Configure advanced, secure signin using your device.
+						<br />
+						Your biometric information or PIN will not be shared.
+					</Typography>
+					<Grid
+						container
+						direction="row"
+						justifyContent="space-around"
+						alignItems="center"
+					>
+						<Button
+							onClick={() => initiateWebauthnEnroll()}
+							variant="contained"
+							color="primary"
+							disabled={webauthn || loading}
+						>
+							Start Setup
+						</Button>
+					</Grid>
+				</Grid>
 			</Hide>
 		</Grid>
 		<Grid item>
-			<Button
-				onClick={() => changeStep('password')}
-				variant="contained"
-				color="primary"
-				disabled={!webauthn}
+			<Grid
+				container
+				direction="row"
+				justifyContent="space-between"
+				alignItems="center"
 			>
-				Configure Password
-			</Button>
-			<Button
-				onClick={() => changeStep('finish')}
-				variant="contained"
-				color="primary"
-				disabled={!webauthn}
-			>
-				Finish
-			</Button>
+				<Button
+					onClick={() => changeStep('password')}
+					variant="contained"
+					color="primary"
+					disabled={!webauthn}
+				>
+					Configure Password
+				</Button>
+
+				<Button
+					onClick={() => changeStep('finish')}
+					variant="contained"
+					color="primary"
+					disabled={!webauthn}
+				>
+					Finish
+				</Button>
+			</Grid>
 		</Grid>
 	</Box>
 );
 // tell user everthing worked.  offer button that moves to login and thence to destination
 const Finish = ({ login }) => (
-	<Box>
+	<Grid
+		container
+		direction="row"
+		justifyContent="space-around"
+		alignItems="center"
+	>
 		<Button
 			onClick={() => (window.location = login)}
 			variant="contained"
@@ -282,7 +314,7 @@ const Finish = ({ login }) => (
 		>
 			Login
 		</Button>
-	</Box>
+	</Grid>
 );
 
 const stepTitles = {
@@ -355,13 +387,13 @@ const FormPage = ({
 	};
 
 	return (
-		<Card>
+		<Container>
 			<CardHeader
 				title={stepTitles[step] || 'Error'}
 				avatar={<LockOutlinedIcon />}
 			/>
-			<CardContent>{page()}</CardContent>
-		</Card>
+			{page()}
+		</Container>
 	);
 };
 

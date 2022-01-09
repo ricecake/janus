@@ -8,11 +8,13 @@ const defaultState = {
 	Totp: false,
 	Webauthn: false,
 	methods: false,
+	error: undefined,
 };
 
 export const {
 	loginStart,
 	loginFinish,
+	loginError,
 	passwordStart,
 	passwordFinish,
 	webauthnStart,
@@ -24,6 +26,7 @@ export const {
 } = createActions(
 	'LOGIN_START',
 	'LOGIN_FINISH',
+	'LOGIN_ERROR',
 	'PASSWORD_START',
 	'PASSWORD_FINISH',
 	'WEBAUTHN_START',
@@ -34,6 +37,13 @@ export const {
 	'METHODS_FINISH',
 	{ prefix: 'janus/login' }
 );
+
+const handleFetchError = (res) => {
+	if (!res.ok) {
+		throw res;
+	}
+	return res;
+};
 
 const resubmitLoginForm = () => {
 	let loginForm = document.createElement('form');
@@ -54,8 +64,10 @@ export const fetchAuthMethods = (email) => {
 			},
 			body: JSON.stringify({ email }),
 		})
+			.then(handleFetchError)
 			.then((res) => res.json())
-			.then((methods) => dispatch(methodsFinish(methods)));
+			.then((methods) => dispatch(methodsFinish(methods)))
+			.catch(() => dispatch(loginError('Something went wrong')));
 	};
 };
 
@@ -76,8 +88,12 @@ export const doPasswordAuth = (email, password, totp) => {
 			},
 			body: JSON.stringify({ email, password }),
 		})
-			.then((res) => dispatch(loginFinish()))
-			.then(() => resubmitLoginForm());
+			.then(handleFetchError)
+			.then(() => resubmitLoginForm())
+			.catch(() =>
+				dispatch(loginError("Seems that password didn't work."))
+			)
+			.finally(() => dispatch(loginFinish()));
 	};
 };
 
@@ -85,19 +101,25 @@ export const doWebauthn = (email) => {
 	return (dispatch, getState) => {
 		dispatch(webauthnStart());
 		doWebauthnLogin(email)
-			.then(() => dispatch(webauthnFinish()))
-			.then(() => resubmitLoginForm());
+			.then(() => resubmitLoginForm())
+			.catch(() =>
+				dispatch(
+					loginError(
+						'Something went wrong.  Refresh, and try using another login method.'
+					)
+				)
+			)
+			.finally(() => dispatch(webauthnFinish()));
 	};
 };
 
 const doMagicLoginLink = () => {};
 
-const completeLogin = () => {};
-
 const reducer = handleActions(
 	{
 		[methodsFinish]: (state, { payload: methods }) =>
 			merge(state, { methods: true, ...methods }),
+		[loginError]: (state, { payload: error }) => merge(state, { error }),
 		[combineActions(
 			loginStart,
 			passwordStart,

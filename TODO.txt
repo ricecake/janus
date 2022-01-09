@@ -9,3 +9,8 @@ See if different entry points work as desired, with only including what's needed
 
 Need to make sure that we can still provide data from the backend to the page as it renders.
 	this is for stuff like "app name".  Ideally, we still pass it by templating in tags that get rendered to json
+
+
+Start moving to typescript
+Add linting preventing unused imports
+add lining preventing unused variables
