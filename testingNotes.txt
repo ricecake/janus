@@ -1,1 +1,0 @@
-http://127.0.0.1:8080/login?response_type=code&state=test1&prompt=any&redirect_uri=http%3A%2F%2F127.0.0.1%3A8080&scope=openid&client_id=client1
