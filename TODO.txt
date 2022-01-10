@@ -3,6 +3,12 @@ Add linting preventing unused imports
 add lining preventing unused variables
 make sure to clear the oidc-usermanager session when doing a logout
 
+update material ui
+update js deps in general
+
+fill out the app/client api area, so apps can manage cliques and user clique roles
+fill out admin and user apis
+
 add a profile dashboard
 	change password
 	change webauthn
