@@ -175,8 +175,7 @@ export const App = (props) => {
 									path="signup"
 									element={withSuspense(<Signup />)}
 								/>
-								<Route path="profile">
-								</Route>
+								<Route path="profile"></Route>
 								<Route path="callbacks">
 									<Route
 										path="oidc"
