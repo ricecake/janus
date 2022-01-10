@@ -8,16 +8,28 @@ export const OidcCallback = (props) => {
 
 	React.useEffect(() => {
 		Oidc.Log.logger = console;
-		Oidc.Log.level = Oidc.Log.INFO;
+		Oidc.Log.level = Oidc.Log.DEBUG;
 
+		console.log(searchParams.get('mode'));
 		switch (searchParams.get('mode')) {
 			case 'normal':
+				userManager.signinRedirectCallback().then(() => {
+					let redir = sessionStorage.getItem('loc');
+					if (redir) {
+						console.log(`redirect: ${redir}`);
+						sessionStorage.removeItem('loc');
+						window.location = redir;
+					}
+				});
+				break;
 			case 'silent':
-				userManager.signinCallback();
+				userManager.signinSilentCallback();
 				break;
 			default:
 				console.log('IT BROKEN');
 		}
+
+		// if we have a redirect in params, bounce to that path, but only inside this domain
 	}, []);
 
 	return <span>Auth...</span>;

@@ -153,7 +153,6 @@ const withSuspense = (element, fallback = <div>Loading...</div>) => (
 
 const Login = lazy(() => import('Page/login'));
 const Signup = lazy(() => import('Page/signup'));
-const Activate = lazy(() => import('Page/profile/activate'));
 const OidcCallback = lazy(() => import('Page/callbacks/oidc'));
 
 export const App = (props) => {
@@ -176,12 +175,7 @@ export const App = (props) => {
 									path="signup"
 									element={withSuspense(<Signup />)}
 								/>
-								<Route path="profile">
-									<Route
-										path="activate"
-										element={withSuspense(<Activate />)}
-									/>
-								</Route>
+								<Route path="profile"></Route>
 								<Route path="callbacks">
 									<Route
 										path="oidc"

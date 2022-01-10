@@ -27,10 +27,11 @@ func Configure(r *gin.RouterGroup) {
 	r.GET("/zip/:code", processZipCode)
 
 	r.GET("/logout", logoutPage)
-	r.POST("/logout", logoutSubmit)
 
 	r.GET("/signup", signupPage)
 	r.POST("/signup", signupSubmit)
+
+	r.POST("/signup/password", signupPassword)
 
 	r.GET("/publickeys", publicKeys)
 	r.GET("/userinfo", userInfo)
@@ -40,7 +41,13 @@ func Configure(r *gin.RouterGroup) {
 	r.GET("/check/auth/redirect", checkAuthRedirect)
 
 	r.GET("/check/username", checkUsername)
-	r.GET("/check/authenticators", authDetails)
+	r.POST("/check/authenticators", authDetails)
 	r.POST("/check/auth", checkAuth)
 	r.GET("/revocation", listRevocation)
+
+	setupWebauthn()
+	r.POST("/webauthn/register/start", registerStart)
+	r.POST("/webauthn/register/finish", registerFinish)
+	r.POST("/webauthn/login/start/:email", loginStart)
+	r.POST("/webauthn/login/finish/:email", loginFinish)
 }

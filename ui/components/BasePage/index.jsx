@@ -3,6 +3,7 @@ import { ThemeProvider, Grid } from '@material-ui/core/';
 import { createTheme } from '@material-ui/core/styles';
 import green from '@material-ui/core/colors/green';
 import teal from '@material-ui/core/colors/teal';
+import { withLogin } from 'Include/userManager';
 
 const theme = createTheme({
 	palette: {
@@ -25,5 +26,7 @@ const BasePage = (props) => (
 		</Grid>
 	</ThemeProvider>
 );
+
+export const LoginBasePage = withLogin(BasePage);
 
 export default BasePage;

@@ -1,11 +1,14 @@
 package model
 
 import (
+	"encoding/base64"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/duo-labs/webauthn/protocol"
+	"github.com/duo-labs/webauthn/webauthn"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
@@ -26,14 +29,28 @@ func (this Identity) TableName() string {
 }
 
 type AuthPassword struct {
-	Identity  string    `gorm:"column:identity;not null"`
-	Hash      []byte    `gorm:"column:hash;not null"`
-	Totp      *[]byte   `gorm:"column:totp;not null"`
-	CreatedAt time.Time `gorm:"column:created_at;not null;autoCreateTime"`
+	Identity   string    `gorm:"column:identity;not null"`
+	Hash       []byte    `gorm:"column:hash;not null"`
+	Totp       *[]byte   `gorm:"column:totp;not null"`
+	TotpActive bool      `gorm:"column:totp_active;not null"`
+	CreatedAt  time.Time `gorm:"column:created_at;not null;autoCreateTime"`
 }
 
 func (this AuthPassword) TableName() string {
 	return "auth_password"
+}
+
+type WebauthnCredential struct {
+	Identity               string
+	Id                     string
+	PublicKey              string
+	AttestationType        string
+	AuthenticatorGUID      string
+	AuthenticatorSignCount int
+}
+
+func (wc WebauthnCredential) TableName() string {
+	return "webauthn_credential"
 }
 
 func CreateIdentity(ident *Identity) error {
@@ -100,6 +117,19 @@ func (this *Identity) SetPassword(password string) (err error) {
 	return err
 }
 
+func (this *Identity) AddWebauthnCredential(wc *webauthn.Credential) (err error) {
+	db := util.GetDb()
+	cred := WebauthnCredential{
+		Identity:               this.Code,
+		Id:                     base64.StdEncoding.EncodeToString(wc.ID),
+		PublicKey:              base64.StdEncoding.EncodeToString(wc.PublicKey),
+		AttestationType:        wc.AttestationType,
+		AuthenticatorGUID:      base64.StdEncoding.EncodeToString(wc.Authenticator.AAGUID),
+		AuthenticatorSignCount: int(wc.Authenticator.SignCount),
+	}
+	return db.Create(&cred).Error
+}
+
 func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 	issued := time.Now()
 	expires := issued.Add(time.Duration(viper.GetInt("identity.ttl")) * time.Hour)
@@ -133,6 +163,102 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 	return token
 }
 
+type AvailableAuthMethods struct {
+	Email    bool
+	Password bool
+	Totp     bool
+	Webauthn bool
+}
+
+func (user Identity) ValidAuthMethods() (methods AvailableAuthMethods, err error) {
+	db := util.GetDb()
+
+	methods.Email = true
+
+	var pwCount int64
+	var wauthnCount int64
+
+	db.Model(&AuthPassword{}).Where("identity = ?", user.Code).Count(&pwCount)
+	db.Model(&WebauthnCredential{}).Where("identity = ?", user.Code).Count(&wauthnCount)
+
+	methods.Password = pwCount > 0
+	methods.Webauthn = wauthnCount > 0
+
+	return
+}
+
+func (user Identity) WebAuthnID() []byte {
+	return []byte(user.Code)
+}
+
+func (user Identity) WebAuthnName() string {
+	return user.Email
+}
+
+func (user Identity) WebAuthnDisplayName() string {
+	return user.PreferredName
+}
+
+func (user Identity) WebAuthnIcon() string {
+	return ""
+}
+
+func (user Identity) WebAuthnCredentials() (creds []webauthn.Credential) {
+	db := util.GetDb()
+	var webCreds []WebauthnCredential
+	err := db.Where("identity = ?", user.Code).Find(&webCreds).Error
+	if err != nil {
+		log.Error(err)
+	} else {
+		for _, cred := range webCreds {
+			id, err := base64.StdEncoding.DecodeString(cred.Id)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			pubkey, err := base64.StdEncoding.DecodeString(cred.PublicKey)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+			guid, err := base64.StdEncoding.DecodeString(cred.AuthenticatorGUID)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+
+			creds = append(creds, webauthn.Credential{
+				ID:              id,
+				PublicKey:       pubkey,
+				AttestationType: cred.AttestationType,
+				Authenticator: webauthn.Authenticator{
+					AAGUID:    guid,
+					SignCount: uint32(cred.AuthenticatorSignCount),
+				},
+			})
+
+		}
+	}
+
+	return
+}
+
+// CredentialExcludeList returns a CredentialDescriptor array filled
+// with all the user's credentials
+func (user Identity) CredentialExcludeList() []protocol.CredentialDescriptor {
+
+	credentialExcludeList := []protocol.CredentialDescriptor{}
+	for _, cred := range user.WebAuthnCredentials() {
+		descriptor := protocol.CredentialDescriptor{
+			Type:         protocol.PublicKeyCredentialType,
+			CredentialID: cred.ID,
+		}
+		credentialExcludeList = append(credentialExcludeList, descriptor)
+	}
+
+	return credentialExcludeList
+}
+
 type IdentificationStrategy int
 
 const (
@@ -149,8 +275,9 @@ type IdentificationRequest struct {
 	Email        *string
 	Password     *string
 	Totp         *string
-	SessionToken *string
+	SessionToken *[]string
 	ZipCode      *string
+	Credential   *webauthn.Credential
 }
 type IdentificationResult struct {
 	Success       bool
@@ -203,67 +330,78 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			Method:   "password",
 		}
 	case SESSION_TOKEN:
-		if req.SessionToken == nil || req.Context == nil {
+		if req.SessionToken == nil || len(*req.SessionToken) == 0 || req.Context == nil {
 			return &IdentificationResult{
 				FailureCode:   401,
 				FailureReason: "No token",
 			}
 		}
-		var encData IDToken
-		if err := util.DecodeJWTOpen(*req.SessionToken, &encData); err != nil {
+		results := []*IdentificationResult{}
+		for _, token := range *req.SessionToken {
+			var encData IDToken
+			if err := util.DecodeJWTOpen(token, &encData); err != nil {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: err.Error(),
+				})
+				continue
+			}
+
+			now := time.Now()
+			if now.Unix() >= encData.Expiration {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Expired",
+				})
+				continue
+			}
+
+			clientId := viper.GetString("identity.issuer_id")
+			if encData.ClientID != clientId {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad token",
+				})
+				continue
+			}
+
+			if encData.Context != *req.Context {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad token",
+				})
+				continue
+			}
+
+			db := util.GetDb()
+			var ident Identity
+			if db.Where("code = ?", encData.UserCode).Find(&ident).RecordNotFound() {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad user",
+				})
+				continue
+			}
+
+			if EntityRevoked(encData.TokenId) {
+				results = append(results, &IdentificationResult{
+					FailureCode:   401,
+					FailureReason: "Bad session",
+				})
+				continue
+			}
+
 			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: err.Error(),
+				Success:  true,
+				Strategy: req.Strategy,
+				Identity: &ident,
+				Strength: "0",
+				Method:   "session",
+				Session:  &encData.TokenId,
 			}
 		}
+		return results[0]
 
-		now := time.Now()
-		if now.Unix() >= encData.Expiration {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Expired",
-			}
-		}
-
-		clientId := viper.GetString("identity.issuer_id")
-		if encData.ClientID != clientId {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad token",
-			}
-		}
-
-		if encData.Context != *req.Context {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad token",
-			}
-		}
-
-		db := util.GetDb()
-		var ident Identity
-		if db.Where("code = ?", encData.UserCode).Find(&ident).RecordNotFound() {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad user",
-			}
-		}
-
-		if EntityRevoked(encData.TokenId) {
-			return &IdentificationResult{
-				FailureCode:   401,
-				FailureReason: "Bad session",
-			}
-		}
-
-		return &IdentificationResult{
-			Success:  true,
-			Strategy: req.Strategy,
-			Identity: &ident,
-			Strength: "0",
-			Method:   "session",
-			Session:  &encData.TokenId,
-		}
 	case ZIPCODE:
 		if req.ZipCode == nil {
 			return &IdentificationResult{
@@ -296,6 +434,34 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 			Strength: "1",
 			Method:   "email possession",
 		}
+	case WEBAUTHN:
+		db := util.GetDb()
+
+		var webCred WebauthnCredential
+		credId := base64.StdEncoding.EncodeToString(req.Credential.ID)
+		if db.Where("id = ?", credId).Find(&webCred).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad credential",
+			}
+		}
+
+		var ident Identity
+		if db.Where("code = ?", webCred.Identity).Find(&ident).RecordNotFound() {
+			return &IdentificationResult{
+				FailureCode:   401,
+				FailureReason: "Bad user",
+			}
+		}
+
+		return &IdentificationResult{
+			Success:  true,
+			Strategy: req.Strategy,
+			Identity: &ident,
+			Strength: "3",
+			Method:   "webauthn",
+		}
+
 	default:
 		return &IdentificationResult{
 			FailureCode:   500,
