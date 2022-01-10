@@ -23,19 +23,6 @@ type AuthDetailParams struct {
 }
 
 func authDetails(c *gin.Context) {
-	/* TODO:
-	Given a username, should return what auth mechanisms are valid for that user,
-	as well as any two factor type options, and settings for those auth choices.
-	If it's password, it should do something like returning password, and if two factor is required for this user.
-	If it's webauthn, should return basic webauthn settings for picking an identity.
-	Need to make it so that the login for just prompts for username at first, and then shows the available options.
-	Should ideally show a password/otp input, and a button for webauthn if it's available.
-	Or should the page just try webauthn if it's available?  Maybe only if we can check that the identity is present.
-	Need to add some tables for tracking webauthn identities.
-
-	Should look into using that gorm schema generator, and adding swagger stuff while I'm in here.
-	*/
-
 	var authParams AuthDetailParams
 	if err := c.ShouldBind(&authParams); err != nil {
 		c.Error(err).SetType(gin.ErrorTypePrivate)
@@ -301,6 +288,7 @@ func processZipCode(c *gin.Context) {
 	if res.Success {
 		if res.ZipCode.Signup {
 			// If it's a signup, activate the user since they just verified
+			// This is also going to be used for inviting a new user.  User is inactive until they click the link.
 			identity := res.Identity
 			identity.Active = true
 

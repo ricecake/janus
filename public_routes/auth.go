@@ -284,6 +284,7 @@ func signupPassword(c *gin.Context) {
 }
 
 func logoutPage(c *gin.Context) {
+	// TODO: return a page with js that will clear usermanager session
 	for _, cookie := range c.Request.Cookies() {
 		if cookieVal := cookie.Value; cookieVal != "" {
 			var encData model.IDToken
