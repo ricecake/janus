@@ -1,16 +1,32 @@
-Need to move all the ui stuff into ui folder.
-need to convert it to using a single entry point, and react router, instead of weird, bespoke html pages.
-Need to make sure that that singe entry point still gets templated, to load the csp nonce
-
-remove using redux oidc stuff for login to profile pages.
-	instead, just do something closer to the background auth checking.  We're the idp, we can just look at the cookie.
-
-See if different entry points work as desired, with only including what's needed for each page, or if big spa with delayed loading works just as well.
-
-Need to make sure that we can still provide data from the backend to the page as it renders.
-	this is for stuff like "app name".  Ideally, we still pass it by templating in tags that get rendered to json
-
-
 Start moving to typescript
 Add linting preventing unused imports
 add lining preventing unused variables
+make sure to clear the oidc-usermanager session when doing a logout
+
+add a profile dashboard
+	change password
+	change webauthn
+	manage totp
+	manage user details
+	view sessions
+	view app logins
+	clear sessions
+	clear app logins
+	view roles
+	view permissions
+
+add an admin dashboard
+	should be able to invite users
+	should be able to create context/client/action/role/role actions
+	view rate limits/clear
+	view/disable/update users
+	force password reset on next login
+	send reset links
+
+add an index page
+	should show apps that can be logged into, gated behind a login so it only shows what can be gotten to.
+		needs a "user available apps" method -- may just forward to access view.
+
+get magic-link signin working
+get password reset working
+get invite emails working
