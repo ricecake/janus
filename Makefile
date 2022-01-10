@@ -34,6 +34,7 @@ go-deps:
 js: js-deps js-build
 
 js-build:
+	mkdir -p util/content
 	npm run build
 
 go: go-deps go-build
