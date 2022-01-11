@@ -1,9 +1,9 @@
 package util
 
 import (
-	"bytes"
 	"html/template"
 	"path/filepath"
+	"strings"
 
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
@@ -26,11 +26,9 @@ func SendMail(name, address, template string, context TemplateContext) error {
 		return err
 	}
 
-	message := mail.NewSingleEmail(from, string(subject), to, string(plainTextContent), string(htmlContent))
+	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
 	client := sendgrid.NewSendClient(key)
-
-	log.Printf("SENDING %+v", message)
 
 	response, err := client.Send(message)
 	if err != nil {
@@ -43,7 +41,7 @@ func SendMail(name, address, template string, context TemplateContext) error {
 	return err
 }
 
-func RenderEmailTemplate(templateName string, context map[string]interface{}) (subjectOutput, plainOutput, htmlOutput []byte, renderErr error) {
+func RenderEmailTemplate(templateName string, context map[string]interface{}) (subjectOutput, plainOutput, htmlOutput string, renderErr error) {
 	subjectPath := filepath.Join("content", "email", templateName, "subject")
 	plainPath := filepath.Join("content", "email", templateName, "plain")
 	htmlPath := filepath.Join("content", "email", templateName, "html")
@@ -59,24 +57,24 @@ func RenderEmailTemplate(templateName string, context map[string]interface{}) (s
 		newContext[index] = element
 	}
 
-	var tpl bytes.Buffer
+	var tpl strings.Builder
 
 	if renderErr = emailTemplates.ExecuteTemplate(&tpl, "subject", newContext); renderErr != nil {
 		return
 	}
-	subjectOutput = tpl.Bytes()
+	subjectOutput = tpl.String()
 	tpl.Reset()
 
 	if renderErr = emailTemplates.ExecuteTemplate(&tpl, "plain", newContext); renderErr != nil {
 		return
 	}
-	plainOutput = tpl.Bytes()
+	plainOutput = tpl.String()
 	tpl.Reset()
 
 	if renderErr = emailTemplates.ExecuteTemplate(&tpl, "html", newContext); renderErr != nil {
 		return
 	}
-	htmlOutput = tpl.Bytes()
+	htmlOutput = tpl.String()
 
 	return
 }

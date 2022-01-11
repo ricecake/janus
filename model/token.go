@@ -269,25 +269,35 @@ type ZipCode struct {
 }
 
 func (zip *ZipCode) Save() error {
-	idp, clientErr := FindClientById(zip.Client)
+	zipClient, clientErr := FindClientById(zip.Client)
 	if clientErr != nil {
 		return clientErr
 	}
 
-	redirectURL := idp.BaseUri
+	redirectURL := zipClient.BaseUri
 	if zip.RedirectUri != "" {
-		redirectBase, err := url.Parse(idp.BaseUri)
-		if err != nil {
-			return err
-		}
-
 		redirect, redirErr := url.Parse(zip.RedirectUri)
 		if redirErr != nil {
 			return redirErr
 		}
 
-		redirect.Scheme = redirectBase.Scheme
-		redirect.Host = redirectBase.Host
+		clientBase, err := url.Parse(zipClient.BaseUri)
+		if err != nil {
+			return err
+		}
+
+		idpBase, idpErr := url.Parse(viper.GetString("identity.issuer"))
+		if idpErr != nil {
+			return idpErr
+		}
+
+		if redirect.Host == idpBase.Host {
+			redirect.Scheme = idpBase.Scheme
+			redirect.Host = idpBase.Host
+		} else {
+			redirect.Scheme = clientBase.Scheme
+			redirect.Host = clientBase.Host
+		}
 
 		baseQuery := redirect.Query()
 		for key, value := range zip.Params {

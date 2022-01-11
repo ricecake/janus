@@ -1,4 +1,3 @@
-*** If there's only one auth method available, just start that auth method ***
 Start moving to typescript
 Add linting preventing unused imports
 add lining preventing unused variables
@@ -37,3 +36,6 @@ add an index page
 get magic-link signin working
 get password reset working
 get invite emails working
+
+what if blockchain auth, or something dumb like that?
+	put some signed thing onto the blockchain, and your identity is your wallet, can sso between servers by using the block chain to assert identity

@@ -282,7 +282,6 @@ type LoginLinkRequest struct {
 	Email  string `form:"email" json:"email"`
 	Client string `form:"client" json:"client"`
 	Url    string `form:"url" json:"url"`
-	State  string `form:"state" json:"state"`
 }
 
 func sendLoginLink(c *gin.Context) {
@@ -307,48 +306,16 @@ func sendLoginLink(c *gin.Context) {
 		return
 	}
 
-	redirect, err := url.Parse(linkRequest.Url)
-	if err != nil {
-		c.Error(err).SetType(gin.ErrorTypePrivate)
-		c.AbortWithStatusJSON(400, "bad url")
-		return
-	}
-
-	idpBase, err := url.Parse(viper.GetString("identity.issuer"))
-	if err != nil {
-		c.Error(err).SetType(gin.ErrorTypePrivate)
-		c.AbortWithStatusJSON(500, "system error")
-		return
-	}
-
-	params := map[string]string{
-		"state": linkRequest.State,
-	}
-
-	// Redirects can happen to the client base uri, or into the idp, to facilitate background auth flow.
-	if redirect.Host == idpBase.Host {
-		var data map[string]string
-		if err := model.StashFetch(linkRequest.State, &data); err != nil {
-			c.Error(err).SetType(gin.ErrorTypePrivate)
-			c.AbortWithStatusJSON(400, "Bad state")
-			return
-		}
-		redirect, err = url.Parse(data["redirect"])
-		if err != nil {
-			c.Error(err).SetType(gin.ErrorTypePrivate)
-			c.AbortWithStatusJSON(400, "Bad state")
-			return
-		}
-
-		params = map[string]string{}
+	redirString := linkRequest.Url
+	if redirString == "" {
+		redirString = c.Request.Header.Get("Referer")
 	}
 
 	zipCode := model.ZipCode{
 		Identity:    ident.Code,
 		Client:      client.ClientId,
-		RedirectUri: redirect.String(),
+		RedirectUri: redirString,
 		TTL:         300, // five minutes
-		Params:      params,
 	}
 
 	if zipErr := zipCode.Save(); zipErr != nil {

@@ -122,8 +122,6 @@ export const doMagicLoginLink = (email) => {
 			body: JSON.stringify({
 				email: email,
 				client: state.context.query.client_id,
-				url: state.context.query.redirect_uri,
-				state: state.context.query.state,
 			}),
 		})
 			.then(handleFetchError)
