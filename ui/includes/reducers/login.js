@@ -9,6 +9,7 @@ const defaultState = {
 	Webauthn: false,
 	methods: false,
 	error: undefined,
+	emailSent: false,
 };
 
 export const {
@@ -109,13 +110,34 @@ export const doWebauthn = (email) => {
 	};
 };
 
-const doMagicLoginLink = () => {};
+export const doMagicLoginLink = (email) => {
+	return (dispatch, getState) => {
+		dispatch(magicStart());
+		let state = getState();
+		fetch('/login/link', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				email: email,
+				client: state.context.query.client_id,
+				url: state.context.query.redirect_uri,
+				state: state.context.query.state,
+			}),
+		})
+			.then(handleFetchError)
+			.then(() => dispatch(magicFinish()))
+			.catch(() => dispatch(loginError('Something went wrong')));
+	};
+};
 
 const reducer = handleActions(
 	{
 		[methodsFinish]: (state, { payload: methods }) =>
 			merge(state, { methods: true, ...methods }),
 		[loginError]: (state, { payload: error }) => merge(state, { error }),
+		[magicFinish]: (state) => merge(state, { emailSent: true }),
 		[combineActions(
 			loginStart,
 			passwordStart,

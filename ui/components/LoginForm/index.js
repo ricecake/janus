@@ -22,6 +22,7 @@ import {
 	fetchAuthMethods,
 	doWebauthn,
 	doPasswordAuth,
+	doMagicLoginLink,
 } from 'Include/reducers/login';
 import { bindActionCreators } from 'redux';
 import { webauthnCapable } from 'Include/webauthn';
@@ -81,6 +82,9 @@ const LoginForm = (props) => {
 				</Typography>
 				<Show If={props.error}>
 					<Alert severity="error">{props.error}</Alert>
+				</Show>
+				<Show If={props.emailSent}>
+					<Alert severity="success">Login email sent!</Alert>
 				</Show>
 				<Container>
 					<form
@@ -193,12 +197,11 @@ const LoginForm = (props) => {
 									Password Authentication
 								</Button>
 							</Show>
-							<Show If={false && props.Email}>
+							<Show If={props.Email && !props.emailSent}>
 								<Button
 									startIcon={<EmailOutlinedIcon />}
 									onClick={() => {
-										setPicked('email');
-										props.doWebauthn(email);
+										props.doMagicLoginLink(email);
 									}}
 									fullWidth
 									variant="contained"
@@ -237,6 +240,7 @@ const dispatchToProps = (dispatch) =>
 			fetchAuthMethods,
 			doWebauthn,
 			doPasswordAuth,
+			doMagicLoginLink,
 		},
 		dispatch
 	);

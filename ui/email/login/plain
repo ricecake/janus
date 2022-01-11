@@ -1,0 +1,3 @@
+To complete your login to {{ .Client_Name }} account, please visit:
+
+{{ .IDP_Site }}/zip/{{ .Code }}

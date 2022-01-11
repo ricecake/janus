@@ -11,8 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/ricecake/karma_chameleon/util"
+	kcutil "github.com/ricecake/karma_chameleon/util"
 	"janus/model"
+	"janus/util"
 )
 
 func defaultPage(c *gin.Context)   {}
@@ -177,7 +178,7 @@ func checkAuthRedirect(c *gin.Context) {
 	}
 
 	var encData model.AuthCodeData
-	if err := util.DecodeJWTClose(c.Query("code"), viper.GetString("security.passphrase"), &encData); err != nil {
+	if err := kcutil.DecodeJWTClose(c.Query("code"), viper.GetString("security.passphrase"), &encData); err != nil {
 		c.Error(err).SetType(gin.ErrorTypePrivate)
 		c.AbortWithStatusJSON(500, "system error")
 	}
@@ -214,7 +215,7 @@ func checkAuthRedirect(c *gin.Context) {
 		return
 	}
 
-	trunkDomain := util.TrunkUrlFragment([]string{redirectBase.Host, idpBase.Host})
+	trunkDomain := kcutil.TrunkUrlFragment([]string{redirectBase.Host, idpBase.Host})
 	cookieName := fmt.Sprintf("janus.auth.session.%s", client.Context)
 
 	if res.Success {
@@ -254,7 +255,7 @@ func checkAuthRedirect(c *gin.Context) {
 		token := user.IdentityToken(scopes)
 		token.ClientID = idp.ClientId
 		token.Context = client.Context
-		encToken, err := util.EncodeJWTOpen(token)
+		encToken, err := kcutil.EncodeJWTOpen(token)
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithStatusJSON(500, "system error")
@@ -275,6 +276,98 @@ func checkAuthRedirect(c *gin.Context) {
 	} else {
 		clearSessionCookie(c, cookieName, trunkDomain)
 	}
+}
+
+type LoginLinkRequest struct {
+	Email  string `form:"email" json:"email"`
+	Client string `form:"client" json:"client"`
+	Url    string `form:"url" json:"url"`
+	State  string `form:"state" json:"state"`
+}
+
+func sendLoginLink(c *gin.Context) {
+	var linkRequest LoginLinkRequest
+	if err := c.ShouldBind(&linkRequest); err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "Bad request")
+		return
+	}
+
+	ident, err := model.FindIdentityByEmail(linkRequest.Email)
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "Bad email")
+		return
+	}
+
+	client, clientErr := model.FindClientById(linkRequest.Client)
+	if clientErr != nil {
+		c.Error(clientErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "bad client")
+		return
+	}
+
+	redirect, err := url.Parse(linkRequest.Url)
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(400, "bad url")
+		return
+	}
+
+	idpBase, err := url.Parse(viper.GetString("identity.issuer"))
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	params := map[string]string{
+		"state": linkRequest.State,
+	}
+
+	// Redirects can happen to the client base uri, or into the idp, to facilitate background auth flow.
+	if redirect.Host == idpBase.Host {
+		var data map[string]string
+		if err := model.StashFetch(linkRequest.State, &data); err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(400, "Bad state")
+			return
+		}
+		redirect, err = url.Parse(data["redirect"])
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(400, "Bad state")
+			return
+		}
+
+		params = map[string]string{}
+	}
+
+	zipCode := model.ZipCode{
+		Identity:    ident.Code,
+		Client:      client.ClientId,
+		RedirectUri: redirect.String(),
+		TTL:         300, // five minutes
+		Params:      params,
+	}
+
+	if zipErr := zipCode.Save(); zipErr != nil {
+		c.Error(zipErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	emailErr := util.SendMail(ident.PreferredName, ident.Email, "login", util.TemplateContext{
+		"Code":        zipCode.Code,
+		"Client_Name": client.DisplayName,
+	})
+	if emailErr != nil {
+		c.Error(emailErr).SetType(gin.ErrorTypePrivate)
+		c.AbortWithStatusJSON(500, "system error")
+		return
+	}
+
+	c.Status(204)
 }
 
 func processZipCode(c *gin.Context) {
@@ -348,7 +441,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 		token.ClientID = client.ClientId
 		token.Context = context
 
-		encToken, err := util.EncodeJWTOpen(token)
+		encToken, err := kcutil.EncodeJWTOpen(token)
 		if err != nil {
 			return nil, err
 		}
@@ -372,7 +465,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 			if cookie.Name == cookieName {
 				if cookieVal := cookie.Value; cookieVal != "" {
 					var encData model.IDToken
-					if err := util.DecodeJWTOpen(cookieVal, &encData); err == nil {
+					if err := kcutil.DecodeJWTOpen(cookieVal, &encData); err == nil {
 						if err := model.ReplaceSessionToken(encData.TokenId, sessionCode); err != nil {
 							log.Error(err)
 						}

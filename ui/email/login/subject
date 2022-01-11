@@ -1,1 +1,1 @@
-Email Login Link from {{ .idp_name }}
+{{ .Client_Name }} Login Link from {{ .idp_name }}
