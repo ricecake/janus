@@ -103,11 +103,7 @@ export const doWebauthn = (email) => {
 		doWebauthnLogin(email)
 			.then(() => resubmitLoginForm())
 			.catch(() =>
-				dispatch(
-					loginError(
-						'Something went wrong.  Refresh, and try using another login method.'
-					)
-				)
+				dispatch(loginError('Something went wrong.  Please try again.'))
 			)
 			.finally(() => dispatch(webauthnFinish()));
 	};
@@ -126,7 +122,7 @@ const reducer = handleActions(
 			webauthnStart,
 			magicStart,
 			methodsStart
-		)]: (state) => merge(state, { loading: true }),
+		)]: (state) => merge(state, { loading: true, error: undefined }),
 		[combineActions(
 			loginFinish,
 			passwordFinish,

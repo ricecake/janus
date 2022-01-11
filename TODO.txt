@@ -1,3 +1,4 @@
+*** If there's only one auth method available, just start that auth method ***
 Start moving to typescript
 Add linting preventing unused imports
 add lining preventing unused variables

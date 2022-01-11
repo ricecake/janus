@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -51,6 +51,23 @@ const LoginForm = (props) => {
 	const [email, setEmail] = React.useState('');
 	const [password, setPassword] = React.useState('');
 	const [picked, setPicked] = React.useState(false);
+
+	useEffect(() => {
+		if (props.methods) {
+			if (props.Webauthn && !props.Password) {
+				setPicked('webauthn');
+				props.doWebauthn(email);
+			} else if (!props.Webauthn && props.Password) {
+				setPicked('password');
+			}
+		}
+	}, [props.methods]);
+
+	useEffect(() => {
+		if (props.error) {
+			setPicked('');
+		}
+	}, [props.error]);
 
 	return (
 		<Container component="main" maxWidth="sm">
@@ -107,51 +124,6 @@ const LoginForm = (props) => {
 					<LinearProgress />
 				</Show>
 
-				<Show If={props.methods && !picked}>
-					<Container>
-						<ButtonGroup fullWidth orientation="vertical">
-							<Show If={webauthnCapable() && props.Webauthn}>
-								<Button
-									startIcon={<FingerprintOutlinedIcon />}
-									onClick={() => {
-										setPicked('webauthn');
-										props.doWebauthn(email);
-									}}
-									fullWidth
-									variant="contained"
-								>
-									Platform Authentication
-								</Button>
-							</Show>
-							<Show If={props.Password}>
-								<Button
-									startIcon={<LockOutlinedIcon />}
-									onClick={() => {
-										setPicked('password');
-									}}
-									fullWidth
-									variant="contained"
-								>
-									Password Authentication
-								</Button>
-							</Show>
-							<Show If={false && props.Email}>
-								<Button
-									startIcon={<EmailOutlinedIcon />}
-									onClick={() => {
-										setPicked('email');
-										props.doWebauthn(email);
-									}}
-									fullWidth
-									variant="contained"
-								>
-									Magic Link Email
-								</Button>
-							</Show>
-						</ButtonGroup>
-					</Container>
-				</Show>
-
 				<Show If={props.Password && picked === 'password'}>
 					<Container>
 						<form
@@ -186,6 +158,58 @@ const LoginForm = (props) => {
 						</form>
 					</Container>
 				</Show>
+
+				<Show If={props.methods}>
+					<Container>
+						<ButtonGroup fullWidth orientation="vertical">
+							<Show
+								If={
+									webauthnCapable() &&
+									props.Webauthn &&
+									!picked
+								}
+							>
+								<Button
+									startIcon={<FingerprintOutlinedIcon />}
+									onClick={() => {
+										setPicked('webauthn');
+										props.doWebauthn(email);
+									}}
+									fullWidth
+									variant="contained"
+								>
+									Platform Authentication
+								</Button>
+							</Show>
+							<Show If={props.Password && !picked}>
+								<Button
+									startIcon={<LockOutlinedIcon />}
+									onClick={() => {
+										setPicked('password');
+									}}
+									fullWidth
+									variant="contained"
+								>
+									Password Authentication
+								</Button>
+							</Show>
+							<Show If={false && props.Email}>
+								<Button
+									startIcon={<EmailOutlinedIcon />}
+									onClick={() => {
+										setPicked('email');
+										props.doWebauthn(email);
+									}}
+									fullWidth
+									variant="contained"
+								>
+									Magic Link Email
+								</Button>
+							</Show>
+						</ButtonGroup>
+					</Container>
+				</Show>
+
 				<Grid container justify="flex-end">
 					{/* <Grid item xs>
 			  <Link to="#" variant="body2">
