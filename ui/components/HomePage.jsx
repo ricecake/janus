@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 import Avatar from '@material-ui/core/Avatar';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -118,6 +119,7 @@ const ContextDetails = (props) => (
 );
 
 const ResponsiveAppBar = (props) => {
+	const navigate = useNavigate();
 	useEffect(() => {
 		console.log(props);
 	});
@@ -169,9 +171,16 @@ const ResponsiveAppBar = (props) => {
 						open={open}
 						onClose={handleClose}
 					>
-						<MenuItem onClick={handleClose}>Profile</MenuItem>
-						<MenuItem onClick={handleClose}>Admin</MenuItem>
-						<MenuItem onClick={handleClose}>Logout</MenuItem>
+						{/* <MenuItem onClick={handleClose}>Profile</MenuItem>
+						<MenuItem onClick={handleClose}>Admin</MenuItem> */}
+						<MenuItem
+							onClick={() => {
+								handleClose();
+								navigate('/logout');
+							}}
+						>
+							Logout
+						</MenuItem>
 					</Menu>
 				</div>
 			</Toolbar>
@@ -205,15 +214,16 @@ const HomeAppMenu = (props) => {
 	);
 };
 
-const stateToProps = ({
-	home,
-	oidc: {
-		user: { profile },
-	},
-}) => ({
-	profile,
-	...home,
-});
+const stateToProps = ({ home, oidc: { user } }) => {
+	let profile = {};
+	if (user && user.profile) {
+		profile = user.profile;
+	}
+	return {
+		profile,
+		...home,
+	};
+};
 const dispatchToProps = (dispatch) =>
 	bindActionCreators({ fetchAllowedClients }, dispatch);
 

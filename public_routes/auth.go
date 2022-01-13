@@ -283,7 +283,7 @@ func signupPassword(c *gin.Context) {
 	c.Status(204)
 }
 
-func logoutPage(c *gin.Context) {
+func logout(c *gin.Context) {
 	// TODO: return a page with js that will clear usermanager session
 	for _, cookie := range c.Request.Cookies() {
 		if cookieVal := cookie.Value; cookieVal != "" {
@@ -298,7 +298,7 @@ func logoutPage(c *gin.Context) {
 			clearSessionCookie(c, cookie.Name, cookie.Domain)
 		}
 	}
-	c.String(200, "Logged out")
+	c.Status(204)
 }
 
 type AuthParams struct {

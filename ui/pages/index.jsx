@@ -149,6 +149,7 @@ const withSuspense = (element, fallback = <div>Loading...</div>) => (
 
 const Home = lazy(() => import('Page/home'));
 const Login = lazy(() => import('Page/login'));
+const Logout = lazy(() => import('Page/logout'));
 const Signup = lazy(() => import('Page/signup'));
 const OidcCallback = lazy(() => import('Page/callbacks/oidc'));
 
@@ -167,6 +168,10 @@ export const App = (props) => {
 								<Route
 									path="login"
 									element={withSuspense(<Login />)}
+								/>
+								<Route
+									path="logout"
+									element={withSuspense(<Logout />)}
 								/>
 								<Route
 									path="signup"
