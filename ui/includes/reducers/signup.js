@@ -7,6 +7,7 @@ const defaultState = {
 	enrolled: false,
 	webauthn: false,
 	password: false,
+	error: undefined,
 };
 
 export const {
@@ -16,6 +17,7 @@ export const {
 	webauthnFinish,
 	passwordStart,
 	passwordFinish,
+	signupError,
 } = createActions(
 	'SIGNUP_START',
 	'SIGNUP_FINISH',
@@ -23,8 +25,16 @@ export const {
 	'WEBAUTHN_FINISH',
 	'PASSWORD_START',
 	'PASSWORD_FINISH',
+	'SIGNUP_ERROR',
 	{ prefix: 'janus/signup' }
 );
+
+const handleFetchError = (res) => {
+	if (!res.ok) {
+		throw res;
+	}
+	return res;
+};
 
 export const initiateSignup = (preferred_name, email) => {
 	return (dispatch, getState) => {
@@ -38,14 +48,20 @@ export const initiateSignup = (preferred_name, email) => {
 				preferred_name,
 				email,
 			}),
-		}).then((res) => dispatch(signupFinish(email)));
+		})
+			.then(handleFetchError)
+			.then((res) => dispatch(signupFinish(email)))
+			.catch(() => dispatch(signupError('Something went wrong')));
 	};
 };
 
 export const initiateWebauthnEnroll = () => {
 	return (dispatch, getState) => {
 		dispatch(webauthnStart());
-		doWebauthnRegister().then(() => dispatch(webauthnFinish()));
+		doWebauthnRegister()
+			.then(handleFetchError)
+			.then(() => dispatch(webauthnFinish()))
+			.catch(() => dispatch(signupError('Something went wrong')));
 	};
 };
 
@@ -61,12 +77,16 @@ export const initiatePasswordEnroll = (password, verify_password) => {
 				password: password,
 				verify_password: verify_password,
 			}),
-		}).then((res) => dispatch(passwordFinish()));
+		})
+			.then(handleFetchError)
+			.then((res) => dispatch(passwordFinish()))
+			.catch(() => dispatch(signupError('Something went wrong')));
 	};
 };
 
 const reducer = handleActions(
 	{
+		[signupError]: (state, { payload: error }) => merge(state, { error }),
 		[signupStart]: (state) => merge(state, { loading: true }),
 		[webauthnStart]: (state) => merge(state, { loading: true }),
 		[passwordStart]: (state) => merge(state, { loading: true }),

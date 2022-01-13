@@ -1,9 +1,13 @@
 import React from 'react';
+import { OidcProvider } from 'redux-oidc';
+
 import { ThemeProvider, Grid } from '@material-ui/core/';
 import { createTheme } from '@material-ui/core/styles';
 import green from '@material-ui/core/colors/green';
 import teal from '@material-ui/core/colors/teal';
-import { withLogin } from 'Include/userManager';
+
+import store from 'Include/store';
+import userManager, { withLogin } from 'Include/userManager';
 
 const theme = createTheme({
 	palette: {
@@ -27,6 +31,14 @@ const BasePage = (props) => (
 	</ThemeProvider>
 );
 
-export const LoginBasePage = withLogin(BasePage);
+export const LoginBasePage = (props) => {
+	let WrappedBase = withLogin(BasePage);
+
+	return (
+		<OidcProvider store={store} userManager={userManager}>
+			<WrappedBase {...props} />
+		</OidcProvider>
+	);
+};
 
 export default BasePage;

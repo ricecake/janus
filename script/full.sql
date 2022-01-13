@@ -31,8 +31,9 @@ CREATE TABLE webauthn_credential (
 create index ON webauthn_credential (identity);
 
 CREATE TABLE context (
-    code text  NOT NULL PRIMARY KEY,
-    name text  NOT NULL
+    code text NOT NULL PRIMARY KEY,
+    name text NOT NULL,
+    description text NOT NULL
 );
 
 CREATE TABLE action (
@@ -56,6 +57,7 @@ CREATE TABLE clique (
 CREATE TABLE client (
     context text NOT NULL REFERENCES context(code) ON DELETE CASCADE,
     display_name text NOT NULL,
+    description text NOT NULL,
     client_id text NOT NULL UNIQUE,
     secret text NOT NULL,
     base_uri text
@@ -224,7 +226,7 @@ create or replace view identity_allowed_clients as
     select
         identity,
         email,
-        jsonb_pretty(jsonb_agg(context_data))
+        jsonb_pretty(jsonb_agg(context_data)) as details
     from (
         select
             ias.identity,
@@ -232,9 +234,11 @@ create or replace view identity_allowed_clients as
             jsonb_build_object(
                 'context', c.code,
                 'display_name', c.name,
-                'clients', jsonb_agg(jsonb_build_object(
+                'description', c.description,
+                'clients', jsonb_agg(distinct jsonb_build_object(
                     'client_id', cl.client_id,
                     'display_name', cl.display_name,
+                    'description', cl.description,
                     'base_uri', cl.base_uri
                 ))) as context_data
         from identity_access_summary ias

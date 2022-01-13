@@ -21,4 +21,6 @@ func Configure(r *gin.RouterGroup) {
 
 	apiGroup := r.Group("/api")
 	apiGroup.Use(http_middleware.NewAuthMiddleware(model.NewLocalVerifierCache()))
+
+	apiGroup.GET("/applist", listUserApps)
 }

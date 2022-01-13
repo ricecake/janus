@@ -28,7 +28,7 @@ func Configure(r *gin.RouterGroup) {
 
 	r.GET("/zip/:code", processZipCode)
 
-	r.GET("/logout", logoutPage)
+	r.DELETE("/sessions", logout)
 
 	r.GET("/signup", signupPage)
 	r.POST("/signup", signupSubmit)

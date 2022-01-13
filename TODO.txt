@@ -24,6 +24,9 @@ add a profile dashboard
 add an admin dashboard
 	should be able to invite users
 	should be able to create context/client/action/role/role actions
+	change context for clients
+	manage roles, role actions
+	view effective role/access assignments for users, and for apps, to see who has access to what.
 	view rate limits/clear
 	view/disable/update users
 	force password reset on next login
@@ -33,9 +36,29 @@ add an index page
 	should show apps that can be logged into, gated behind a login so it only shows what can be gotten to.
 		needs a "user available apps" method -- may just forward to access view.
 
-get magic-link signin working
 get password reset working
 get invite emails working
 
+add a description table to clients, and contexts, to expand on the "display name" field.
+fix being able to submit password on signup when they don't match
+fix doing login link being broken when already logged in.
+
+add toolbar to login landing page, with user link, like to profile page, and link to admin page if available, and logout link.
+
+loggout should also clear the usermanager session
+
+add ability to store and return lists or validate ssh keys, for ssh authorized keys command.
+	goal is to be able to provide auth for ssh sessions without putting keys on boxes
+		keys should have optional expiration dates
+
 what if blockchain auth, or something dumb like that?
 	put some signed thing onto the blockchain, and your identity is your wallet, can sso between servers by using the block chain to assert identity
+
+spend some time thinking of ways to have 'peer' authentication servers.
+	the notion would be that if an identity isn't found locally, can ask peers if the auth is valid.
+	makes a way to have a network of servers that can all access each other, but each one is responsible for tracking their local data.
+	peer authentication via some key exchange protocol, and then use merkel trees to share user lists?
+		need to find a good way to share "i'm responsible for these users" without allowing people to spoof identities.
+		need a handshake where two parties can prove that they have a value that hashes to the same value.
+			user auths with password that hashes to X.  Need remote server to not see password or X, but prove they have hash X independently.
+			scram might acturally be that, since it does a password based challange response handshake.
