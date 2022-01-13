@@ -23,7 +23,7 @@ const production = {
 		idp_path: 'https://login.greenstuff.io',
 	},
 	identity: {
-		client_id: 'm1qCCDi0QJuEjcgZD2mx9Q',
+		client_id: '39X88ylOTPaIgPBUMpAlxw',
 	},
 };
 
