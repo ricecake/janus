@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -535,4 +536,44 @@ func ActionsForIdentity(identCode, context string) (allowed []string, err error)
 
 	sort.Strings(allowed)
 	return
+}
+
+type IdentityAllowedClient struct {
+	Identity string `gorm:"column:identity"`
+	Email    string `gorm:"column:email"`
+	Details  []byte `gorm:"column:details"`
+}
+
+func (view IdentityAllowedClient) TableName() string {
+	return "identity_allowed_clients"
+}
+
+type ClientDisplayDetails struct {
+	BaseUri     string `json:"base_uri"`
+	ClientId    string `json:"client_id"`
+	DisplayName string `json:"display_name"`
+}
+type ContextClientDetails struct {
+	Context     string                 `json:"context"`
+	DisplayName string                 `json:"display_name"`
+	Clients     []ClientDisplayDetails `json:"clients"`
+}
+type AllowedClientList []ContextClientDetails
+
+func IdentityAllowedClients(identCode string) (AllowedClientList, error) {
+	db := util.GetDb()
+
+	var result AllowedClientList
+	var allowedList IdentityAllowedClient
+
+	err := db.Where("identity = ?", identCode).Find(&allowedList).Error
+	if err != nil {
+		return result, err
+	}
+
+	if unmarshalError := json.Unmarshal(allowedList.Details, &result); unmarshalError != nil {
+		return result, unmarshalError
+	}
+
+	return result, nil
 }

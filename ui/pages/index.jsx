@@ -143,14 +143,11 @@ const styles = {
 	},
 };
 
-const Home = (props) => (
-	<React.Fragment>This is the default page!</React.Fragment>
-);
-
 const withSuspense = (element, fallback = <div>Loading...</div>) => (
 	<Suspense fallback={fallback}>{element}</Suspense>
 );
 
+const Home = lazy(() => import('Page/home'));
 const Login = lazy(() => import('Page/login'));
 const Signup = lazy(() => import('Page/signup'));
 const OidcCallback = lazy(() => import('Page/callbacks/oidc'));
@@ -166,7 +163,7 @@ export const App = (props) => {
 					<Router>
 						<Routes>
 							<Route path="/">
-								<Route index element={<Home />} />
+								<Route index element={withSuspense(<Home />)} />
 								<Route
 									path="login"
 									element={withSuspense(<Login />)}

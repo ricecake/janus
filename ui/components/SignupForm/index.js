@@ -14,6 +14,7 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import Alert from '@material-ui/lab/Alert';
 
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -167,7 +168,9 @@ const SetupPassword = ({
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
-					initiatePasswordEnroll(pass, verify);
+					if (verify && verify === pass) {
+						initiatePasswordEnroll(pass, verify);
+					}
 				}}
 			>
 				<input name="username" type="hidden" value={email} />
@@ -178,6 +181,7 @@ const SetupPassword = ({
 					<TextField
 						required
 						fullWidth
+						autoFocus
 						disabled={loading}
 						name="password"
 						label="Password"
@@ -216,7 +220,7 @@ const SetupPassword = ({
 					alignItems="center"
 				>
 					<Button
-						disabled={loading}
+						disabled={loading || (!!verify && verify !== pass)}
 						type="submit"
 						variant="contained"
 						color="primary"
@@ -412,6 +416,9 @@ const SignupForm = (props) => {
 				<Typography component="h1" variant="h5">
 					Sign up
 				</Typography>
+				<Show If={props.error}>
+					<Alert severity="error">{props.error}</Alert>
+				</Show>
 				<FormPage
 					step={activeStep}
 					changeStep={setActiveStep}

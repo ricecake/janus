@@ -224,7 +224,7 @@ create or replace view identity_allowed_clients as
     select
         identity,
         email,
-        jsonb_pretty(jsonb_agg(context_data))
+        jsonb_pretty(jsonb_agg(context_data)) as details
     from (
         select
             ias.identity,
@@ -232,7 +232,7 @@ create or replace view identity_allowed_clients as
             jsonb_build_object(
                 'context', c.code,
                 'display_name', c.name,
-                'clients', jsonb_agg(jsonb_build_object(
+                'clients', jsonb_agg(distinct jsonb_build_object(
                     'client_id', cl.client_id,
                     'display_name', cl.display_name,
                     'base_uri', cl.base_uri

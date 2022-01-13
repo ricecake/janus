@@ -146,6 +146,7 @@ const LoginForm = (props) => {
 								label="Password"
 								type="password"
 								id="password"
+								autoFocus
 								autoComplete="current-password"
 								onChange={(e) => setPassword(e.target.value)}
 							/>
