@@ -10,10 +10,16 @@ import Container from '@material-ui/core/Container';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import IconButton from '@material-ui/core/IconButton';
+import Typography from '@material-ui/core/Typography';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import Identicon from 'react-identicons';
+import ExitToAppOutlinedIcon from '@material-ui/icons/ExitToAppOutlined';
 
-import { Link, Show, Hide } from 'Component/Helpers';
-
+import { Link, Show, Hide, NavButton } from 'Component/Helpers';
 import { fetchAllowedClients } from 'Include/reducers/home';
 
 const useStyles = makeStyles((theme) => ({
@@ -34,6 +40,18 @@ const useStyles = makeStyles((theme) => ({
 	submit: {
 		margin: theme.spacing(3, 0, 2),
 	},
+	root: {
+		flexGrow: 1,
+	},
+	menuButton: {
+		marginRight: theme.spacing(2),
+	},
+	title: {
+		flexGrow: 1,
+	},
+	app_bar: {
+		marginBottom: theme.spacing(1),
+	},
 }));
 
 const ClientDetails = (props) => (
@@ -46,9 +64,24 @@ const ClientDetails = (props) => (
 					</Avatar>
 				}
 				title={props.display_name}
+				subheader={props.description}
 			/>
 			<CardContent>
-				<a href={props.base_uri}>{props.display_name}</a>
+				<Grid
+					container
+					direction="row"
+					justifyContent="space-evenly"
+					alignItems="center"
+				>
+					<NavButton
+						to={props.base_uri}
+						variant="contained"
+						color="secondary"
+						startIcon={<ExitToAppOutlinedIcon />}
+					>
+						Login
+					</NavButton>
+				</Grid>
 			</CardContent>
 		</Card>
 	</Grid>
@@ -56,7 +89,6 @@ const ClientDetails = (props) => (
 
 const ContextDetails = (props) => (
 	<Grid item md={12} lg={4}>
-		{' '}
 		{/** or should this be auto? */}
 		<Card variant="outlined">
 			<CardHeader
@@ -66,6 +98,7 @@ const ContextDetails = (props) => (
 					</Avatar>
 				}
 				title={props.display_name}
+				subheader={props.description}
 			/>
 			<CardContent>
 				<Grid
@@ -84,32 +117,103 @@ const ContextDetails = (props) => (
 	</Grid>
 );
 
-const HomeAppMenu = (props) => {
+const ResponsiveAppBar = (props) => {
+	useEffect(() => {
+		console.log(props);
+	});
 	const classes = useStyles();
+	const [anchorEl, setAnchorEl] = React.useState(null);
+	const open = Boolean(anchorEl);
 
+	const handleMenu = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+
+	const handleClose = () => {
+		setAnchorEl(null);
+	};
+
+	return (
+		<AppBar position="static" className={classes.app_bar}>
+			<Toolbar>
+				<Typography variant="h6" className={classes.title}>
+					Applications
+				</Typography>
+				<Typography variant="subtitle1" className={classes.title}>
+					{props.profile.preferred_name}
+				</Typography>
+				<div>
+					<IconButton
+						aria-label="account of current user"
+						aria-controls="menu-appbar"
+						aria-haspopup="true"
+						onClick={handleMenu}
+						color="inherit"
+					>
+						<Avatar alt={props.profile.preferred_name}>
+							<Identicon string={props.profile.sub} size="25" />
+						</Avatar>
+					</IconButton>
+					<Menu
+						id="menu-appbar"
+						anchorEl={anchorEl}
+						anchorOrigin={{
+							vertical: 'top',
+							horizontal: 'right',
+						}}
+						keepMounted
+						transformOrigin={{
+							vertical: 'top',
+							horizontal: 'right',
+						}}
+						open={open}
+						onClose={handleClose}
+					>
+						<MenuItem onClick={handleClose}>Profile</MenuItem>
+						<MenuItem onClick={handleClose}>Admin</MenuItem>
+						<MenuItem onClick={handleClose}>Logout</MenuItem>
+					</Menu>
+				</div>
+			</Toolbar>
+		</AppBar>
+	);
+};
+
+const HomeAppMenu = (props) => {
 	useEffect(() => {
 		props.fetchAllowedClients();
 	}, []);
 
 	return (
-		<Container component="main" maxWidth="xl">
-			<CssBaseline />
-			<Grid
-				container
-				spacing={2}
-				direction="row"
-				justifyContent="space-evenly"
-				alignItems="baseline"
-			>
-				{props.clientDetails.map((context) => (
-					<ContextDetails key={context.context} {...context} />
-				))}
-			</Grid>
-		</Container>
+		<React.Fragment>
+			<ResponsiveAppBar {...props} />
+			<Container component="main" maxWidth="xl">
+				<CssBaseline />
+				<Grid
+					container
+					spacing={2}
+					direction="row"
+					justifyContent="space-evenly"
+					alignItems="baseline"
+				>
+					{props.clientDetails.map((context) => (
+						<ContextDetails key={context.context} {...context} />
+					))}
+				</Grid>
+			</Container>
+		</React.Fragment>
 	);
 };
 
-const stateToProps = ({ home }) => ({ ...home });
+const stateToProps = ({
+	home,
+	oidc: {
+		user: { profile },
+	},
+}) => ({
+	profile,
+	...home,
+});
 const dispatchToProps = (dispatch) =>
 	bindActionCreators({ fetchAllowedClients }, dispatch);
 

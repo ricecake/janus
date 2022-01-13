@@ -552,10 +552,12 @@ type ClientDisplayDetails struct {
 	BaseUri     string `json:"base_uri"`
 	ClientId    string `json:"client_id"`
 	DisplayName string `json:"display_name"`
+	Description string `json:"description"`
 }
 type ContextClientDetails struct {
 	Context     string                 `json:"context"`
 	DisplayName string                 `json:"display_name"`
+	Description string                 `json:"description"`
 	Clients     []ClientDisplayDetails `json:"clients"`
 }
 type AllowedClientList []ContextClientDetails
