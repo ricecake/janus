@@ -7,7 +7,7 @@ const common = {
 		oidc_path: '/oauth',
 		automaticSilentRenew: true,
 		validateSubOnSilentRenew: true,
-		loadUserInfo: false,
+		loadUserInfo: true,
 	},
 };
 const dev = {

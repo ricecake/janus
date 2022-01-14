@@ -79,6 +79,9 @@ func userInfo(c *gin.Context) {
 
 	idToken := user.IdentityToken(scopes)
 
+	idToken.Context = encData.ContextCode
+	idToken.ClientID = encData.ClientId
+
 	c.JSON(200, idToken)
 }
 
