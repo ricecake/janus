@@ -202,6 +202,13 @@ func accessToken(c *gin.Context) {
 			}
 			if ar.UserData != nil {
 				authDetails := ar.UserData.(*model.UserAuthDetails)
+
+				client, clientErr := model.FindClientById(ar.Client.GetId())
+				if clientErr != nil {
+					response.InternalError = clientErr
+					break
+				}
+
 				ident, err := model.FindIdentityById(authDetails.Code)
 				if err != nil {
 					response.InternalError = err
@@ -212,7 +219,8 @@ func accessToken(c *gin.Context) {
 					}
 					token := ident.IdentityToken(scopes)
 
-					token.ClientID = ar.Client.GetId()
+					token.ClientID = client.ClientId
+					token.Context = client.Context
 					token.Nonce = authDetails.Nonce
 
 					encToken, err := util.EncodeJWTOpen(token)

@@ -253,4 +253,27 @@ create or replace view identity_allowed_clients as
 ALTER view identity_allowed_clients OWNER TO postgres;
 GRANT SELECT ON identity_allowed_clients TO janus;
 
+-- This is for a quick summary of actions, and roles
+create or replace view identity_summary as
+    select
+        identity,
+        email,
+        jsonb_object_agg(context, role_data) as roles,
+        jsonb_object_agg(context, action_data) as actions
+    from (
+        select
+            ias.identity,
+            i.email,
+            ias.context,
+            jsonb_agg(distinct ias.role) as role_data,
+            jsonb_agg(distinct ias.action) as action_data
+        from identity_access_summary ias
+        join identity i on i.code = ias.identity
+        group by ias.identity, ias.context, i.email
+    ) a
+    group by identity, email;
+
+ALTER view identity_summary OWNER TO postgres;
+GRANT SELECT ON identity_summary TO janus;
+
 COMMIT;

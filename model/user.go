@@ -151,8 +151,14 @@ func (this Identity) IdentityToken(claims map[string]bool) IDToken {
 			token.GivenName = this.GivenName
 		}
 		if claims["roles"] {
-			//TODO: 1) this, 2) make sure to include automatic roles
+			roles, err := IdentityRoles(this.Code)
+			if err != nil {
+				log.Error(err)
+			} else {
+				token.Roles = roles
+			}
 		}
+
 		if claims["cliques"] {
 		}
 		if claims["actions"] {
@@ -536,6 +542,35 @@ func ActionsForIdentity(identCode, context string) (allowed []string, err error)
 
 	sort.Strings(allowed)
 	return
+}
+
+type IdentitySummary struct {
+	Identity string `gorm:"column:identity"`
+	Email    string `gorm:"column:email"`
+	Roles    []byte `gorm:"column:roles"`
+	Actions  []byte `gorm:"column:actions"`
+}
+
+func (view IdentitySummary) TableName() string {
+	return "identity_summary"
+}
+
+func IdentityRoles(identCode string) (map[string][]string, error) {
+	db := util.GetDb()
+
+	result := make(map[string][]string)
+	var summary IdentitySummary
+
+	err := db.Where("identity = ?", identCode).Find(&summary).Error
+	if err != nil {
+		return result, err
+	}
+
+	if unmarshalError := json.Unmarshal(summary.Roles, &result); unmarshalError != nil {
+		return result, unmarshalError
+	}
+
+	return result, nil
 }
 
 type IdentityAllowedClient struct {

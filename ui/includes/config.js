@@ -3,11 +3,11 @@ import deepmerge from 'deepmerge';
 const common = {
 	identity: {
 		response_type: 'code',
-		scope: 'openid profile',
+		scope: 'openid profile roles',
 		oidc_path: '/oauth',
 		automaticSilentRenew: true,
 		validateSubOnSilentRenew: true,
-		loadUserInfo: true,
+		loadUserInfo: false,
 	},
 };
 const dev = {

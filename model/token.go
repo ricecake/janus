@@ -457,10 +457,11 @@ type IDToken struct {
 	//
 	// See: https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
 
-	Email         string `json:"email,omitempty"`
-	FamilyName    string `json:"family_name,omitempty"`
-	GivenName     string `json:"given_name,omitempty"`
-	PreferredName string `json:"preferred_name,omitempty"`
+	Email         string              `json:"email,omitempty"`
+	FamilyName    string              `json:"family_name,omitempty"`
+	GivenName     string              `json:"given_name,omitempty"`
+	PreferredName string              `json:"preferred_name,omitempty"`
+	Roles         map[string][]string `json:"roles,omitempty"`
 }
 
 func Cleanup() {
