@@ -17,7 +17,6 @@ const userManager = createUserManager(userManagerConfig);
 
 export const ensureLoginEffect = () => {
 	let state = store.getState();
-	console.log(state);
 	if (!state.oidc.user || state.oidc.user.expired) {
 		sessionStorage.setItem('loc', window.location.href);
 		userManager.signinSilent().catch(() => {

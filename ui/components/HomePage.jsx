@@ -120,9 +120,6 @@ const ContextDetails = (props) => (
 
 const ResponsiveAppBar = (props) => {
 	const navigate = useNavigate();
-	useEffect(() => {
-		console.log(props);
-	});
 	const classes = useStyles();
 	const [anchorEl, setAnchorEl] = React.useState(null);
 	const open = Boolean(anchorEl);
@@ -214,16 +211,15 @@ const HomeAppMenu = (props) => {
 	);
 };
 
-const stateToProps = ({ home, oidc: { user } }) => {
-	let profile = {};
-	if (user && user.profile) {
-		profile = user.profile;
-	}
-	return {
-		profile,
-		...home,
-	};
-};
+const stateToProps = ({
+	home,
+	oidc: {
+		user: { profile },
+	},
+}) => ({
+	profile,
+	...home,
+});
 const dispatchToProps = (dispatch) =>
 	bindActionCreators({ fetchAllowedClients }, dispatch);
 
