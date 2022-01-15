@@ -143,15 +143,36 @@ const styles = {
 	},
 };
 
-const withSuspense = (element, fallback = <div>Loading...</div>) => (
-	<Suspense fallback={fallback}>{element}</Suspense>
+const withSuspense =
+	(Element, fallback = <div>Loading...</div>) =>
+	(props) =>
+		(
+			<Suspense fallback={fallback}>
+				<Element {...props} />
+			</Suspense>
+		);
+
+const Home = withSuspense(lazy(() => import('Page/home')));
+const Login = withSuspense(lazy(() => import('Page/login')));
+const Logout = withSuspense(lazy(() => import('Page/logout')));
+const Signup = withSuspense(lazy(() => import('Page/signup')));
+const OidcCallback = withSuspense(lazy(() => import('Page/callbacks/oidc')));
+
+const ProfileIndex = withSuspense(lazy(() => import('Page/profile')));
+const ProfileLogin = withSuspense(lazy(() => import('Page/profile/logins')));
+const ProfileSession = withSuspense(
+	lazy(() => import('Page/profile/sessions'))
+);
+const ProfileAuthentication = withSuspense(
+	lazy(() => import('Page/profile/authentication'))
 );
 
-const Home = lazy(() => import('Page/home'));
-const Login = lazy(() => import('Page/login'));
-const Logout = lazy(() => import('Page/logout'));
-const Signup = lazy(() => import('Page/signup'));
-const OidcCallback = lazy(() => import('Page/callbacks/oidc'));
+const AdminIndex = withSuspense(lazy(() => import('Page/admin')));
+const AdminAction = withSuspense(lazy(() => import('Page/admin/actions')));
+const AdminClient = withSuspense(lazy(() => import('Page/admin/clients')));
+const AdminContext = withSuspense(lazy(() => import('Page/admin/contexts')));
+const AdminRole = withSuspense(lazy(() => import('Page/admin/roles')));
+const AdminUser = withSuspense(lazy(() => import('Page/admin/users')));
 
 export const App = (props) => {
 	const { classes } = props;
@@ -164,24 +185,52 @@ export const App = (props) => {
 					<Router>
 						<Routes>
 							<Route path="/">
-								<Route index element={withSuspense(<Home />)} />
-								<Route
-									path="login"
-									element={withSuspense(<Login />)}
-								/>
-								<Route
-									path="logout"
-									element={withSuspense(<Logout />)}
-								/>
-								<Route
-									path="signup"
-									element={withSuspense(<Signup />)}
-								/>
-								<Route path="profile"></Route>
+								<Route index element={<Home />} />
+								<Route path="login" element={<Login />} />
+								<Route path="logout" element={<Logout />} />
+								<Route path="signup" element={<Signup />} />
+								<Route path="profile">
+									<Route index element={<ProfileIndex />} />
+									<Route
+										path="authentication"
+										element={<ProfileAuthentication />}
+									/>
+									<Route
+										path="logins"
+										element={<ProfileLogin />}
+									/>
+									<Route
+										path="sessions"
+										element={<ProfileSession />}
+									/>
+								</Route>
+								<Route path="admin">
+									<Route index element={<AdminIndex />} />
+									<Route
+										path="actions"
+										element={<AdminAction />}
+									/>
+									<Route
+										path="clients"
+										element={<AdminClient />}
+									/>
+									<Route
+										path="contexts"
+										element={<AdminContext />}
+									/>
+									<Route
+										path="roles"
+										element={<AdminRole />}
+									/>
+									<Route
+										path="users"
+										element={<AdminUser />}
+									/>
+								</Route>
 								<Route path="callbacks">
 									<Route
 										path="oidc"
-										element={withSuspense(<OidcCallback />)}
+										element={<OidcCallback />}
 									/>
 								</Route>
 							</Route>

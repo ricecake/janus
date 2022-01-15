@@ -124,6 +124,10 @@ const ResponsiveAppBar = (props) => {
 	const [anchorEl, setAnchorEl] = React.useState(null);
 	const open = Boolean(anchorEl);
 
+	const isAdmin = () => {
+		return true;
+	};
+
 	const handleMenu = (event) => {
 		setAnchorEl(event.currentTarget);
 	};
@@ -168,8 +172,22 @@ const ResponsiveAppBar = (props) => {
 						open={open}
 						onClose={handleClose}
 					>
-						{/* <MenuItem onClick={handleClose}>Profile</MenuItem>
-						<MenuItem onClick={handleClose}>Admin</MenuItem> */}
+						<MenuItem
+							onClick={() => {
+								handleClose();
+								navigate('/profile');
+							}}
+						>
+							Profile
+						</MenuItem>
+						<MenuItem
+							onClick={() => {
+								handleClose();
+								navigate('/admin');
+							}}
+						>
+							Admin
+						</MenuItem>
 						<MenuItem
 							onClick={() => {
 								handleClose();
