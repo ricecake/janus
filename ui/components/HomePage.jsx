@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -22,6 +23,8 @@ import ExitToAppOutlinedIcon from '@material-ui/icons/ExitToAppOutlined';
 
 import { Link, Show, Hide, NavButton } from 'Component/Helpers';
 import { fetchAllowedClients } from 'Include/reducers/home';
+
+import { hasRole } from 'Include/permissions';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -88,6 +91,13 @@ const ClientDetails = (props) => (
 	</Grid>
 );
 
+ClientDetails.propTypes = {
+	base_uri: PropTypes.any,
+	client_id: PropTypes.any,
+	description: PropTypes.any,
+	display_name: PropTypes.any,
+};
+
 const ContextDetails = (props) => (
 	<Grid item md={12} lg={4}>
 		{/** or should this be auto? */}
@@ -118,15 +128,20 @@ const ContextDetails = (props) => (
 	</Grid>
 );
 
+ContextDetails.propTypes = {
+	clients: PropTypes.shape({
+		map: PropTypes.func,
+	}),
+	context: PropTypes.any,
+	description: PropTypes.any,
+	display_name: PropTypes.any,
+};
+
 const ResponsiveAppBar = (props) => {
 	const navigate = useNavigate();
 	const classes = useStyles();
 	const [anchorEl, setAnchorEl] = React.useState(null);
 	const open = Boolean(anchorEl);
-
-	const isAdmin = () => {
-		return true;
-	};
 
 	const handleMenu = (event) => {
 		setAnchorEl(event.currentTarget);
@@ -180,14 +195,16 @@ const ResponsiveAppBar = (props) => {
 						>
 							Profile
 						</MenuItem>
-						<MenuItem
-							onClick={() => {
-								handleClose();
-								navigate('/admin');
-							}}
-						>
-							Admin
-						</MenuItem>
+						<Show If={hasRole('Admin')}>
+							<MenuItem
+								onClick={() => {
+									handleClose();
+									navigate('/admin');
+								}}
+							>
+								Admin
+							</MenuItem>
+						</Show>
 						<MenuItem
 							onClick={() => {
 								handleClose();
@@ -201,6 +218,13 @@ const ResponsiveAppBar = (props) => {
 			</Toolbar>
 		</AppBar>
 	);
+};
+
+ResponsiveAppBar.propTypes = {
+	profile: PropTypes.shape({
+		preferred_name: PropTypes.any,
+		sub: PropTypes.any,
+	}),
 };
 
 const HomeAppMenu = (props) => {
@@ -227,6 +251,13 @@ const HomeAppMenu = (props) => {
 			</Container>
 		</React.Fragment>
 	);
+};
+
+HomeAppMenu.propTypes = {
+	clientDetails: PropTypes.shape({
+		map: PropTypes.func,
+	}),
+	fetchAllowedClients: PropTypes.func,
 };
 
 const stateToProps = ({

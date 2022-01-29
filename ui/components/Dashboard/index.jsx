@@ -9,7 +9,7 @@ import {
 } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Hidden from '@material-ui/core/Hidden';
-import BasePage, { LoginBasePage } from 'Component/BasePage';
+import BasePage, { LoginBasePage, BaseTheme } from 'Component/BasePage';
 import userManager, { withLogin } from 'Include/userManager';
 import { OidcProvider } from 'redux-oidc';
 import store from 'Include/store';
@@ -59,11 +59,14 @@ export const Dashboard = withLogin(
 
 		return (
 			<OidcProvider store={store} userManager={userManager}>
+				{/* <BaseTheme> */}
 				<div className={classes.root}>
 					<nav className={classes.drawer}>
 						<Hidden smUp implementation="js">
 							<Navigator
-								PaperProps={{ style: { width: drawerWidth } }}
+								PaperProps={{
+									style: { width: drawerWidth },
+								}}
 								variant="temporary"
 								open={mobileOpen}
 								onClose={handleDrawerToggle}
@@ -74,7 +77,9 @@ export const Dashboard = withLogin(
 						</Hidden>
 						<Hidden xsDown implementation="css">
 							<Navigator
-								PaperProps={{ style: { width: drawerWidth } }}
+								PaperProps={{
+									style: { width: drawerWidth },
+								}}
 								root={root}
 								title={title}
 								categories={categories}
@@ -86,6 +91,7 @@ export const Dashboard = withLogin(
 						<BasePage>{props.children}</BasePage>
 					</div>
 				</div>
+				{/* </BaseTheme> */}
 			</OidcProvider>
 		);
 	}

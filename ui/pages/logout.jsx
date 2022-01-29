@@ -3,7 +3,7 @@ import BasePage from 'Component/BasePage';
 import Grid from '@material-ui/core/Grid';
 import userManager from 'Include/userManager';
 
-export const LoginPage = (props) => {
+export const LoginPage = () => {
 	useEffect(() => {
 		userManager.removeUser();
 		fetch('/sessions', {

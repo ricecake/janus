@@ -20,7 +20,8 @@ import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 
-import { Link } from 'Component/Helpers';
+import { Show, Link } from 'Component/Helpers';
+import { hasRole } from 'Include/permissions';
 
 const urlNameMap = {
 	'/': 'Home',
@@ -89,13 +90,7 @@ const RouterBreadcrumbs = withStyles(styles)((props) => {
 							{urlNameMap[to] || ucfirst(value)}
 						</Typography>
 					) : (
-						<Link
-							color="inherit"
-							to={to}
-							key={to}
-							variant="h5"
-							component="h1"
-						>
+						<Link color="inherit" to={to} key={to} variant="h5">
 							{urlNameMap[to] || ucfirst(value)}
 						</Link>
 					);
@@ -177,14 +172,16 @@ function Header(props) {
 								>
 									Profile
 								</MenuItem>
-								<MenuItem
-									onClick={() => {
-										handleClose();
-										navigate('/admin');
-									}}
-								>
-									Admin
-								</MenuItem>
+								<Show If={hasRole('Admin')}>
+									<MenuItem
+										onClick={() => {
+											handleClose();
+											navigate('/admin');
+										}}
+									>
+										Admin
+									</MenuItem>
+								</Show>
 								<MenuItem
 									onClick={() => {
 										handleClose();

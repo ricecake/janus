@@ -540,7 +540,7 @@ func ActionsForIdentity(identCode, context string) (allowed []string, err error)
 		allowed = append(allowed, action)
 	}
 
-	sort.Strings(allowed)
+	sort.Strings(allowed) // dedupe
 	return
 }
 

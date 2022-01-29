@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -160,9 +161,6 @@ const OidcCallback = withSuspense(lazy(() => import('Page/callbacks/oidc')));
 
 const ProfileIndex = withSuspense(lazy(() => import('Page/profile')));
 const ProfileLogin = withSuspense(lazy(() => import('Page/profile/logins')));
-const ProfileSession = withSuspense(
-	lazy(() => import('Page/profile/sessions'))
-);
 const ProfileAuthentication = withSuspense(
 	lazy(() => import('Page/profile/authentication'))
 );
@@ -198,10 +196,6 @@ export const App = (props) => {
 									<Route
 										path="logins"
 										element={<ProfileLogin />}
-									/>
-									<Route
-										path="sessions"
-										element={<ProfileSession />}
 									/>
 								</Route>
 								<Route path="admin">
@@ -242,7 +236,14 @@ export const App = (props) => {
 	);
 };
 
-const stateToProps = ({}) => ({});
+App.propTypes = {
+	classes: PropTypes.shape({
+		app: PropTypes.any,
+		root: PropTypes.any,
+	}),
+};
+
+const stateToProps = () => ({});
 const dispatchToProps = (dispatch) => bindActionCreators({}, dispatch);
 
 export default connect(stateToProps, dispatchToProps)(withStyles(styles)(App));

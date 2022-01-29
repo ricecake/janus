@@ -136,7 +136,6 @@ function Navigator(props) {
 								</NavLink>
 							)
 						)}
-
 						<Divider className={classes.divider} />
 					</React.Fragment>
 				))}

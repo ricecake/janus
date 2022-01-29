@@ -21,7 +21,7 @@ export const { applistStart, applistFinish, applistError } = createActions(
 	{ prefix: 'janus/home' }
 );
 
-export const fetchAllowedClients = (email) => {
+export const fetchAllowedClients = () => {
 	return (dispatch, getState) => {
 		dispatch(applistStart());
 		let state = getState();

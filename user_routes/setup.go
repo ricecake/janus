@@ -1,10 +1,11 @@
 package user_routes
 
 import (
+	"janus/model"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/karma_chameleon/http_middleware"
 	log "github.com/sirupsen/logrus"
-	"janus/model"
 )
 
 /*
@@ -23,4 +24,14 @@ func Configure(r *gin.RouterGroup) {
 	apiGroup.Use(http_middleware.NewAuthMiddleware(model.NewLocalVerifierCache()))
 
 	apiGroup.GET("/applist", listUserApps)
+
+	apiGroup.GET("/detail", listUserDetails)
+	apiGroup.POST("/detail", updateUserDetails)
+
+	apiGroup.GET("/login")
+	apiGroup.DELETE("/login")
+	apiGroup.DELETE("/login/session")
+
+	apiGroup.GET("/authentication")
+	apiGroup.POST("/password")
 }

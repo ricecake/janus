@@ -56,7 +56,7 @@ const resubmitLoginForm = () => {
 };
 
 export const fetchAuthMethods = (email) => {
-	return (dispatch, getState) => {
+	return (dispatch) => {
 		dispatch(methodsStart());
 		fetch('/check/authenticators', {
 			method: 'POST',
@@ -72,7 +72,7 @@ export const fetchAuthMethods = (email) => {
 	};
 };
 
-export const doPasswordAuth = (email, password, totp) => {
+export const doPasswordAuth = (email, password, _totp) => {
 	return (dispatch, getState) => {
 		dispatch(loginStart());
 
@@ -99,7 +99,7 @@ export const doPasswordAuth = (email, password, totp) => {
 };
 
 export const doWebauthn = (email) => {
-	return (dispatch, getState) => {
+	return (dispatch) => {
 		dispatch(webauthnStart());
 		doWebauthnLogin(email)
 			.then(() => resubmitLoginForm())

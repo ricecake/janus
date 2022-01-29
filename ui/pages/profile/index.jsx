@@ -1,5 +1,7 @@
 import React from 'react';
-import ProfilePage from './frame';
+import ProfileOverview from 'Component/Profile/Overview';
 
-const ProfileIndex = (props) => <ProfilePage>Stuff</ProfilePage>;
+const ProfileIndex = () => {
+	return <ProfileOverview />;
+};
 export default ProfileIndex;

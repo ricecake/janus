@@ -377,6 +377,7 @@ type AccessToken struct {
 	ContextCode   string   `json:"ctx,omitempty"`
 	Scope         string   `json:"scope,omitempty"`
 	Permitted     []string `json:"perm,omitempty"`
+	Roles         []string `json:"role,omitempty"`
 
 	Browser  string `json:"bro,omitempty"`
 	Strength string `json:"acr,omitempty"`

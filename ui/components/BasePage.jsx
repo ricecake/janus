@@ -13,22 +13,26 @@ const theme = createTheme({
 	palette: {
 		primary: green,
 		secondary: teal,
-		background: {
-			default:
-				'linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%)',
-		},
+		// background: {
+		// 	default:
+		// 		'linear-gradient(0deg, rgba(0,203,0,1) 0%, rgba(0,128,128,1) 100%)',
+		// },
 	},
 	status: {
 		danger: 'orange',
 	},
 });
 
+export const BaseTheme = (props) => (
+	<ThemeProvider theme={theme}>{props.children}</ThemeProvider>
+);
+
 const BasePage = (props) => (
-	<ThemeProvider theme={theme}>
+	<BaseTheme>
 		<Grid container direction="row" justify="center" alignItems="center">
 			{props.children}
 		</Grid>
-	</ThemeProvider>
+	</BaseTheme>
 );
 
 export const LoginBasePage = (props) => {

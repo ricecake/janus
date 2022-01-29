@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { Dashboard } from 'Component/Dashboard';
 
@@ -6,12 +7,15 @@ export const ProfilePage = (props) => (
 		root="/profile"
 		title={'Profile Management'}
 		categories={[
-			{ id: 'Sessions' },
-			{ id: 'Logins' },
+			{ id: 'Logins' }, // this should be a list of browser logins, with individual app contexts listed underneath
 			{ id: 'Authentication' },
 		]}
 	>
 		{props.children}
 	</Dashboard>
 );
+
+ProfilePage.propTypes = {
+	children: PropTypes.any,
+};
 export default ProfilePage;
