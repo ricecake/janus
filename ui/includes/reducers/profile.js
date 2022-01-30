@@ -1,11 +1,13 @@
 import { createActions, handleActions } from 'redux-actions';
 import { MakeMerge } from './helpers';
+import { doWebauthnRegister } from 'Include/webauthn';
 
 const defaultState = {
 	loading: false,
 	loaded: false,
 	user_details: {},
 	error: undefined,
+	authenticators: [],
 };
 
 const handleFetchError = (res) => {
@@ -21,6 +23,7 @@ export const {
 	detailFinishFetch,
 	detailStartUpdate,
 	detailFinishUpdate,
+	finishAuthenticatorFetch,
 } = createActions(
 	'PROFILE_ERROR',
 
@@ -29,6 +32,11 @@ export const {
 
 	'DETAIL_START_UPDATE',
 	'DETAIL_FINISH_UPDATE',
+
+	'PASSWORD_START_CHANGE',
+	'PASSWORD_FINISH_CHANGE',
+
+	'FINISH_AUTHENTICATOR_FETCH',
 	{ prefix: 'janus/profile' }
 );
 
@@ -45,6 +53,56 @@ export const fetchUserDetails = () => {
 			.then((res) => res.json())
 			.then((methods) => dispatch(detailFinishFetch(methods)))
 			.catch(() => dispatch(profileError('Something went wrong')));
+	};
+};
+
+export const fetchAuthenticators = () => {
+	return (dispatch, getState) => {
+		// dispatch(detailStartFetch());
+		let state = getState();
+		fetch('/profile/api/authenticator', {
+			headers: {
+				Authorization: `Bearer ${state.oidc.user.access_token}`,
+			},
+		})
+			.then(handleFetchError)
+			.then((res) => res.json())
+			.then((methods) => dispatch(finishAuthenticatorFetch(methods)))
+			.catch(() => dispatch(profileError('Something went wrong')));
+	};
+};
+
+export const deleteAuthenticator = (name) => {
+	return (dispatch, getState) => {
+		// dispatch(detailStartFetch());
+		let state = getState();
+		fetch(`/profile/api/authenticator?name=${name}`, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${state.oidc.user.access_token}`,
+			},
+		})
+			.then(handleFetchError)
+			.then(() => dispatch(fetchAuthenticators()))
+			.catch(() => dispatch(profileError('Something went wrong')));
+	};
+};
+
+export const initiatePasswordChange = (pass, verify) => {
+	return (dispatch, getState) => {};
+};
+
+export const initiateWebauthnEnroll = (name) => {
+	return (dispatch, getState) => {
+		// dispatch(webauthnStart());
+		doWebauthnRegister(name)
+			.then(handleFetchError)
+			.then(() => dispatch(fetchAuthenticators()))
+			// .then(() => dispatch(webauthnFinish()))
+			.catch((err) => {
+				console.log(err);
+				dispatch(profileError('Something went wrong'));
+			});
 	};
 };
 
@@ -82,6 +140,10 @@ const reducer = handleActions(
 				loading: false,
 				loaded: true,
 				user_details: details,
+			}),
+		[finishAuthenticatorFetch]: (state, { payload: details }) =>
+			merge(state, {
+				authenticators: details,
 			}),
 		[profileError]: (state, { payload: error }) =>
 			merge(state, { loading: false, error }),

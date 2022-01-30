@@ -1,5 +1,7 @@
 import React from 'react';
-import ProfilePage from 'Component/Profile/frame';
+import Authentication from 'Component/Profile/Authentication';
 
-const ProfileIndex = () => <ProfilePage>Stuff</ProfilePage>;
-export default ProfileIndex;
+const AuthenticationIndex = () => {
+	return <Authentication />;
+};
+export default AuthenticationIndex;

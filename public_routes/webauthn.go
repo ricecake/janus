@@ -118,7 +118,9 @@ func registerFinish(c *gin.Context) {
 		return
 	}
 
-	if err := res.Identity.AddWebauthnCredential(credential); err != nil {
+	name := c.Query("name")
+
+	if err := res.Identity.AddWebauthnCredential(name, credential); err != nil {
 		c.AbortWithError(500, err)
 		return
 	}
@@ -204,6 +206,9 @@ func loginFinish(c *gin.Context) {
 	})
 
 	if res.Success {
+		// TODO: increment webauthn credential auth count
+		// check 'credential.Authenticator.CloneWarning'
+
 		_, err := establishSession(c, idp.Context, *res)
 		if err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)

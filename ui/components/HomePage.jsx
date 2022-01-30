@@ -120,6 +120,7 @@ const ContextDetails = (props) => (
 					alignItems="center"
 				>
 					{props.clients.map((client) => (
+						// TODO: instead of cards, these should be list items with a "go" button on the right.
 						<ClientDetails key={client.client_id} {...client} />
 					))}
 				</Grid>
@@ -187,14 +188,6 @@ const ResponsiveAppBar = (props) => {
 						open={open}
 						onClose={handleClose}
 					>
-						<MenuItem
-							onClick={() => {
-								handleClose();
-								navigate('/profile');
-							}}
-						>
-							Profile
-						</MenuItem>
 						<Show If={hasRole('Admin')}>
 							<MenuItem
 								onClick={() => {
@@ -205,6 +198,22 @@ const ResponsiveAppBar = (props) => {
 								Admin
 							</MenuItem>
 						</Show>
+						<MenuItem
+							onClick={() => {
+								handleClose();
+								navigate('/');
+							}}
+						>
+							Home
+						</MenuItem>
+						<MenuItem
+							onClick={() => {
+								handleClose();
+								navigate('/profile');
+							}}
+						>
+							Profile
+						</MenuItem>
 						<MenuItem
 							onClick={() => {
 								handleClose();

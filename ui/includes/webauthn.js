@@ -28,13 +28,14 @@ const handleFetchError = (res) => {
 	return res;
 };
 
-export const doWebauthnRegister = () =>
+export const doWebauthnRegister = (name) =>
 	fetch('/webauthn/register/start', {
 		method: 'POST',
 	})
 		.then(handleFetchError)
 		.then((response) => response.json())
 		.then((data) => {
+			console.log(data);
 			data.publicKey.challenge = bufferDecode(data.publicKey.challenge);
 			data.publicKey.user.id = bufferDecode(data.publicKey.user.id);
 
@@ -53,7 +54,7 @@ export const doWebauthnRegister = () =>
 			let clientDataJSON = data.response.clientDataJSON;
 			let rawId = data.rawId;
 
-			return fetch('/webauthn/register/finish', {
+			return fetch(`/webauthn/register/finish?name=${name}`, {
 				method: 'POST',
 				body: JSON.stringify({
 					id: data.id,

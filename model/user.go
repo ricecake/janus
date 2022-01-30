@@ -43,11 +43,14 @@ func (this AuthPassword) TableName() string {
 
 type WebauthnCredential struct {
 	Identity               string
-	Id                     string
-	PublicKey              string
-	AttestationType        string
-	AuthenticatorGUID      string
-	AuthenticatorSignCount int
+	Id                     string `json:"-"`
+	Name                   string
+	PublicKey              string `json:"-"`
+	AttestationType        string `json:"-"`
+	AuthenticatorGUID      string `json:"-"`
+	AuthenticatorSignCount int    `json:"-"`
+	CreatedAt              time.Time
+	// LastUsed TODO
 }
 
 func (wc WebauthnCredential) TableName() string {
@@ -118,11 +121,12 @@ func (this *Identity) SetPassword(password string) (err error) {
 	return err
 }
 
-func (this *Identity) AddWebauthnCredential(wc *webauthn.Credential) (err error) {
+func (this *Identity) AddWebauthnCredential(name string, wc *webauthn.Credential) (err error) {
 	db := util.GetDb()
 	cred := WebauthnCredential{
 		Identity:               this.Code,
 		Id:                     base64.StdEncoding.EncodeToString(wc.ID),
+		Name:                   name,
 		PublicKey:              base64.StdEncoding.EncodeToString(wc.PublicKey),
 		AttestationType:        wc.AttestationType,
 		AuthenticatorGUID:      base64.StdEncoding.EncodeToString(wc.Authenticator.AAGUID),
@@ -264,6 +268,25 @@ func (user Identity) CredentialExcludeList() []protocol.CredentialDescriptor {
 	}
 
 	return credentialExcludeList
+}
+
+func AuthenticatorsForIdentity(code string) []WebauthnCredential {
+	db := util.GetDb()
+	var webCreds []WebauthnCredential
+	err := db.Where("identity = ?", code).Find(&webCreds).Error
+	if err != nil {
+		log.Error(err)
+	}
+	return webCreds
+}
+
+func RemoveAuthenticator(code, name string) {
+	db := util.GetDb()
+	var webCreds []WebauthnCredential
+	err := db.Where("identity = ? and name = ?", code, name).Delete(&webCreds).Error
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 type IdentificationStrategy int

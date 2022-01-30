@@ -77,8 +77,12 @@ function Navigator(props) {
 				<NavLink
 					exact
 					to={`${root}/`.toLowerCase()}
-					activeClassName={classes.itemActiveItem}
-					className={classes.item}
+					className={({ isActive }) =>
+						[
+							classes.item,
+							isActive ? classes.itemActiveItem : '',
+						].join(' ')
+					}
 				>
 					<ListItem className={clsx(classes.itemCategory)}>
 						<ListItemIcon className={classes.itemIcon}>
@@ -97,8 +101,12 @@ function Navigator(props) {
 					<React.Fragment key={id}>
 						<NavLink
 							to={`${root}/${path || id}/`.toLowerCase()}
-							activeClassName={classes.itemActiveItem}
-							className={classes.item}
+							className={({ isActive }) =>
+								[
+									classes.item,
+									isActive ? classes.itemActiveItem : '',
+								].join(' ')
+							}
 						>
 							<ListItem className={classes.categoryHeader}>
 								<ListItemText>{id}</ListItemText>
@@ -116,8 +124,14 @@ function Navigator(props) {
 									to={`${root}/${id}/${
 										childPath || childId
 									}/`.toLowerCase()}
-									activeClassName={classes.itemActiveItem}
-									className={classes.item}
+									className={({ isActive }) =>
+										[
+											classes.item,
+											isActive
+												? classes.itemActiveItem
+												: '',
+										].join(' ')
+									}
 								>
 									<ListItem key={childId} button>
 										<ListItemIcon

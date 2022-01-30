@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Dashboard } from 'Component/Dashboard';
+import Grid from '@material-ui/core/Grid';
 
 export const ProfilePage = (props) => (
 	<Dashboard
@@ -11,7 +12,15 @@ export const ProfilePage = (props) => (
 			{ id: 'Authentication' },
 		]}
 	>
-		{props.children}
+		<Grid
+			container
+			spacing={2}
+			direction="row"
+			justifyContent="space-evenly"
+			alignItems="baseline"
+		>
+			{props.children}
+		</Grid>
 	</Dashboard>
 );
 

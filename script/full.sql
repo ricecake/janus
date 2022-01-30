@@ -21,6 +21,8 @@ CREATE TABLE auth_password (
 
 CREATE TABLE webauthn_credential (
     identity text not null references identity(code) ON DELETE CASCADE,
+    name text not null default 'unknown',
+    created_at timestamp with time zone default now() not null,
     id text not null primary key,
     public_key text not null,
     attestation_type text not null,

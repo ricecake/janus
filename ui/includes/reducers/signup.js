@@ -55,10 +55,10 @@ export const initiateSignup = (preferred_name, email) => {
 	};
 };
 
-export const initiateWebauthnEnroll = () => {
+export const initiateWebauthnEnroll = (name) => {
 	return (dispatch, getState) => {
 		dispatch(webauthnStart());
-		doWebauthnRegister()
+		doWebauthnRegister(name)
 			.then(handleFetchError)
 			.then(() => dispatch(webauthnFinish()))
 			.catch(() => dispatch(signupError('Something went wrong')));

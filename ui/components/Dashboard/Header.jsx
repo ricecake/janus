@@ -164,14 +164,6 @@ function Header(props) {
 								open={open}
 								onClose={handleClose}
 							>
-								<MenuItem
-									onClick={() => {
-										handleClose();
-										navigate('/profile');
-									}}
-								>
-									Profile
-								</MenuItem>
 								<Show If={hasRole('Admin')}>
 									<MenuItem
 										onClick={() => {
@@ -182,6 +174,22 @@ function Header(props) {
 										Admin
 									</MenuItem>
 								</Show>
+								<MenuItem
+									onClick={() => {
+										handleClose();
+										navigate('/');
+									}}
+								>
+									Home
+								</MenuItem>
+								<MenuItem
+									onClick={() => {
+										handleClose();
+										navigate('/profile');
+									}}
+								>
+									Profile
+								</MenuItem>
 								<MenuItem
 									onClick={() => {
 										handleClose();

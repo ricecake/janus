@@ -32,6 +32,8 @@ func Configure(r *gin.RouterGroup) {
 	apiGroup.DELETE("/login")
 	apiGroup.DELETE("/login/session")
 
-	apiGroup.GET("/authentication")
-	apiGroup.POST("/password")
+	apiGroup.GET("/authenticator", listAuthenticators)
+	apiGroup.DELETE("/authenticator", deleteAuthenticator)
+
+	apiGroup.POST("/password", changePassword)
 }

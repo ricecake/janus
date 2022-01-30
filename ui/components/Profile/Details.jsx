@@ -22,10 +22,6 @@ const ProfileDetailsBase = ({
 	loading,
 	user_details,
 }) => {
-	useEffect(() => {
-		fetchUserDetails();
-	}, []);
-
 	const [PreferredName, setPreferredName] = React.useState(
 		user_details.PreferredName
 	);
@@ -33,13 +29,14 @@ const ProfileDetailsBase = ({
 	const [FamilyName, setFamilyName] = React.useState(user_details.FamilyName);
 
 	useEffect(() => {
-		console.log({
-			user_details,
-			PreferredName,
-			GivenName,
-			FamilyName,
-		});
-	});
+		fetchUserDetails();
+	}, []);
+
+	useEffect(()=>{
+		setPreferredName(user_details.PreferredName);
+		setGivenName(user_details.GivenName);
+		setFamilyName(user_details.FamilyName);
+	}, [user_details]);
 
 	const [profileView, setProfileView] = React.useState(true);
 	const [open, setOpen] = React.useState(false);

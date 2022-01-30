@@ -20,6 +20,8 @@ export const LoginPage = () => {
 					alignItems="center"
 				>
 					You are now logged out.
+					<br />
+					<a href="/">Login again</a>
 				</Grid>
 			</BasePage>
 		</React.Fragment>
