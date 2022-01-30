@@ -637,3 +637,56 @@ func IdentityAllowedClients(identCode string) (AllowedClientList, error) {
 
 	return result, nil
 }
+
+type IdentityLoginDetails struct {
+	Identity string `gorm:"column:identity"`
+	Email    string `gorm:"column:email"`
+	Sessions []byte `gorm:"column:sessions"`
+}
+
+func (view IdentityLoginDetails) TableName() string {
+	return "identity_login_summary"
+}
+
+type LoginClient struct {
+	ClientId    string `json:"client_id"`
+	DisplayName string `json:"display_name"`
+	Description string `json:"description"`
+}
+type LoginAccess struct {
+	Code      string      `json:"code"`
+	CreatedAt time.Time   `json:"created_at"`
+	Client    LoginClient `json:"client"`
+}
+type LoginContext struct {
+	Code          string        `json:"code"`
+	DisplayName   string        `json:"display_name"`
+	Description   string        `json:"description"`
+	AccessContext []LoginAccess `json:"access_context"`
+}
+type LoginSession struct {
+	Code      string         `json:"code"`
+	CreatedAt time.Time      `json:"created_at"`
+	ExpiresIn int            `json:"expires_in"`
+	UserAgent string         `json:"user_agent"`
+	Context   []LoginContext `json:"context"`
+}
+type LoginList []LoginSession
+
+func IdentityLogins(identCode string) (LoginList, error) {
+	db := util.GetDb()
+
+	var result LoginList
+	var loginList IdentityLoginDetails
+
+	err := db.Where("identity = ?", identCode).Find(&loginList).Error
+	if err != nil {
+		return result, err
+	}
+
+	if unmarshalError := json.Unmarshal(loginList.Sessions, &result); unmarshalError != nil {
+		return result, unmarshalError
+	}
+
+	return result, nil
+}

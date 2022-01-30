@@ -11,9 +11,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	kcutil "github.com/ricecake/karma_chameleon/util"
 	"janus/model"
 	"janus/util"
+
+	kcutil "github.com/ricecake/karma_chameleon/util"
 )
 
 func defaultPage(c *gin.Context)   {}
@@ -106,6 +107,19 @@ func checkAuthBackground(c *gin.Context) {
 		}
 
 		if allowed {
+
+			accessContext := model.AccessContext{
+				Session:   res.Session,
+				Client:    client.ClientId,
+				CreatedAt: time.Now(),
+			}
+
+			if err := model.EnsureAccessContext(&accessContext); err != nil {
+				c.Error(err).SetType(gin.ErrorTypePrivate)
+				c.AbortWithStatusJSON(500, "system error")
+				return
+			}
+
 			c.Status(204)
 			c.Header("X-Identity-Code", res.Identity.Code)
 			c.Header("X-Identity-Email", res.Identity.Email)
@@ -252,11 +266,25 @@ func checkAuthRedirect(c *gin.Context) {
 			scopes[s] = true
 		}
 
+		//TODO: this needs to establish a session and access context -- use establish session?
 		token := user.IdentityToken(scopes)
+		token.TokenId = *res.Session
 		token.ClientID = idp.ClientId
 		token.Context = client.Context
 		encToken, err := kcutil.EncodeJWTOpen(token)
 		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithStatusJSON(500, "system error")
+			return
+		}
+
+		accessContext := model.AccessContext{
+			Session:   res.Session,
+			Client:    client.ClientId,
+			CreatedAt: time.Now(),
+		}
+
+		if err := model.EnsureAccessContext(&accessContext); err != nil {
 			c.Error(err).SetType(gin.ErrorTypePrivate)
 			c.AbortWithStatusJSON(500, "system error")
 			return
@@ -479,6 +507,7 @@ func establishSession(c *gin.Context, context string, identData model.Identifica
 		Strength:  identData.Strength,
 		Method:    identData.Method,
 		Permitted: perms, //TODO: dedupe
+		// Roles: IdentityRoles(user_code)[accessContext.Code] TODO:
 		// TODO: add roles for this context
 		// TODO: Can this be populated with at least the set of clients the user can hit?
 		// Maybe intersect that with the set of resources that this client might direct a user to hit?

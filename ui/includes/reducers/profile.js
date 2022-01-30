@@ -8,6 +8,9 @@ const defaultState = {
 	user_details: {},
 	error: undefined,
 	authenticators: [],
+	logins: {
+		Logins: [],
+	},
 };
 
 const handleFetchError = (res) => {
@@ -24,6 +27,7 @@ export const {
 	detailStartUpdate,
 	detailFinishUpdate,
 	finishAuthenticatorFetch,
+	finishLoginFetch,
 } = createActions(
 	'PROFILE_ERROR',
 
@@ -37,6 +41,8 @@ export const {
 	'PASSWORD_FINISH_CHANGE',
 
 	'FINISH_AUTHENTICATOR_FETCH',
+
+	'FINISH_LOGIN_FETCH',
 	{ prefix: 'janus/profile' }
 );
 
@@ -106,6 +112,25 @@ export const initiateWebauthnEnroll = (name) => {
 	};
 };
 
+export const fetchLogins = () => {
+	return (dispatch, getState) => {
+		// dispatch(detailStartFetch());
+		let state = getState();
+		fetch('/profile/api/login', {
+			headers: {
+				Authorization: `Bearer ${state.oidc.user.access_token}`,
+			},
+		})
+			.then(handleFetchError)
+			.then((res) => res.json())
+			.then((methods) => dispatch(finishLoginFetch(methods)))
+			.catch((err) => {
+				console.log(err);
+				dispatch(profileError('Something went wrong'));
+			});
+	};
+};
+
 export const updateUserDetails = ({ PreferredName, GivenName, FamilyName }) => {
 	return (dispatch, getState) => {
 		dispatch(detailStartUpdate());
@@ -145,6 +170,8 @@ const reducer = handleActions(
 			merge(state, {
 				authenticators: details,
 			}),
+		[finishLoginFetch]: (state, { payload: logins }) =>
+			merge(state, { logins }),
 		[profileError]: (state, { payload: error }) =>
 			merge(state, { loading: false, error }),
 	},

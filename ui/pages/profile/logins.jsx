@@ -1,5 +1,7 @@
 import React from 'react';
-import ProfilePage from 'Component/Profile/frame';
+import Logins from 'Component/Profile/Logins';
 
-const ProfileIndex = () => <ProfilePage>Stuff</ProfilePage>;
-export default ProfileIndex;
+const LoginIndex = () => {
+	return <Logins />;
+};
+export default LoginIndex;

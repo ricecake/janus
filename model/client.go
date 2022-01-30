@@ -16,6 +16,8 @@ type Client struct {
 	ClientId    string `gorm:"column:client_id;not null"`
 	Secret      []byte `gorm:"column:secret;not null" json:"-"`
 	BaseUri     string `gorm:"column:base_uri;not null"`
+	//TODO: description
+
 }
 
 func (this Client) TableName() string {
@@ -32,6 +34,8 @@ func CreateClient(client *Client) error {
 	client.ClientId = util.CompactUUID()
 
 	log.Info("Creating client ", client.ClientId)
+
+	// TODO: insert the client code as an action for the context.
 
 	return db.Create(client).Error
 }

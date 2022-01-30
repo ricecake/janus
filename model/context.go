@@ -9,6 +9,7 @@ import (
 type Context struct {
 	Code string `gorm:"column:code;not null"`
 	Name string `gorm:"column:name;not null"`
+	//TODO: description
 }
 
 func (this Context) TableName() string {

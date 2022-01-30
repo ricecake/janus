@@ -28,7 +28,7 @@ func Configure(r *gin.RouterGroup) {
 	apiGroup.GET("/detail", listUserDetails)
 	apiGroup.POST("/detail", updateUserDetails)
 
-	apiGroup.GET("/login")
+	apiGroup.GET("/login", listUserLogins)
 	apiGroup.DELETE("/login")
 	apiGroup.DELETE("/login/session")
 

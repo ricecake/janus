@@ -278,4 +278,51 @@ create or replace view identity_summary as
 ALTER view identity_summary OWNER TO postgres;
 GRANT SELECT ON identity_summary TO janus;
 
+create or replace view identity_login_summary as
+    select
+        i.code as identity,
+        i.email,
+        jsonb_agg(sess.session_context order by session_context->'created_at') as sessions
+    from (
+        select
+            st.identity,
+            jsonb_build_object(
+                    'code', st.code,
+                    'created_at', st.created_at,
+                    'expires_in', st.expires_in,
+                    'user_agent', st.user_agent,
+                    'context', jsonb_agg(login_contexts.session_context)
+            ) session_context
+        from (
+            select
+                st.code as session,
+                jsonb_build_object(
+                    'code', ct.code,
+                    'display_name', ct.name,
+                    'description', ct.description,
+                    'access_context', jsonb_agg(jsonb_build_object(
+                        'code', ac.code,
+                        'created_at', ac.created_at,
+                        'client', jsonb_build_object(
+                            'client_id', cl.client_id,
+                            'display_name', cl.display_name,
+                            'description', cl.description
+                        )
+                    ) order by ac.created_at)
+                ) session_context
+            from session_token st
+            join access_context ac on ac.session = st.code
+            join client cl on cl.client_id = ac.client
+            join context ct on ct.code = cl.context
+            group by st.code, ct.code, ct.name, ct.description
+        ) login_contexts
+        join session_token st on st.code = login_contexts.session
+        group by st.code, st.identity, st.created_at, st.expires_in, st.user_agent
+    ) sess
+    join identity i on i.code = sess.identity
+    group by i.code, i.email;
+
+ALTER view identity_login_summary OWNER TO postgres;
+GRANT SELECT ON identity_login_summary TO janus;
+
 COMMIT;

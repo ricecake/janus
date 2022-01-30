@@ -476,6 +476,8 @@ func Cleanup() {
 	for _, recType := range simpleRecordTypes {
 		db.Where("created_at + expires_in * interval '1 second' < now()").Delete(recType)
 	}
+
+	// db.Where("session is null and cre") 		AccessContext{},
 }
 
 type LocalVerifierCache struct {

@@ -52,7 +52,8 @@
     "redux": "^4.1.2",
     "redux-actions": "^2.6.5",
     "redux-oidc": "^4.0.0-beta1",
-    "redux-thunk": "^2.4.0"
+    "redux-thunk": "^2.4.0",
+    "ua-parser-js": "^1.0.2"
   },
   "prettier": {
     "trailingComma": "es5",
