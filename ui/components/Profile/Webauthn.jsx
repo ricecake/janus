@@ -24,6 +24,15 @@ import InputBase from '@material-ui/core/InputBase';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import Avatar from '@material-ui/core/Avatar';
+import DeleteIcon from '@material-ui/icons/Delete';
+
 import {
 	initiateWebauthnEnroll,
 	fetchAuthenticators,
@@ -106,21 +115,21 @@ const NewAuthButton = ({ initiateWebauthnEnroll }) => {
 };
 
 const Authenticator = ({ Name, deleteAuthenticator, CreatedAt }) => {
-	const classes = useStyles();
+	const created = new Date(CreatedAt);
 	return (
-		<Paper key={Name} className={classes.root}>
-			<Typography>{Name}</Typography>
-			<Typography>{(new Date(CreatedAt)).toDateString()}</Typography>
-			{/* TODO: some manner of spacer? */}
-			{/* Should add created date for authenticator asap. */}
-			<IconButton
-				color="primary"
-				className={classes.iconButton}
-				onClick={() => deleteAuthenticator(Name)}
-			>
-				<CloseIcon />
-			</IconButton>
-		</Paper>
+		<ListItem key={Name}>
+			<ListItemText primary={Name} secondary={created.toDateString()} />
+			<ListItemSecondaryAction>
+				<IconButton
+					edge="end"
+					aria-label="delete"
+					color="primary"
+					onClick={() => deleteAuthenticator(Name)}
+				>
+					<DeleteIcon />
+				</IconButton>
+			</ListItemSecondaryAction>
+		</ListItem>
 	);
 };
 
@@ -137,17 +146,19 @@ const WebauthnBase = (props) => {
 		<Card>
 			<CardHeader title="Platform Authenticators" />
 			<CardContent>
-				{/* TODO: this should be an mui list, with created date as secondary text.
+				<List>
+					{/* TODO: this should be an mui list, with created date as secondary text.
                 also, move the signup component to use the widget from here.  Need a shared location. */}
-				{props.authenticators.map((authenticator) => (
-					<>
-						<Authenticator
-							key={authenticator.Name}
-							deleteAuthenticator={props.deleteAuthenticator}
-							{...authenticator}
-						/>
-					</>
-				))}
+					{props.authenticators.map((authenticator) => (
+						<>
+							<Authenticator
+								key={authenticator.Name}
+								deleteAuthenticator={props.deleteAuthenticator}
+								{...authenticator}
+							/>
+						</>
+					))}
+				</List>
 
 				<NewAuthButton
 					initiateWebauthnEnroll={props.initiateWebauthnEnroll}

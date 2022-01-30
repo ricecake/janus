@@ -32,7 +32,7 @@ const ProfileDetailsBase = ({
 		fetchUserDetails();
 	}, []);
 
-	useEffect(()=>{
+	useEffect(() => {
 		setPreferredName(user_details.PreferredName);
 		setGivenName(user_details.GivenName);
 		setFamilyName(user_details.FamilyName);

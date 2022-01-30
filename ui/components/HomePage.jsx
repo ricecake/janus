@@ -26,6 +26,14 @@ import { fetchAllowedClients } from 'Include/reducers/home';
 
 import { hasRole } from 'Include/permissions';
 
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemAvatar from '@material-ui/core/ListItemAvatar';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListItemText from '@material-ui/core/ListItemText';
+import DeleteIcon from '@material-ui/icons/Delete';
+
 const useStyles = makeStyles((theme) => ({
 	paper: {
 		marginTop: theme.spacing(8),
@@ -59,36 +67,22 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ClientDetails = (props) => (
-	<Grid item xs="auto">
-		<Card variant="outlined">
-			<CardHeader
-				avatar={
-					<Avatar alt={props.display_name}>
-						<Identicon string={props.client_id} size="25" />
-					</Avatar>
-				}
-				title={props.display_name}
-				subheader={props.description}
-			/>
-			<CardContent>
-				<Grid
-					container
-					direction="row"
-					justifyContent="space-evenly"
-					alignItems="center"
-				>
-					<NavButton
-						to={props.base_uri}
-						variant="contained"
-						color="secondary"
-						startIcon={<ExitToAppOutlinedIcon />}
-					>
-						Login
-					</NavButton>
-				</Grid>
-			</CardContent>
-		</Card>
-	</Grid>
+	<ListItem>
+		<ListItemAvatar>
+			<Avatar alt={props.display_name}>
+				<Identicon string={props.client_id} size="25" />
+			</Avatar>
+		</ListItemAvatar>
+		<ListItemText
+			primary={props.display_name}
+			secondary={props.description}
+		/>
+		<ListItemSecondaryAction>
+			<NavButton to={props.base_uri} edge="end" aria-label="login">
+				<ExitToAppOutlinedIcon />
+			</NavButton>
+		</ListItemSecondaryAction>
+	</ListItem>
 );
 
 ClientDetails.propTypes = {
@@ -112,18 +106,12 @@ const ContextDetails = (props) => (
 				subheader={props.description}
 			/>
 			<CardContent>
-				<Grid
-					container
-					spacing={2}
-					direction="row"
-					justifyContent="space-evenly"
-					alignItems="center"
-				>
+				<List>
 					{props.clients.map((client) => (
 						// TODO: instead of cards, these should be list items with a "go" button on the right.
 						<ClientDetails key={client.client_id} {...client} />
 					))}
-				</Grid>
+				</List>
 			</CardContent>
 		</Card>
 	</Grid>
