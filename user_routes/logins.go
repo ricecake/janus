@@ -38,3 +38,15 @@ func listUserLogins(c *gin.Context) {
 		"Logins":  data,
 	})
 }
+
+func clearSession(c *gin.Context) {
+	code := c.Query("code")
+	model.RevokeSessionToken(code)
+	c.Status(204)
+}
+
+func clearAccess(c *gin.Context) {
+	code := c.Query("code")
+	model.RevokeAccessContext(code)
+	c.Status(204)
+}

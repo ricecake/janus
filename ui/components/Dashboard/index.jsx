@@ -1,21 +1,11 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-import {
-	createTheme,
-	ThemeProvider,
-	withStyles,
-	makeStyles,
-} from '@material-ui/core/styles';
+import React from 'react';
+import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Hidden from '@material-ui/core/Hidden';
-import BasePage, { LoginBasePage, BaseTheme } from 'Component/BasePage';
+import BasePage from 'Component/BasePage';
 import userManager, { withLogin } from 'Include/userManager';
 import { OidcProvider } from 'redux-oidc';
 import store from 'Include/store';
-
-import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 
 import Navigator from './Navigator';
 import Header from './Header';
@@ -59,7 +49,6 @@ export const Dashboard = withLogin(
 
 		return (
 			<OidcProvider store={store} userManager={userManager}>
-				{/* <BaseTheme> */}
 				<div className={classes.root}>
 					<nav className={classes.drawer}>
 						<Hidden smUp implementation="js">
@@ -91,7 +80,6 @@ export const Dashboard = withLogin(
 						<BasePage>{props.children}</BasePage>
 					</div>
 				</div>
-				{/* </BaseTheme> */}
 			</OidcProvider>
 		);
 	}

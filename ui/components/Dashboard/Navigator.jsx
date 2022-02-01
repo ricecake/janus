@@ -17,6 +17,9 @@ const useStyles = makeStyles((theme) => ({
 	categoryHeader: {
 		paddingTop: theme.spacing(2),
 		paddingBottom: theme.spacing(2),
+		'&:hover,&:focus': {
+			backgroundColor: 'rgba(255, 255, 255, 0.08)',
+		},
 	},
 	categoryHeaderPrimary: {
 		color: theme.palette.common.white,
@@ -52,7 +55,7 @@ const useStyles = makeStyles((theme) => ({
 		marginRight: theme.spacing(2),
 	},
 	divider: {
-		marginTop: theme.spacing(2),
+		marginTop: theme.spacing(0),
 	},
 }));
 
@@ -64,15 +67,8 @@ function Navigator(props) {
 	return (
 		<Drawer variant="permanent" {...other}>
 			<List disablePadding>
-				<ListItem
-					className={clsx(
-						classes.firebase,
-						classes.item,
-						classes.itemCategory
-					)}
-				>
-					{title}
-				</ListItem>
+				<ListItem className={clsx(classes.firebase)}>{title}</ListItem>
+				<Divider className={classes.divider} />
 
 				<NavLink
 					exact
@@ -84,7 +80,7 @@ function Navigator(props) {
 						].join(' ')
 					}
 				>
-					<ListItem className={clsx(classes.itemCategory)}>
+					<ListItem className={clsx(classes.categoryHeader)}>
 						<ListItemIcon className={classes.itemIcon}>
 							<HomeIcon />
 						</ListItemIcon>
@@ -97,6 +93,7 @@ function Navigator(props) {
 						</ListItemText>
 					</ListItem>
 				</NavLink>
+				<Divider className={classes.divider} />
 				{categories.map(({ id, path, children = [] }) => (
 					<React.Fragment key={id}>
 						<NavLink

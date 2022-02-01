@@ -23,7 +23,11 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import ProfilePage from './frame';
 import Identicon from 'react-identicons';
 
-import { fetchLogins } from 'Include/reducers/profile';
+import {
+	fetchLogins,
+	deleteAccessContext,
+	deleteSession,
+} from 'Include/reducers/profile';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -45,7 +49,12 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-const LoginContext = ({ created_at, client: { display_name, client_id } }) => {
+const LoginContext = ({
+	code,
+	deleteAccessContext,
+	created_at,
+	client: { display_name, client_id },
+}) => {
 	const created = new Date(created_at);
 
 	return (
@@ -62,7 +71,7 @@ const LoginContext = ({ created_at, client: { display_name, client_id } }) => {
 					edge="end"
 					aria-label="delete"
 					color="primary"
-					onClick={() => deleteAuthenticator(Name)}
+					onClick={() => deleteAccessContext(code)}
 				>
 					<DeleteIcon />
 				</IconButton>
@@ -70,7 +79,12 @@ const LoginContext = ({ created_at, client: { display_name, client_id } }) => {
 		</ListItem>
 	);
 };
-const AppContext = ({ display_name, description, access_context }) => {
+const AppContext = ({
+	display_name,
+	description,
+	access_context,
+	deleteAccessContext,
+}) => {
 	const [open, setOpen] = React.useState(true);
 	React.useEffect(() => {
 		console.log(access_context);
@@ -86,7 +100,11 @@ const AppContext = ({ display_name, description, access_context }) => {
 					<ListSubheader>Logins</ListSubheader>
 
 					{access_context.map((access) => (
-						<LoginContext key={access.code} {...access} />
+						<LoginContext
+							key={access.code}
+							deleteAccessContext={deleteAccessContext}
+							{...access}
+						/>
 					))}
 				</List>
 			</Collapse>
@@ -94,7 +112,14 @@ const AppContext = ({ display_name, description, access_context }) => {
 	);
 };
 
-const BrowserSession = ({ created_at, user_agent, context }) => {
+const BrowserSession = ({
+	code,
+	created_at,
+	user_agent,
+	context,
+	deleteSession,
+	deleteAccessContext,
+}) => {
 	const created = new Date(created_at);
 	var parser = new UAParser();
 	parser.setUA(user_agent);
@@ -112,7 +137,7 @@ const BrowserSession = ({ created_at, user_agent, context }) => {
 						edge="end"
 						aria-label="delete"
 						color="primary"
-						onClick={() => deleteAuthenticator(Name)}
+						onClick={() => deleteSession(code)}
 					>
 						<DeleteIcon />
 					</IconButton>
@@ -122,14 +147,23 @@ const BrowserSession = ({ created_at, user_agent, context }) => {
 				<List>
 					<ListSubheader>Apps groups</ListSubheader>
 					{context.map((con) => (
-						<AppContext key={con.code} {...con} />
+						<AppContext
+							key={con.code}
+							deleteAccessContext={deleteAccessContext}
+							{...con}
+						/>
 					))}
 				</List>
 			</CardContent>
 		</Card>
 	);
 };
-const LoginsBase = ({ fetchLogins, logins }) => {
+const LoginsBase = ({
+	fetchLogins,
+	deleteAccessContext,
+	deleteSession,
+	logins,
+}) => {
 	const classes = useStyles();
 
 	React.useEffect(() => {
@@ -143,7 +177,12 @@ const LoginsBase = ({ fetchLogins, logins }) => {
 	return (
 		<ProfilePage>
 			{logins.Logins.map((session) => (
-				<BrowserSession key={session.code} {...session} />
+				<BrowserSession
+					key={session.code}
+					deleteAccessContext={deleteAccessContext}
+					deleteSession={deleteSession}
+					{...session}
+				/>
 			))}
 		</ProfilePage>
 	);
@@ -154,6 +193,8 @@ const dispatchToProps = (dispatch) =>
 	bindActionCreators(
 		{
 			fetchLogins,
+			deleteAccessContext,
+			deleteSession,
 		},
 		dispatch
 	);

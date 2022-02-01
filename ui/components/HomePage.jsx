@@ -141,7 +141,8 @@ const ResponsiveAppBar = (props) => {
 	};
 
 	return (
-		<AppBar position="static" className={classes.app_bar}>
+		<AppBar color="primary" position="sticky" elevation={0}>
+			{/* <AppBar position="static" className={classes.app_bar}> */}
 			<Toolbar>
 				<Typography variant="h6" className={classes.title}>
 					Applications
@@ -180,7 +181,7 @@ const ResponsiveAppBar = (props) => {
 							<MenuItem
 								onClick={() => {
 									handleClose();
-									navigate('/admin');
+									navigate('/admin/');
 								}}
 							>
 								Admin
@@ -197,7 +198,7 @@ const ResponsiveAppBar = (props) => {
 						<MenuItem
 							onClick={() => {
 								handleClose();
-								navigate('/profile');
+								navigate('/profile/');
 							}}
 						>
 							Profile

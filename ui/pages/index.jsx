@@ -15,8 +15,8 @@ import { bindActionCreators } from 'redux';
 let theme = createTheme({
 	palette: {
 		primary: {
+			main: '#4caf50',
 			light: '#63ccff',
-			main: '#009be5',
 			dark: '#006db3',
 			background: '#18202c',
 		},

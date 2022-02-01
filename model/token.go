@@ -96,18 +96,69 @@ func RevokeSessionToken(sessid string) error {
 		return err
 	}
 
-	revocationEntry := RevocationEntry{
+	//TODO: there should also be a revocation entry for the bro field on this, session
+	// there should also be a revocation of the ctx field when revoking an access context
+
+	revocationEntryJTI := RevocationEntry{
 		EntityCode: sessid,
 		CreatedAt:  time.Now(),
 		ExpiresIn:  int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()),
+		Field:      "jti",
 	}
 
-	if err := db.Set("gorm:insert_option", "ON CONFLICT DO NOTHING").Create(&revocationEntry).Error; err != nil {
+	if err := db.Set("gorm:insert_option", "ON CONFLICT DO NOTHING").Create(&revocationEntryJTI).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
 
-	log.Info("Revoking session ", revocationEntry.EntityCode)
+	revocationEntryBRO := RevocationEntry{
+		EntityCode: sessid,
+		CreatedAt:  time.Now(),
+		ExpiresIn:  int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()),
+		Field:      "bro",
+	}
+
+	if err := db.Set("gorm:insert_option", "ON CONFLICT DO NOTHING").Create(&revocationEntryBRO).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	log.Info("Revoking session ", sessid)
+	return tx.Commit().Error
+}
+
+func RevokeAccessContext(accessContext string) error {
+	db := util.GetDb()
+	tx := db.Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if err := tx.Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := db.Where("code = ?", accessContext).Delete(&AccessContext{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	revocationEntryCTX := RevocationEntry{
+		EntityCode: accessContext,
+		CreatedAt:  time.Now(),
+		ExpiresIn:  int((time.Duration(viper.GetInt("identity.ttl")) * time.Hour).Seconds()),
+		Field:      "ctx",
+	}
+
+	if err := db.Set("gorm:insert_option", "ON CONFLICT DO NOTHING").Create(&revocationEntryCTX).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	log.Info("Revoking access context ", accessContext)
 	return tx.Commit().Error
 }
 

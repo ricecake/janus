@@ -152,10 +152,11 @@ CREATE TABLE access_context (
 );
 
 CREATE TABLE revocation (
-    entity_code text not null PRIMARY KEY,
+    entity_code text not null,
     field text not null default 'jti',
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    expires_in integer
+    expires_in integer,
+    unique(entity_code, field)
 );
 
 CREATE TABLE stash_data (
@@ -291,9 +292,12 @@ create or replace view identity_login_summary as
                     'created_at', st.created_at,
                     'expires_in', st.expires_in,
                     'user_agent', st.user_agent,
-                    'context', jsonb_agg(login_contexts.session_context)
+                    'context', coalesce(
+                        jsonb_agg(login_contexts.session_context)
+                        filter (where login_contexts.session_context is not null), '[]'::jsonb)
             ) session_context
-        from (
+        from session_token st
+        left join (
             select
                 st.code as session,
                 jsonb_build_object(
@@ -315,8 +319,7 @@ create or replace view identity_login_summary as
             join client cl on cl.client_id = ac.client
             join context ct on ct.code = cl.context
             group by st.code, ct.code, ct.name, ct.description
-        ) login_contexts
-        join session_token st on st.code = login_contexts.session
+        ) login_contexts on st.code = login_contexts.session
         group by st.code, st.identity, st.created_at, st.expires_in, st.user_agent
     ) sess
     join identity i on i.code = sess.identity

@@ -2,8 +2,9 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { Dashboard } from 'Component/Dashboard';
 import Grid from '@material-ui/core/Grid';
+import userManager, { withLogin } from 'Include/userManager';
 
-export const ProfilePage = (props) => (
+export const ProfilePage = withLogin((props) => (
 	<Dashboard
 		root="/profile"
 		title={'Profile Management'}
@@ -22,7 +23,7 @@ export const ProfilePage = (props) => (
 			{props.children}
 		</Grid>
 	</Dashboard>
-);
+));
 
 ProfilePage.propTypes = {
 	children: PropTypes.any,

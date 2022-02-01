@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Identicon from 'react-identicons';
 import { useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
 
 import AppBar from '@material-ui/core/AppBar';
 import Avatar from '@material-ui/core/Avatar';
@@ -54,7 +55,6 @@ const styles = (theme) => ({
 	root: {
 		display: 'flex',
 		flexDirection: 'column',
-		width: 360,
 	},
 	lists: {
 		backgroundColor: theme.palette.background.paper,
@@ -85,7 +85,7 @@ const RouterBreadcrumbs = withStyles(styles)((props) => {
 							color="inherit"
 							key={to}
 							variant="h5"
-							component="h1"
+							component="h5"
 						>
 							{urlNameMap[to] || ucfirst(value)}
 						</Typography>
@@ -168,7 +168,7 @@ function Header(props) {
 									<MenuItem
 										onClick={() => {
 											handleClose();
-											navigate('/admin');
+											navigate('/admin/');
 										}}
 									>
 										Admin
@@ -185,7 +185,7 @@ function Header(props) {
 								<MenuItem
 									onClick={() => {
 										handleClose();
-										navigate('/profile');
+										navigate('/profile/');
 									}}
 								>
 									Profile
@@ -212,13 +212,13 @@ Header.propTypes = {
 	onDrawerToggle: PropTypes.func.isRequired,
 };
 
-const stateToProps = ({
-	oidc: {
-		user: { profile },
-	},
-}) => ({
-	profile,
-});
+const stateToProps = (state) => {
+	const profile = _.get(state, ['oidc', 'user', 'profile'], {});
+
+	return {
+		profile,
+	};
+};
 const dispatchToProps = (dispatch) => bindActionCreators({}, dispatch);
 
 export default connect(

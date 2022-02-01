@@ -1,6 +1,7 @@
 import { createActions, handleActions } from 'redux-actions';
 import { MakeMerge } from './helpers';
 import { doWebauthnRegister } from 'Include/webauthn';
+import userManager from 'Include/userManager';
 
 const defaultState = {
 	loading: false,
@@ -15,6 +16,9 @@ const defaultState = {
 
 const handleFetchError = (res) => {
 	if (!res.ok) {
+		if (res.status === 401) {
+			userManager.removeUser();
+		}
 		throw res;
 	}
 	return res;
@@ -128,6 +132,40 @@ export const fetchLogins = () => {
 				console.log(err);
 				dispatch(profileError('Something went wrong'));
 			});
+	};
+};
+
+// TODO: Need to force a refresh of auth session when you get a 401
+
+export const deleteSession = (code) => {
+	return (dispatch, getState) => {
+		// dispatch(detailStartFetch());
+		let state = getState();
+		fetch(`/profile/api/login/session?code=${code}`, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${state.oidc.user.access_token}`,
+			},
+		})
+			.then(handleFetchError)
+			.then(() => dispatch(fetchLogins()))
+			.catch(() => dispatch(profileError('Something went wrong')));
+	};
+};
+
+export const deleteAccessContext = (code) => {
+	return (dispatch, getState) => {
+		// dispatch(detailStartFetch());
+		let state = getState();
+		fetch(`/profile/api/login?code=${code}`, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${state.oidc.user.access_token}`,
+			},
+		})
+			.then(handleFetchError)
+			.then(() => dispatch(fetchLogins()))
+			.catch(() => dispatch(profileError('Something went wrong')));
 	};
 };
 

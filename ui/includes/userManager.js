@@ -17,11 +17,24 @@ const userManager = createUserManager(userManagerConfig);
 
 export const ensureLoginEffect = () => {
 	let state = store.getState();
-	if (!state.oidc.user || state.oidc.user.expired) {
+	if (
+		!state.oidc.isLoadingUser &&
+		(!state.oidc.user || state.oidc.user.expired)
+	) {
 		sessionStorage.setItem('loc', window.location.href);
-		userManager.signinSilent().catch(() => {
-			userManager.signinRedirect();
-		});
+		userManager
+			.signinSilent()
+			.catch(() => {
+				userManager.signinRedirect();
+			})
+			.then(() => {
+				if (
+					!state.oidc.isLoadingUser &&
+					(!state.oidc.user || state.oidc.user.expired)
+				) {
+					userManager.signinRedirect();
+				}
+			});
 	}
 	return;
 };
