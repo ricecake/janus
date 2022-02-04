@@ -1,3 +1,5 @@
+Add the concept of "inactive" contexts and clients.  Basically disabled, without being deleted.
+
 Start moving to typescript
 Add linting preventing unused imports
 add lining preventing unused variables

@@ -30,7 +30,7 @@ func (this Identity) TableName() string {
 }
 
 type AuthPassword struct {
-	Identity   string    `gorm:"column:identity;not null"`
+	Identity   string    `gorm:"column:identity;not null;primary_key"`
 	Hash       []byte    `gorm:"column:hash;not null"`
 	Totp       *[]byte   `gorm:"column:totp;not null"`
 	TotpActive bool      `gorm:"column:totp_active;not null"`
@@ -103,11 +103,12 @@ func (this *Identity) SetPassword(password string) (err error) {
 	}
 
 	auth := AuthPassword{
-		Identity:  this.Code,
-		CreatedAt: time.Now(),
+		Identity: this.Code,
 	}
-	if db.Where("identity = ?", this.Code).Find(&auth).RecordNotFound() {
+
+	if db.Where("identity = ?", this.Code).First(&auth).RecordNotFound() {
 		auth.Hash = hash
+		auth.CreatedAt = time.Now()
 		err = db.Create(&auth).Error
 	} else {
 		auth.Hash = hash

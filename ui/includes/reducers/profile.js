@@ -15,6 +15,11 @@ const defaultState = {
 };
 
 const handleFetchError = (res) => {
+	/*
+	TODO: this should be in a shared location.
+	it should also handle "bad user", "bad creds", and "no permissions"
+	Should almost certainly update the server to distinguish between 401 bad auth and 403 no perms
+	*/
 	if (!res.ok) {
 		if (res.status === 401) {
 			userManager.removeUser();
@@ -99,7 +104,29 @@ export const deleteAuthenticator = (name) => {
 };
 
 export const initiatePasswordChange = (pass, verify) => {
-	return (dispatch, getState) => {};
+	return (dispatch, getState) => {
+		// dispatch(detailStartFetch());
+		let state = getState();
+		return (
+			fetch('/profile/api/password', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${state.oidc.user.access_token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					password: pass,
+					verify_password: verify,
+				}),
+			})
+				.then(handleFetchError)
+				// .then((methods) => dispatch(finishLoginFetch(methods)))
+				.catch((err) => {
+					console.log(err);
+					dispatch(profileError('Something went wrong'));
+				})
+		);
+	};
 };
 
 export const initiateWebauthnEnroll = (name) => {

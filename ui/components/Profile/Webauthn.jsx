@@ -1,18 +1,10 @@
-import PropTypes from 'prop-types';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import { ButtonGroup, Typography } from '@material-ui/core';
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
-import { Show, Hide } from 'Component/Helpers';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import SendIcon from '@material-ui/icons/Send';
@@ -26,22 +18,16 @@ import IconButton from '@material-ui/core/IconButton';
 
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
-import Avatar from '@material-ui/core/Avatar';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { NewButton } from 'Component/Helpers';
 
 import {
 	initiateWebauthnEnroll,
 	fetchAuthenticators,
 	deleteAuthenticator,
 } from 'Include/reducers/profile';
-// There should be new webauthn helpers for profile.
-// this should be updated to include details about the name of the authenticator
-
-import { fetchUserDetails, updateUserDetails } from 'Include/reducers/profile';
 
 const useStyles = makeStyles((theme) => ({
 	root: {
@@ -159,9 +145,10 @@ const WebauthnBase = (props) => {
 						</>
 					))}
 				</List>
-
-				<NewAuthButton
-					initiateWebauthnEnroll={props.initiateWebauthnEnroll}
+				<NewButton
+					onSubmit={props.initiateWebauthnEnroll}
+					title="Setup new authenticator"
+					placeholder="Authenticator Name"
 				/>
 			</CardContent>
 		</Card>

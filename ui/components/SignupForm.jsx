@@ -22,7 +22,7 @@ import FingerprintOutlinedIcon from '@material-ui/icons/FingerprintOutlined';
 import EmailOutlinedIcon from '@material-ui/icons/EmailOutlined';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
-import { Link, Show, Hide } from 'Component/Helpers';
+import { Link, Show, Hide, NewButton } from 'Component/Helpers';
 
 import {
 	initiateSignup,
@@ -263,14 +263,11 @@ const SetupWebauthn = ({
 						justifyContent="space-around"
 						alignItems="center"
 					>
-						<Button
-							onClick={() => initiateWebauthnEnroll()}
-							variant="contained"
-							color="primary"
-							disabled={webauthn || loading}
-						>
-							Start Setup
-						</Button>
+						<NewButton
+							onSubmit={initiateWebauthnEnroll}
+							title="Setup new authenticator"
+							placeholder="Authenticator Name"
+						/>
 					</Grid>
 				</Grid>
 			</Hide>

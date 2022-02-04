@@ -14,6 +14,7 @@ import EmailOutlinedIcon from '@material-ui/icons/EmailOutlined';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Alert from '@material-ui/lab/Alert';
 import Paper from '@material-ui/core/Paper';
+import VpnKeyOutlined from '@material-ui/icons/VpnKeyOutlined';
 
 import { Link, Show, Hide } from 'Component/Helpers';
 
@@ -188,7 +189,7 @@ const LoginForm = (props) => {
 							</Show>
 							<Show If={props.Password && !picked}>
 								<Button
-									startIcon={<LockOutlinedIcon />}
+									startIcon={<VpnKeyOutlined />}
 									onClick={() => {
 										setPicked('password');
 									}}
@@ -210,16 +211,21 @@ const LoginForm = (props) => {
 									Magic Link Email
 								</Button>
 							</Show>
+							<Button
+								startIcon={<LockOutlinedIcon />}
+								onClick={() => {
+									console.log('FORGOT PASSWORD TODO');
+								}}
+								fullWidth
+								variant="contained"
+							>
+								Forgot Password?
+							</Button>
 						</ButtonGroup>
 					</Container>
 				</Show>
 
 				<Grid container justify="flex-end">
-					{/* <Grid item xs>
-			  <Link to="#" variant="body2">
-				Forgot password?
-			  </Link>
-			</Grid> */}
 					<Grid item>
 						<Link
 							to={`/signup?${props.context.serverParams.RawQuery}`}

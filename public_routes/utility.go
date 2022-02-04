@@ -158,6 +158,9 @@ func checkAuthBackground(c *gin.Context) {
 
 	redirectBase.Path = "/check/auth/redirect"
 
+	// TODO: implement pkce here, and include the verifier in the state.
+	//       this is needed so that we can have a public app behind the reverse proxy, without needing a dummy password.
+
 	queryParams := url.Values{
 		"scope":         []string{"openid"},
 		"response_type": []string{"code"},

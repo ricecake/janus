@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -8,22 +7,31 @@ import CardHeader from '@material-ui/core/CardHeader';
 import CardContent from '@material-ui/core/CardContent';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import { ButtonGroup } from '@material-ui/core';
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
 import { Show, Hide } from 'Component/Helpers';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Grid from '@material-ui/core/Grid';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 
-import {
-	fetchUserDetails,
-	updateUserDetails,
-	initiatePasswordChange,
-} from 'Include/reducers/profile';
+import { initiatePasswordChange } from 'Include/reducers/profile';
 
-const PasswordBase = ({ loading }) => {
+const PasswordBase = ({ loading, initiatePasswordChange }) => {
 	const [pass, setPass] = React.useState('');
 	const [verify, setVerify] = React.useState('');
+
+	const [open, setOpen] = React.useState(false);
+
+	const handleClick = () => {
+		setOpen(true);
+	};
+
+	const handleClose = (event, reason) => {
+		if (reason === 'clickaway') {
+			return;
+		}
+
+		setOpen(false);
+	};
 
 	return (
 		<Card>
@@ -33,7 +41,13 @@ const PasswordBase = ({ loading }) => {
 					onSubmit={(e) => {
 						e.preventDefault();
 						if (verify && verify === pass) {
-							initiatePasswordChange(pass, verify);
+							initiatePasswordChange(pass, verify).then(() => {
+								// setPass('');
+								// setVerify('');
+								handleClick();
+							});
+						} else {
+							console.log('FOOOOO');
 						}
 					}}
 				>
@@ -88,10 +102,19 @@ const PasswordBase = ({ loading }) => {
 							variant="contained"
 							color="primary"
 						>
-							Finish
+							Change Password
 						</Button>
 					</Grid>
 				</form>
+				<Snackbar
+					open={open}
+					autoHideDuration={5000}
+					onClose={handleClose}
+				>
+					<MuiAlert onClose={handleClose} severity="success">
+						Password Changed
+					</MuiAlert>
+				</Snackbar>
 			</CardContent>
 		</Card>
 	);
@@ -99,9 +122,6 @@ const PasswordBase = ({ loading }) => {
 
 const stateToProps = ({ profile }) => ({ ...profile });
 const dispatchToProps = (dispatch) =>
-	bindActionCreators(
-		{ fetchUserDetails, updateUserDetails, initiatePasswordChange },
-		dispatch
-	);
+	bindActionCreators({ initiatePasswordChange }, dispatch);
 
 export const Password = connect(stateToProps, dispatchToProps)(PasswordBase);
