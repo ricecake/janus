@@ -1,6 +1,7 @@
 import React from 'react';
+import Contexts from 'Component/Admin/Contexts';
 
-import AdminPage from './frame';
-
-export const AdminIndex = (props) => <AdminPage>Admin stuff</AdminPage>;
-export default AdminIndex;
+const ContextsIndex = () => {
+	return <Contexts />;
+};
+export default ContextsIndex;

@@ -12,6 +12,12 @@ import Paper from '@material-ui/core/Paper';
 import InputBase from '@material-ui/core/InputBase';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
+import Card from '@material-ui/core/Card';
+import CardHeader from '@material-ui/core/CardHeader';
+import CardContent from '@material-ui/core/CardContent';
+import TextField from '@material-ui/core/TextField';
+import { ButtonGroup } from '@material-ui/core';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 export const Hide = ({ If: condition, children }) => {
 	if (condition) {
@@ -139,6 +145,7 @@ export const AutoEditForm = ({
 	const classes = useStyles();
 
 	const [profileView, setProfileView] = React.useState(true);
+	const [loading, setLoading] = React.useState(false);
 
 	const [values, setValues] = React.useState(initialValues);
 	const setValue = (name, value) => setValues({ ...values, [name]: value });
@@ -151,13 +158,14 @@ export const AutoEditForm = ({
 					<fieldset disabled={profileView}>
 						{fields.map((field) => (
 							<TextField
+								key={field}
 								defaultValue={initialValues[field]}
 								onChange={(e) =>
 									setValue(field, e.target.value)
 								}
 								margin="normal"
 								variant="outlined"
-								label={labels[field]}
+								label={labels[field] || field}
 								name={field}
 								autoComplete={autocomplete[field]}
 							/>
@@ -176,6 +184,8 @@ export const AutoEditForm = ({
 							onClick={() => {
 								setProfileView(true);
 								onSubmit(values);
+								//TODO: take whatever is returned from onsubmit, and make it into a promise.
+								// then set loading to be false when it resolved.
 							}}
 						>
 							Save

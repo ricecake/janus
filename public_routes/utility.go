@@ -293,6 +293,8 @@ func checkAuthRedirect(c *gin.Context) {
 			return
 		}
 
+		// TODO: set the cookie value into the headers, so that the proxy can set the cookie and we're not bount
+		// to having systems be on a common subdomain
 		http.SetCookie(c.Writer, &http.Cookie{
 			Domain:   trunkDomain,
 			Name:     cookieName,

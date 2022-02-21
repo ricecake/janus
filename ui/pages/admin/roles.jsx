@@ -1,6 +1,7 @@
 import React from 'react';
+import Roles from 'Component/Admin/Roles';
 
-import AdminPage from './frame';
-
-export const AdminIndex = (props) => <AdminPage>Admin stuff</AdminPage>;
-export default AdminIndex;
+const RolesIndex = () => {
+	return <Roles />;
+};
+export default RolesIndex;

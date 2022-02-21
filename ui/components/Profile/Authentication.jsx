@@ -6,7 +6,7 @@ import ProfilePage from './frame';
 import { Webauthn } from './Webauthn';
 import { Password } from './Password';
 import { webauthnCapable } from 'Include/webauthn';
-import { Show, Hide } from 'Component/Helpers';
+import { Show } from 'Component/Helpers';
 
 const Authentication = () => {
 	return (

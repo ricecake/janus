@@ -1,6 +1,7 @@
 import React from 'react';
+import Users from 'Component/Admin/Users';
 
-import AdminPage from './frame';
-
-export const AdminIndex = (props) => <AdminPage>Admin stuff</AdminPage>;
-export default AdminIndex;
+const UsersIndex = () => {
+	return <Users />;
+};
+export default UsersIndex;

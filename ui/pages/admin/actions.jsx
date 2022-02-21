@@ -1,6 +1,7 @@
 import React from 'react';
+import Actions from 'Component/Admin/Actions';
 
-import AdminPage from './frame';
-
-export const AdminIndex = (props) => <AdminPage>Admin stuff</AdminPage>;
-export default AdminIndex;
+const ActionsIndex = () => {
+	return <Actions />;
+};
+export default ActionsIndex;

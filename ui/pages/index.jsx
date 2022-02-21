@@ -171,6 +171,7 @@ const AdminClient = withSuspense(lazy(() => import('Page/admin/clients')));
 const AdminContext = withSuspense(lazy(() => import('Page/admin/contexts')));
 const AdminRole = withSuspense(lazy(() => import('Page/admin/roles')));
 const AdminUser = withSuspense(lazy(() => import('Page/admin/users')));
+const AdminGroup = withSuspense(lazy(() => import('Page/admin/groups')));
 
 export const App = (props) => {
 	const { classes } = props;
@@ -219,6 +220,10 @@ export const App = (props) => {
 									<Route
 										path="users"
 										element={<AdminUser />}
+									/>
+									<Route
+										path="groups"
+										element={<AdminGroup />}
 									/>
 								</Route>
 								<Route path="callbacks">
