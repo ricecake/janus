@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"janus/admin_routes"
 	"janus/model"
 	"janus/public_routes"
 	"janus/user_routes"
@@ -139,6 +140,7 @@ func setupRouter(r *gin.Engine) {
 	public_routes.Configure(rootGroup)
 
 	user_routes.Configure(rootGroup.Group("/profile"))
+	admin_routes.Configure(rootGroup.Group("/admin"))
 }
 
 type embedFileSystem struct {

@@ -4,12 +4,12 @@ import Grid from '@material-ui/core/Grid';
 import AdminPage from './frame';
 import { AutoEditForm } from 'Component/Helpers';
 
-import ContextList from './ContextList';
+import { ContextList } from './ContextList';
 
 const Contexts = () => {
 	return (
 		<AdminPage>
-			<Grid item>
+			<Grid item xs={12}>
 				<ContextList />
 			</Grid>
 			{/* <Grid item>

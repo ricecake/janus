@@ -5,6 +5,7 @@ import loginReducer from 'Include/reducers/login';
 import signupReducer from 'Include/reducers/signup';
 import homeReducer from 'Include/reducers/home';
 import profileReducer from 'Include/reducers/profile';
+import adminReducer from 'Include/reducers/admin';
 
 const reducer = combineReducers({
 	oidc: oidcReducer,
@@ -13,6 +14,7 @@ const reducer = combineReducers({
 	signup: signupReducer,
 	home: homeReducer,
 	profile: profileReducer,
+	admin: adminReducer,
 });
 
 export default reducer;

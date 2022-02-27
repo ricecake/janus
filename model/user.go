@@ -597,6 +597,25 @@ func IdentityRoles(identCode string) (map[string][]string, error) {
 	return result, nil
 }
 
+func HasContextRole(context, user, role string) (bool, error) {
+	roles, err := IdentityRoles(user)
+	if err != nil {
+		return false, err
+	}
+	ctxRoles, ok := roles[context]
+	if !ok {
+		return false, nil
+	}
+
+	for _, assigned := range ctxRoles {
+		if role == assigned {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 type IdentityAllowedClient struct {
 	Identity string `gorm:"column:identity"`
 	Email    string `gorm:"column:email"`

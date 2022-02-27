@@ -49,57 +49,6 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-const NewAuthButton = ({ initiateWebauthnEnroll }) => {
-	const classes = useStyles();
-	const [open, setOpen] = React.useState(false);
-	const [name, setName] = React.useState('');
-
-	const fab = (
-		<Fab color="primary" variant="extended" onClick={() => setOpen(true)}>
-			<AddIcon />
-			New Authenticator
-		</Fab>
-	);
-
-	const input = (
-		<Paper
-			component="form"
-			className={classes.root}
-			onSubmit={(e) => {
-				e.preventDefault();
-				setOpen(false);
-				initiateWebauthnEnroll(name);
-			}}
-		>
-			<InputBase
-				required
-				autoFocus
-				className={classes.input}
-				placeholder="Create new authenticator"
-				onChange={(e) => setName(e.target.value)}
-			/>
-			<IconButton
-				color="primary"
-				className={classes.iconButton}
-				onClick={() => setOpen(false)}
-			>
-				<CloseIcon />
-			</IconButton>
-			<Divider className={classes.divider} orientation="vertical" />
-			<IconButton
-				disabled={!name}
-				color="primary"
-				className={classes.iconButton}
-				type="submit"
-			>
-				<SendIcon />
-			</IconButton>
-		</Paper>
-	);
-
-	return open ? input : fab;
-};
-
 const Authenticator = ({ Name, deleteAuthenticator, CreatedAt }) => {
 	const created = new Date(CreatedAt);
 	return (
