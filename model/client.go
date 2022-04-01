@@ -13,11 +13,10 @@ import (
 type Client struct {
 	Context     string `gorm:"column:context;not null"`
 	DisplayName string `gorm:"column:display_name;not null"`
-	ClientId    string `gorm:"column:client_id;not null"`
+	ClientId    string `gorm:"column:client_id;not null; primary_key"`
 	Secret      []byte `gorm:"column:secret;not null" json:"-"`
 	BaseUri     string `gorm:"column:base_uri;not null"`
-	//TODO: description
-
+	Description string `gorm:"column:description; not null"`
 }
 
 func (this Client) TableName() string {
@@ -97,4 +96,22 @@ func ActionsForClient(identCode, context string) (allowed []string, err error) {
 
 	sort.Strings(allowed)
 	return
+}
+
+func ListClients() ([]Client, error) {
+	db := util.GetDb()
+	var clients []Client
+	err := db.Find(&clients).Error
+	return clients, err
+}
+
+func (this *Client) SaveChanges() error {
+	db := util.GetDb()
+
+	err := db.Save(this).Error
+	if err != nil {
+		log.Errorf("Error while updating client: %s", err)
+	}
+
+	return err
 }

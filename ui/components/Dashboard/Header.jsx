@@ -33,6 +33,9 @@ const ucfirst = (string = '') => string[0].toUpperCase() + string.slice(1);
 const lightColor = 'rgba(255, 255, 255, 0.7)';
 
 const styles = (theme) => ({
+	app_bar: {
+		marginBottom: theme.spacing(2),
+	},
 	secondaryBar: {
 		zIndex: 0,
 	},
@@ -116,7 +119,12 @@ function Header(props) {
 
 	return (
 		<React.Fragment>
-			<AppBar color="primary" position="sticky" elevation={0}>
+			<AppBar
+				color="primary"
+				position="sticky"
+				elevation={0}
+				className={classes.app_bar}
+			>
 				<Toolbar>
 					<Grid container spacing={1} alignItems="center">
 						<Hidden smUp>

@@ -35,6 +35,9 @@ import ListItemText from '@material-ui/core/ListItemText';
 import DeleteIcon from '@material-ui/icons/Delete';
 
 const useStyles = makeStyles((theme) => ({
+	app_bar: {
+		marginBottom: theme.spacing(2),
+	},
 	paper: {
 		marginTop: theme.spacing(8),
 		display: 'flex',
@@ -60,9 +63,6 @@ const useStyles = makeStyles((theme) => ({
 	},
 	title: {
 		flexGrow: 1,
-	},
-	app_bar: {
-		marginBottom: theme.spacing(1),
 	},
 }));
 
@@ -141,7 +141,12 @@ const ResponsiveAppBar = (props) => {
 	};
 
 	return (
-		<AppBar color="primary" position="sticky" elevation={0}>
+		<AppBar
+			color="primary"
+			position="sticky"
+			elevation={0}
+			className={classes.app_bar}
+		>
 			{/* <AppBar position="static" className={classes.app_bar}> */}
 			<Toolbar>
 				<Typography variant="h6" className={classes.title}>

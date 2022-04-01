@@ -78,6 +78,13 @@ func (this *Identity) SaveChanges() error {
 	return err
 }
 
+func ListIdentitys() ([]Identity, error) {
+	db := util.GetDb()
+	var ctx []Identity
+	err := db.Find(&ctx).Error
+	return ctx, err
+}
+
 func FindIdentityById(id string) (ident Identity, err error) {
 	db := util.GetDb()
 	if db.Where("code = ?", id).Find(&ident).RecordNotFound() {

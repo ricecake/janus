@@ -295,6 +295,9 @@ func checkAuthRedirect(c *gin.Context) {
 
 		// TODO: set the cookie value into the headers, so that the proxy can set the cookie and we're not bount
 		// to having systems be on a common subdomain
+		// This should be making the same http.cookie, but with the domain as 'redirectBase.Host', and then calling
+		// cookie.String on it, and doing c.Header("X-Auth-Cookie", &cookieValue)
+		// The nginx config can then set the cookie header for the proxy header to get it into place.
 		http.SetCookie(c.Writer, &http.Cookie{
 			Domain:   trunkDomain,
 			Name:     cookieName,

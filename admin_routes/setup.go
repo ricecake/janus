@@ -56,4 +56,15 @@ func Configure(r *gin.RouterGroup) {
 	apiGroup.PATCH("/context", updateContext)
 	apiGroup.POST("/context", createContext)
 
+	apiGroup.GET("/client", listClients)
+	apiGroup.PATCH("/client", updateClient)
+	apiGroup.POST("/client", createClient)
+
+	apiGroup.GET("/user", listUsers)
+
+	apiGroup.GET("/role", listRoles)
+
+	apiGroup.GET("/action", listActions)
+
+	apiGroup.GET("/group", listGroups)
 }
