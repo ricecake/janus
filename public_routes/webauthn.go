@@ -130,10 +130,34 @@ func registerFinish(c *gin.Context) {
 
 func loginStart(c *gin.Context) {
 	email := c.Param("email")
+	client_id := c.Param("client_id")
 
 	ident, err := model.FindIdentityByEmail(email)
 	if err != nil {
 		c.AbortWithError(400, err)
+		return
+	}
+
+	client, clientErr := model.FindClientById(client_id)
+	if clientErr != nil {
+		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	allowed, err := model.AclCheck(model.AclCheckRequest{
+		Identity: ident.Code,
+		Context:  client.Context,
+		Action:   client.ClientId,
+	})
+
+	if err != nil {
+		c.Error(err).SetType(gin.ErrorTypePrivate)
+		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	if !allowed {
+		c.AbortWithStatus(401)
 		return
 	}
 
@@ -163,6 +187,7 @@ func loginStart(c *gin.Context) {
 
 func loginFinish(c *gin.Context) {
 	email := c.Param("email")
+	client_id := c.Param("client_id")
 
 	ident, err := model.FindIdentityByEmail(email)
 	if err != nil {
@@ -191,31 +216,42 @@ func loginFinish(c *gin.Context) {
 		return
 	}
 
-	idp, clientErr := model.FindClientById(viper.GetString("identity.issuer_id"))
+	client, clientErr := model.FindClientById(client_id)
 	if clientErr != nil {
-		log.Error("Error with own client?")
-		c.Error(clientErr).SetType(gin.ErrorTypePrivate)
-		c.AbortWithStatusJSON(500, "system error")
+		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
 		return
 	}
 
 	res := attemptIdentifyUser(c, model.IdentificationRequest{
 		Strategy:   model.WEBAUTHN,
 		Credential: credential,
-		Context:    &idp.Context,
+		Context:    &client.Context,
 	})
 
 	if res.Success {
+		allowed, err := model.AclCheck(model.AclCheckRequest{
+			Identity: res.Identity.Code,
+			Context:  client.Context,
+			Action:   client.ClientId,
+		})
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
+
 		// TODO: increment webauthn credential auth count
 		// check 'credential.Authenticator.CloneWarning'
 
-		_, err := establishSession(c, idp.Context, *res)
-		if err != nil {
-			c.Error(err).SetType(gin.ErrorTypePrivate)
-			c.AbortWithStatusJSON(500, "system error")
+		if allowed {
+			_, err = establishSession(c, client.Context, *res)
+			if err != nil {
+				c.Error(err).SetType(gin.ErrorTypePrivate)
+				c.AbortWithStatusJSON(500, "system error")
+			}
+			c.Status(204)
+			return
 		}
-		c.Status(204)
-		return
 	}
 
 	c.Status(401)

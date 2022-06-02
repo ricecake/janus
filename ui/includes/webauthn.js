@@ -68,8 +68,8 @@ export const doWebauthnRegister = (name) =>
 			}).then(handleFetchError);
 		});
 
-export const doWebauthnLogin = (email) =>
-	fetch(`/webauthn/login/start/${email}`, {
+export const doWebauthnLogin = (email, client_id) =>
+	fetch(`/webauthn/login/start/${client_id}/${email}`, {
 		method: 'POST',
 	})
 		.then(handleFetchError)
@@ -95,7 +95,7 @@ export const doWebauthnLogin = (email) =>
 			let sig = assertion.response.signature;
 			let userHandle = assertion.response.userHandle;
 
-			return fetch(`/webauthn/login/finish/${email}`, {
+			return fetch(`/webauthn/login/finish/${client_id}/${email}`, {
 				method: 'POST',
 				headers: {
 					'Content-type': 'application/json',

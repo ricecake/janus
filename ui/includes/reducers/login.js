@@ -98,10 +98,10 @@ export const doPasswordAuth = (email, password, _totp) => {
 	};
 };
 
-export const doWebauthn = (email) => {
+export const doWebauthn = (email, client_id) => {
 	return (dispatch) => {
 		dispatch(webauthnStart());
-		doWebauthnLogin(email)
+		doWebauthnLogin(email, client_id)
 			.then(() => resubmitLoginForm())
 			.catch(() =>
 				dispatch(loginError('Something went wrong.  Please try again.'))

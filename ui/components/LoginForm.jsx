@@ -179,7 +179,10 @@ const LoginForm = (props) => {
 									startIcon={<FingerprintOutlinedIcon />}
 									onClick={() => {
 										setPicked('webauthn');
-										props.doWebauthn(email);
+										props.doWebauthn(
+											email,
+											props.context.query.client_id
+										);
 									}}
 									fullWidth
 									variant="contained"
