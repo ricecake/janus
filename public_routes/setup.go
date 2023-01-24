@@ -52,4 +52,6 @@ func Configure(r *gin.RouterGroup) {
 	r.POST("/webauthn/register/finish", registerFinish)
 	r.POST("/webauthn/login/start/:client_id/:email", loginStart)
 	r.POST("/webauthn/login/finish/:client_id/:email", loginFinish)
+	r.POST("/webauthn/mediated/start/:client_id", loginStart)
+	r.POST("/webauthn/mediated/finish/:client_id", loginFinishMediated)
 }

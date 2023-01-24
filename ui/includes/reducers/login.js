@@ -1,5 +1,9 @@
 import { createActions, handleActions, combineActions } from 'redux-actions';
-import { doWebauthnLogin } from 'Include/webauthn';
+import {
+	doWebauthnLogin,
+	doMediatedWebauthn,
+	strongWebauthnAvailable,
+} from 'Include/webauthn';
 
 const defaultState = {
 	loading: false,
@@ -10,6 +14,7 @@ const defaultState = {
 	methods: false,
 	error: undefined,
 	emailSent: false,
+	canStrongWebauthn: false,
 };
 
 export const {
@@ -24,6 +29,7 @@ export const {
 	magicFinish,
 	methodsStart,
 	methodsFinish,
+	strongWebauthn,
 } = createActions(
 	'LOGIN_START',
 	'LOGIN_FINISH',
@@ -36,6 +42,7 @@ export const {
 	'MAGIC_FINISH',
 	'METHODS_START',
 	'METHODS_FINISH',
+	'STRONG_WEBAUTHN',
 	{ prefix: 'janus/login' }
 );
 
@@ -53,6 +60,14 @@ const resubmitLoginForm = () => {
 	loginForm.setAttribute('hidden', 'true');
 	document.body.appendChild(loginForm);
 	loginForm.submit();
+};
+
+export const getWebauthnCapabilities = () => {
+	return (dispatch) => {
+		strongWebauthnAvailable().then((available) =>
+			dispatch(strongWebauthn(available))
+		);
+	};
 };
 
 export const fetchAuthMethods = (email) => {
@@ -103,10 +118,28 @@ export const doWebauthn = (email, client_id) => {
 		dispatch(webauthnStart());
 		doWebauthnLogin(email, client_id)
 			.then(() => resubmitLoginForm())
-			.catch(() =>
-				dispatch(loginError('Something went wrong.  Please try again.'))
-			)
+			.catch((error) => {
+				dispatch(
+					loginError('Something went wrong.  Please try again.')
+				);
+			})
 			.finally(() => dispatch(webauthnFinish()));
+	};
+};
+
+export const doDiscoverableWebauthn = (client_id, autofil = false) => {
+	return (dispatch) => {
+		// dispatch(webauthnStart());
+		doMediatedWebauthn(client_id, autofil)
+			.then(() => resubmitLoginForm())
+			.catch((e) => {
+				if (!autofil) {
+					dispatch(
+						loginError('Something went wrong.  Please try again?')
+					);
+				}
+			})
+			.then(() => dispatch(webauthnFinish()));
 	};
 };
 
@@ -150,6 +183,8 @@ const reducer = handleActions(
 			magicFinish,
 			methodsFinish
 		)]: (state) => merge(state, { loading: false }),
+		[strongWebauthn]: (state, { payload: available }) =>
+			merge(state, { canStrongWebauthn: available }),
 	},
 	defaultState
 );

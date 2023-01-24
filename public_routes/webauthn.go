@@ -22,7 +22,11 @@ func setupWebauthn() {
 	webAuthn, err = webauthn.New(&webauthn.Config{
 		RPDisplayName: viper.GetString("basic.name"),
 		RPID:          viper.GetString("basic.domain"),
-		RPOrigin:      viper.GetString("basic.site"),
+		RPOrigins:     []string{viper.GetString("basic.site")},
+		AuthenticatorSelection: protocol.AuthenticatorSelection{
+			ResidentKey:      protocol.ResidentKeyRequirementPreferred,
+			UserVerification: protocol.VerificationPreferred,
+		},
 	})
 
 	if err != nil {
@@ -129,14 +133,10 @@ func registerFinish(c *gin.Context) {
 }
 
 func loginStart(c *gin.Context) {
-	email := c.Param("email")
-	client_id := c.Param("client_id")
+	var options *protocol.CredentialAssertion
+	var sessionData *webauthn.SessionData
 
-	ident, err := model.FindIdentityByEmail(email)
-	if err != nil {
-		c.AbortWithError(400, err)
-		return
-	}
+	client_id := c.Param("client_id")
 
 	client, clientErr := model.FindClientById(client_id)
 	if clientErr != nil {
@@ -144,27 +144,43 @@ func loginStart(c *gin.Context) {
 		return
 	}
 
-	allowed, err := model.AclCheck(model.AclCheckRequest{
-		Identity: ident.Code,
-		Context:  client.Context,
-		Action:   client.ClientId,
-	})
+	email := c.Param("email")
+	if email != "" {
+		ident, err := model.FindIdentityByEmail(email)
+		if err != nil {
+			c.AbortWithError(400, err)
+			return
+		}
 
-	if err != nil {
-		c.Error(err).SetType(gin.ErrorTypePrivate)
-		c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
-		return
-	}
+		allowed, err := model.AclCheck(model.AclCheckRequest{
+			Identity: ident.Code,
+			Context:  client.Context,
+			Action:   client.ClientId,
+		})
 
-	if !allowed {
-		c.AbortWithStatus(401)
-		return
-	}
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
 
-	options, sessionData, err := webAuthn.BeginLogin(ident)
-	if err != nil {
-		c.AbortWithError(400, err)
-		return
+		if !allowed {
+			c.AbortWithStatus(401)
+			return
+		}
+		options, sessionData, err = webAuthn.BeginLogin(ident)
+		if err != nil {
+			c.AbortWithError(400, err)
+			return
+		}
+	} else {
+		var err error
+		options, sessionData, err = webAuthn.BeginDiscoverableLogin()
+
+		if err != nil {
+			c.AbortWithError(400, err)
+			return
+		}
 	}
 
 	sessionCookie, err := util.EncodeJWTClose(sessionData, viper.GetString("security.passphrase"))
@@ -187,8 +203,6 @@ func loginStart(c *gin.Context) {
 
 func loginFinish(c *gin.Context) {
 	email := c.Param("email")
-	client_id := c.Param("client_id")
-
 	ident, err := model.FindIdentityByEmail(email)
 	if err != nil {
 		c.AbortWithError(400, fmt.Errorf("Bad input"))
@@ -216,6 +230,82 @@ func loginFinish(c *gin.Context) {
 		return
 	}
 
+	client_id := c.Param("client_id")
+	client, clientErr := model.FindClientById(client_id)
+	if clientErr != nil {
+		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)
+		return
+	}
+
+	res := attemptIdentifyUser(c, model.IdentificationRequest{
+		Strategy:   model.WEBAUTHN,
+		Credential: credential,
+		Context:    &client.Context,
+	})
+
+	if res.Success {
+		allowed, err := model.AclCheck(model.AclCheckRequest{
+			Identity: res.Identity.Code,
+			Context:  client.Context,
+			Action:   client.ClientId,
+		})
+		if err != nil {
+			c.Error(err).SetType(gin.ErrorTypePrivate)
+			c.AbortWithError(500, fmt.Errorf("System Error")).SetType(gin.ErrorTypePublic)
+			return
+		}
+
+		// TODO: increment webauthn credential auth count
+		// check 'credential.Authenticator.CloneWarning'
+
+		if allowed {
+			_, err = establishSession(c, client.Context, *res)
+			if err != nil {
+				c.Error(err).SetType(gin.ErrorTypePrivate)
+				c.AbortWithStatusJSON(500, "system error")
+			}
+			c.Status(204)
+			return
+		}
+	}
+
+	c.Status(401)
+}
+
+func loginFinishMediated(c *gin.Context) {
+	var sessionData webauthn.SessionData
+	cookieName := fmt.Sprintf("janus.webauthn.login.state")
+	for _, cookie := range c.Request.Cookies() {
+		if cookie.Name == cookieName {
+			if cookieVal := cookie.Value; cookieVal != "" {
+				if err := util.DecodeJWTClose(cookieVal, viper.GetString("security.passphrase"), &sessionData); err != nil {
+					c.AbortWithError(400, err)
+					return
+				}
+			}
+			break
+		}
+	}
+	clearWebauthnCookie(c, "login")
+
+	parsedResponse, err := protocol.ParseCredentialRequestResponse(c.Request)
+	if err != nil {
+		c.AbortWithError(400, err)
+		return
+	}
+
+	credential, err := webAuthn.ValidateDiscoverableLogin(func(rawID, userHandle []byte) (ident webauthn.User, err error) {
+		log.Infof("%+v %+v %+v", rawID, userHandle, string(userHandle))
+		ident, err = model.FindIdentityById(string(userHandle))
+		return
+	}, sessionData, parsedResponse)
+
+	if err != nil {
+		c.AbortWithError(400, err)
+		return
+	}
+
+	client_id := c.Param("client_id")
 	client, clientErr := model.FindClientById(client_id)
 	if clientErr != nil {
 		c.AbortWithError(400, fmt.Errorf("Client Not Found")).SetType(gin.ErrorTypePublic)

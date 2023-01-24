@@ -1,25 +1,18 @@
+import {
+	browserSupportsWebAuthn,
+	startAuthentication,
+	startRegistration,
+	browserSupportsWebAuthnAutofill,
+} from '@simplewebauthn/browser';
+
 // This should have webauthn specific helpers.
 // These should include a higher order component to wrap a needs-login component
 // This also needs some helpers relating to if webauthn is supported.
 
-export const webauthnCapable = () =>
-	typeof window['PublicKeyCredential'] !== 'undefined';
+export const webauthnCapable = browserSupportsWebAuthn;
 
 export const strongWebauthnAvailable = () =>
 	window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-
-// Base64 to ArrayBuffer
-const bufferDecode = (value) => {
-	return Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
-};
-
-// ArrayBuffer to URLBase64
-const bufferEncode = (value) => {
-	return btoa(String.fromCharCode.apply(null, new Uint8Array(value)))
-		.replace(/\+/g, '-')
-		.replace(/\//g, '_')
-		.replace(/=/g, '');
-};
 
 const handleFetchError = (res) => {
 	if (!res.ok) {
@@ -35,36 +28,12 @@ export const doWebauthnRegister = (name) =>
 		.then(handleFetchError)
 		.then((response) => response.json())
 		.then((data) => {
-			console.log(data);
-			data.publicKey.challenge = bufferDecode(data.publicKey.challenge);
-			data.publicKey.user.id = bufferDecode(data.publicKey.user.id);
-
-			if (data.publicKey.excludeCredentials) {
-				data.publicKey.excludeCredentials.forEach(
-					(cred, index, excludes) => {
-						excludes[index].id = bufferDecode(cred.id);
-					}
-				);
-			}
-
-			return navigator.credentials.create(data);
+			return startRegistration(data.publicKey);
 		})
 		.then((data) => {
-			let attestationObject = data.response.attestationObject;
-			let clientDataJSON = data.response.clientDataJSON;
-			let rawId = data.rawId;
-
 			return fetch(`/webauthn/register/finish?name=${name}`, {
 				method: 'POST',
-				body: JSON.stringify({
-					id: data.id,
-					rawId: bufferEncode(rawId),
-					type: data.type,
-					response: {
-						attestationObject: bufferEncode(attestationObject),
-						clientDataJSON: bufferEncode(clientDataJSON),
-					},
-				}),
+				body: JSON.stringify(data),
 			}).then(handleFetchError);
 		});
 
@@ -75,41 +44,43 @@ export const doWebauthnLogin = (email, client_id) =>
 		.then(handleFetchError)
 		.then((res) => res.json())
 		.then((credentialRequestOptions) => {
-			credentialRequestOptions.publicKey.challenge = bufferDecode(
-				credentialRequestOptions.publicKey.challenge
-			);
-			credentialRequestOptions.publicKey.allowCredentials.forEach(
-				function (listItem) {
-					listItem.id = bufferDecode(listItem.id);
-				}
-			);
-
-			return navigator.credentials.get({
-				publicKey: credentialRequestOptions.publicKey,
-			});
+			return startAuthentication(credentialRequestOptions.publicKey);
 		})
 		.then((assertion) => {
-			let authData = assertion.response.authenticatorData;
-			let clientDataJSON = assertion.response.clientDataJSON;
-			let rawId = assertion.rawId;
-			let sig = assertion.response.signature;
-			let userHandle = assertion.response.userHandle;
-
 			return fetch(`/webauthn/login/finish/${client_id}/${email}`, {
 				method: 'POST',
 				headers: {
 					'Content-type': 'application/json',
 				},
-				body: JSON.stringify({
-					id: assertion.id,
-					rawId: bufferEncode(rawId),
-					type: assertion.type,
-					response: {
-						authenticatorData: bufferEncode(authData),
-						clientDataJSON: bufferEncode(clientDataJSON),
-						signature: bufferEncode(sig),
-						userHandle: bufferEncode(userHandle),
-					},
-				}),
+				body: JSON.stringify(assertion),
 			}).then(handleFetchError);
 		});
+
+export const doMediatedWebauthn = (client_id, autofil = false) => {
+	return browserSupportsWebAuthnAutofill().then((supportAutofill) => {
+		if (supportAutofill || !autofil) {
+			return fetch(`/webauthn/mediated/start/${client_id}`, {
+				method: 'POST',
+			})
+				.then(handleFetchError)
+				.then((res) => res.json())
+				.then((credentialRequestOptions) => {
+					return startAuthentication(
+						credentialRequestOptions.publicKey,
+						autofil
+					);
+				})
+				.then((assertion) => {
+					return fetch(`/webauthn/mediated/finish/${client_id}`, {
+						method: 'POST',
+						headers: {
+							'Content-type': 'application/json',
+						},
+						body: JSON.stringify(assertion),
+					}).then(handleFetchError);
+				});
+		} else {
+			return Promise.reject();
+		}
+	});
+};

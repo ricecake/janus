@@ -24,9 +24,10 @@ import {
 	doWebauthn,
 	doPasswordAuth,
 	doMagicLoginLink,
+	doDiscoverableWebauthn,
 } from 'Include/reducers/login';
 import { bindActionCreators } from 'redux';
-import { webauthnCapable } from 'Include/webauthn';
+import { webauthnCapable, strongWebauthnAvailable } from 'Include/webauthn';
 
 const useStyles = makeStyles((theme) => ({
 	paper: {
@@ -53,6 +54,10 @@ const LoginForm = (props) => {
 	const [email, setEmail] = React.useState('');
 	const [password, setPassword] = React.useState('');
 	const [picked, setPicked] = React.useState(false);
+
+	useEffect(() => {
+		props.doDiscoverableWebauthn(props.context.query.client_id, true);
+	}, []);
 
 	useEffect(() => {
 		if (props.methods) {
@@ -103,14 +108,27 @@ const LoginForm = (props) => {
 							id="email"
 							label="Email Address"
 							name="email"
-							autoComplete="email"
+							autoComplete="email webauthn"
 							autoFocus
 							disabled={props.methods}
 							onChange={(e) => setEmail(e.target.value)}
 							error={!!email && !/^\S+@\S+\.\S+$/.test(email)}
 						/>
 						<Hide If={props.methods}>
-							<Grid container justify="flex-end">
+							<Grid container justify="space-around">
+								<Button
+									startIcon={<FingerprintOutlinedIcon />}
+									onClick={() => {
+										props.doDiscoverableWebauthn(
+											props.context.query.client_id,
+											false
+										);
+									}}
+									color="primary"
+									variant="contained"
+								>
+									Auto Login
+								</Button>
 								<Button
 									variant="contained"
 									color="primary"
@@ -251,6 +269,7 @@ const dispatchToProps = (dispatch) =>
 			doWebauthn,
 			doPasswordAuth,
 			doMagicLoginLink,
+			doDiscoverableWebauthn,
 		},
 		dispatch
 	);
