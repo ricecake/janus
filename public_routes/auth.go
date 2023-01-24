@@ -2,14 +2,16 @@ package public_routes
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ricecake/osin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	kcutil "github.com/ricecake/karma_chameleon/util"
 	"janus/model"
+
+	kcutil "github.com/ricecake/karma_chameleon/util"
 )
 
 var (
@@ -334,10 +336,9 @@ func attemptIdentifyUser(c *gin.Context, authData model.IdentificationRequest) *
 
 	if authData.Strategy == model.NONE || authData.Strategy == model.SESSION_TOKEN {
 		if authData.Context != nil {
-			cookieName := fmt.Sprintf("janus.auth.session.%s", *authData.Context)
 			cookies := []string{}
 			for _, cookie := range c.Request.Cookies() {
-				if cookie.Name == cookieName {
+				if strings.HasPrefix(cookie.Name, "janus.auth.session.") {
 					if cookieVal := cookie.Value; cookieVal != "" {
 						authData.Strategy = model.SESSION_TOKEN
 						cookies = append(cookies, cookieVal)
