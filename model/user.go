@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/duo-labs/webauthn/protocol"
-	"github.com/duo-labs/webauthn/webauthn"
+	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/go-webauthn/webauthn/webauthn"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 

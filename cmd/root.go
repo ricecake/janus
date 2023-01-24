@@ -1,6 +1,5 @@
 /*
 Copyright © 2019 Sebastian Green-Husted <geoffcake@gmail.com>
-
 */
 package cmd
 
