@@ -403,13 +403,15 @@ func IdentifyFromCredentials(req IdentificationRequest) *IdentificationResult {
 				continue
 			}
 
-			if encData.Context != *req.Context {
-				results = append(results, &IdentificationResult{
-					FailureCode:   401,
-					FailureReason: "Bad token",
-				})
-				continue
-			}
+			// TODO: make it a setting on the context to control if it requires
+			//       an explicit auth, or if it supports implicit identity.
+			// if encData.Context != *req.Context {
+			// 	results = append(results, &IdentificationResult{
+			// 		FailureCode:   401,
+			// 		FailureReason: "Bad token",
+			// 	})
+			// 	continue
+			// }
 
 			db := util.GetDb()
 			var ident Identity
