@@ -51,7 +51,7 @@ go-build:
 	go build -o bin/janus
 
 go-build-prod:
-	go build -ldflags "-s -w" -o bin/janus
+	go build -ldflags "-s -w" -buildvcs=false -o bin/janus
 
 build: js-build go-build
 
