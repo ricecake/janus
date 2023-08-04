@@ -64,3 +64,5 @@ spend some time thinking of ways to have 'peer' authentication servers.
 		need a handshake where two parties can prove that they have a value that hashes to the same value.
 			user auths with password that hashes to X.  Need remote server to not see password or X, but prove they have hash X independently.
 			scram might acturally be that, since it does a password based challange response handshake.
+
+Need to merge all the context cookies into one cookie, that then gets updated with the new state and permissions of the users current auth context, rather than N cookies.
